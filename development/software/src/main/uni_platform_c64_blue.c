@@ -49,18 +49,18 @@ static int g_delete_keys = 0;
 
 
 // Custom-1 "instance"
-typedef struct custom_1_instance_s {
+typedef struct c64_blue_instance_s {
     uni_gamepad_seat_t gamepad_seat;  // which "seat" is being used
-} custom_1_instance_t;
+} c64_blue_instance_t;
 
 // Declarations
 static void trigger_event_on_gamepad(uni_hid_device_t* d);
-static custom_1_instance_t* get_custom_1_instance(uni_hid_device_t* d);
+static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d);
 
 //
 // Platform Overrides
 //
-static void custom_1_init(int argc, const char** argv) {
+static void c64_blue_init(int argc, const char** argv) {
 
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
@@ -99,28 +99,28 @@ static void custom_1_init(int argc, const char** argv) {
 #endif
 }
 
-static void custom_1_on_init_complete(void) {
+static void c64_blue_on_init_complete(void) {
 	logi("custom: on_init_complete()\n");
 }
 
-static void custom_1_on_device_connected(uni_hid_device_t* d) {
+static void c64_blue_on_device_connected(uni_hid_device_t* d) {
 	logi("custom: device connected: %p\n", d);
 }
 
-static void custom_1_on_device_disconnected(uni_hid_device_t* d) {
+static void c64_blue_on_device_disconnected(uni_hid_device_t* d) {
 	logi("custom: device disconnected: %p\n", d);
 }
 
-static uni_error_t custom_1_on_device_ready(uni_hid_device_t* d) {
+static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
 	logi("custom: device ready: %p\n", d);
-	custom_1_instance_t* ins = get_custom_1_instance(d);
+	c64_blue_instance_t* ins = get_c64_blue_instance(d);
 	ins->gamepad_seat = GAMEPAD_SEAT_A;
 
 	trigger_event_on_gamepad(d);
 	return UNI_ERROR_SUCCESS;
 }
 
-static void custom_1_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
+static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
 //	static uint8_t leds = 0;
 //	static uint8_t enabled = true;
 	static uni_controller_t prev = {0};
@@ -197,29 +197,29 @@ static void custom_1_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 	}
 }
 
-static int32_t custom_1_get_property(uni_platform_property_t key) {
+static int32_t c64_blue_get_property(uni_platform_property_t key) {
 	logi("custom: get_property(): %d\n", key);
 	if (key != UNI_PLATFORM_PROPERTY_DELETE_STORED_KEYS)
 		return -1;
 	return g_delete_keys;
 }
 
-static void custom_1_on_oob_event(uni_platform_oob_event_t event, void* data) {
+static void c64_blue_on_oob_event(uni_platform_oob_event_t event, void* data) {
 	logi("custom: on_device_oob_event(): %d\n", event);
 
 	if (event != UNI_PLATFORM_OOB_GAMEPAD_SYSTEM_BUTTON) {
-		logi("custom_1_on_device_gamepad_event: unsupported event: 0x%04x\n", event);
+		logi("c64_blue_on_device_gamepad_event: unsupported event: 0x%04x\n", event);
 		return;
 	}
 
 	uni_hid_device_t* d = data;
 
 	if (d == NULL) {
-		loge("ERROR: custom_1_on_device_gamepad_event: Invalid NULL device\n");
+		loge("ERROR: c64_blue_on_device_gamepad_event: Invalid NULL device\n");
 		return;
 	}
 
-	custom_1_instance_t* ins = get_custom_1_instance(d);
+	c64_blue_instance_t* ins = get_c64_blue_instance(d);
 	ins->gamepad_seat = ins->gamepad_seat == GAMEPAD_SEAT_A ? GAMEPAD_SEAT_B : GAMEPAD_SEAT_A;
 
 	trigger_event_on_gamepad(d);
@@ -228,12 +228,12 @@ static void custom_1_on_oob_event(uni_platform_oob_event_t event, void* data) {
 //
 // Helpers
 //
-static custom_1_instance_t* get_custom_1_instance(uni_hid_device_t* d) {
-	return (custom_1_instance_t*)&d->platform_data[0];
+static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d) {
+	return (c64_blue_instance_t*)&d->platform_data[0];
 }
 
 static void trigger_event_on_gamepad(uni_hid_device_t* d) {
-	custom_1_instance_t* ins = get_custom_1_instance(d);
+	c64_blue_instance_t* ins = get_c64_blue_instance(d);
 
 	if (d->report_parser.set_rumble != NULL) {
 		d->report_parser.set_rumble(d, 0x80 /* value */, 15 /* duration */);
@@ -254,17 +254,17 @@ static void trigger_event_on_gamepad(uni_hid_device_t* d) {
 //
 // Entry Point
 //
-struct uni_platform* uni_platform_custom_1_create(void) {
+struct uni_platform* uni_platform_c64_blue_create(void) {
 	static struct uni_platform plat = {
-		.name = "custom_1",
-		.init = custom_1_init,
-		.on_init_complete = custom_1_on_init_complete,
-		.on_device_connected = custom_1_on_device_connected,
-		.on_device_disconnected = custom_1_on_device_disconnected,
-		.on_device_ready = custom_1_on_device_ready,
-		.on_oob_event = custom_1_on_oob_event,
-		.on_controller_data = custom_1_on_controller_data,
-		.get_property = custom_1_get_property,
+		.name = "c64_blue",
+		.init = c64_blue_init,
+		.on_init_complete = c64_blue_on_init_complete,
+		.on_device_connected = c64_blue_on_device_connected,
+		.on_device_disconnected = c64_blue_on_device_disconnected,
+		.on_device_ready = c64_blue_on_device_ready,
+		.on_oob_event = c64_blue_on_oob_event,
+		.on_controller_data = c64_blue_on_controller_data,
+		.get_property = c64_blue_get_property,
 	};
 
 	return &plat;

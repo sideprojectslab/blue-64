@@ -4,7 +4,7 @@
             "name": "ESP32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${env:BLUEPAD32_PATH}//src//**",
+                "..//..//resources//bluepad32//src//**",
                 "${env:IDF_TOOLS_PATH}//frameworks/esp-idf-v5.1.1/components/**"
             ],
             "browse": {
