@@ -1,0 +1,27 @@
+// ======================== launch.json ========================
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "gdb",
+        "request": "launch",
+        "name": "Debug ESP32",
+        "target": "build/mfric_test.elf",
+        "cwd": "${workspaceFolder}",
+        "gdbpath": "${env:IDF_TOOLS_PATH}/tools/xtensa-esp32-elf-gdb", // Path of the toolchain
+        "autorun": [
+          "target remote :3333", // Connect to OpenOCD
+          "mon reset halt", // Reset the chip and keep the CPUs halted
+          "set remote hardware-watchpoint-limit 2", // Restrict GDB to using two hardware watchpoints supported by ESP32
+          "flushregs", // Force GDB to get new state from the target
+          "thb app_main", // Insert a temporary hardware breakpoint at the main function
+          "c" // Resume the program. It will then stop at breakpoint inserted at app_main
+        ],
+        //"preLaunchTask": "OpenOCD",
+		//"postDebugTask": "CloseOCD"
+      },
+    ]
+  }

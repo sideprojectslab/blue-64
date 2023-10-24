@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "ESP32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${env:BLUEPAD32_PATH}//src//**",
+                "${env:IDF_TOOLS_PATH}//frameworks/esp-idf-v5.1.1/components/**"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json",
+            "compilerPath": "${env:IDF_TOOLS_PATH}/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "windows-gcc-x86",
+            "defines": [
+                "DUMMY=1"
+            ]
+        }
+    ],
+    "version": 4
+}

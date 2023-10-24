@@ -1,0 +1,171 @@
+// ======================== tasks.json ========================
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Set Target ESP32",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && idf.py set-target esp32"
+      },
+    },
+
+    {
+      "label": "Configure",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && idf.py menuconfig"
+      },
+    },
+
+    {
+      "label": "Build",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": " setup.bat && cd src && idf.py build"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}\\build"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+
+    {
+      "label": "Get size",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && idf.py size"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}\\build"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+
+    {
+      "label": "Clean",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && idf.py clean"
+      },
+    },
+
+    {
+      "label": "Clean (full)",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && idf.py fullclean"
+      },
+    },
+
+    {
+      "label": "Flash",
+      "group": "test",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% flash"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}/build"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+
+    {
+      "label": "Erase flash",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% erase_flash"
+      },
+    },
+
+    {
+      "label": "Monitor",
+      "group": "test",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% monitor"
+      },
+      "isBackground": true,
+      //"dependsOn": ["Flash"]
+    },
+
+    {
+      "label": "OpenOCD",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c openocd -c \"set ESP_RTOS none\" -f %OCD_INTF_CFG% -f %OCD_TARGET_CFG%"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(Info |Warn ):(.*)$", // Ignore errors
+          "severity": 1,
+          "message": 2
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Info : Listening on port \\d+ for gdb connections"
+        }
+      }
+    },
+
+    {
+      "label": "Load Serial Drivers",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": ""
+      },
+      "linux": {
+        "command": "sudo modprobe ftdi_sio"
+      }
+    },
+
+    {
+      "label": "Load JTAG Drivers",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": ""
+      },
+      "linux": {
+        "command": "sudo modprobe -r ftdi_sio"
+      }
+    },
+
+  ]
+}

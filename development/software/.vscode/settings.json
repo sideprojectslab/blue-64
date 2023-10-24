@@ -1,0 +1,25 @@
+// ======================== settings.json ========================
+{
+	"terminal.integrated.defaultProfile.windows": "Command Prompt",
+	"search.exclude": {
+		"**/build": true
+	},
+	"files.associations": {
+		"*.json": "jsonc",
+		"gpio.h": "c",
+		"sdkconfig.h": "c",
+		"task.h": "c",
+		"array": "cpp",
+		"string": "cpp",
+		"string_view": "cpp",
+		"spi_common_internal.h": "c",
+		"i2s.h": "c",
+		"brsp.h": "c",
+		"functional": "cpp",
+		"esp_idf_version.h": "c",
+		"esp_chip_info.h": "c",
+		"uni_config.h": "c",
+		"uni_platform.h": "c"
+	},
+"cmake.configureOnOpen": false,
+}
