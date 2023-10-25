@@ -46,15 +46,21 @@ typedef enum
 	CPORT_RR,
 	CPORT_DN,
 	CPORT_FF
-}t_c64b_cport_id;
+}t_c64b_cport_key;
+
+typedef enum
+{
+	CPORT_1,
+	CPORT_2
+}t_c64b_cport_idx;
 
 extern const t_c64b_key_id KEY_IDS[];
 
 void c64b_keyboard_init(t_c64b_keyboard *h);
 void c64b_keyboard_clear(t_c64b_keyboard *h);
 
-void c64b_keyboard_cport_press(t_c64b_keyboard *h, t_c64b_cport_id key);
-void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_id key);
+void c64b_keyboard_cport_press(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
+void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
 
 void c64b_keyboard_restore_press(t_c64b_keyboard *h);
 void c64b_keyboard_restore_release(t_c64b_keyboard *h);

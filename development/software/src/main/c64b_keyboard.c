@@ -19,6 +19,7 @@ limitations under the License.
 
 #include "c64b_keyboard.h"
 
+#include "uni_config.h"
 #include "uni_log.h"
 #include "uni_platform.h"
 #include "uni_gpio.h"
@@ -253,53 +254,65 @@ bool c64b_keyboard_key_release(t_c64b_keyboard *h, const t_c64b_key_id *k)
 }
 
 
-void c64b_keyboard_cport_press(t_c64b_keyboard *h, t_c64b_cport_id key)
+void c64b_keyboard_cport_press(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx)
 {
 	if(h == NULL)
 		return;
 
+	unsigned int *pins;
+	if(idx == CPORT_1)
+		pins = h->pin_row;
+	else
+		pins = h->pin_col;
+
 	switch(key)
 	{
 		case CPORT_UP:
-			gpio_set_level(h->pin_col[0], 1);
+			gpio_set_level(pins[0], 1);
 			break;
 		case CPORT_LL:
-			gpio_set_level(h->pin_col[2], 1);
+			gpio_set_level(pins[2], 1);
 			break;
 		case CPORT_RR:
-			gpio_set_level(h->pin_col[3], 1);
+			gpio_set_level(pins[3], 1);
 			break;
 		case CPORT_DN:
-			gpio_set_level(h->pin_col[1], 1);
+			gpio_set_level(pins[1], 1);
 			break;
 		case CPORT_FF:
-			gpio_set_level(h->pin_col[4], 1);
+			gpio_set_level(pins[4], 1);
 			break;
 	}
 }
 
 
-void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_id key)
+void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx)
 {
 	if(h == NULL)
 		return;
 
+	unsigned int *pins;
+	if(idx == CPORT_1)
+		pins = h->pin_row;
+	else
+		pins = h->pin_col;
+
 	switch(key)
 	{
 		case CPORT_UP:
-			gpio_set_level(h->pin_col[0], 0);
+			gpio_set_level(pins[0], 0);
 			break;
 		case CPORT_LL:
-			gpio_set_level(h->pin_col[2], 0);
+			gpio_set_level(pins[2], 0);
 			break;
 		case CPORT_RR:
-			gpio_set_level(h->pin_col[3], 0);
+			gpio_set_level(pins[3], 0);
 			break;
 		case CPORT_DN:
-			gpio_set_level(h->pin_col[1], 0);
+			gpio_set_level(pins[1], 0);
 			break;
 		case CPORT_FF:
-			gpio_set_level(h->pin_col[4], 0);
+			gpio_set_level(pins[4], 0);
 			break;
 	}
 }

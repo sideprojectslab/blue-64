@@ -19,6 +19,7 @@ limitations under the License.
 #include <stdio.h>
 #include <string.h>
 
+#include "uni_config.h"
 #include "uni_bt.h"
 #include "uni_gamepad.h"
 #include "uni_hid_device.h"
@@ -155,10 +156,9 @@ static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
 }
 
 static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
-//	static uint8_t leds = 0;
-//	static uint8_t enabled = true;
 	static uni_controller_t prev = {0};
-	uni_gamepad_t* gp;
+	uni_gamepad_t*          gp;
+	t_c64b_cport_idx        cport_idx = CPORT_2;
 
 	if (memcmp(&prev, ctl, sizeof(*ctl)) == 0) {
 		return;
@@ -175,29 +175,29 @@ static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 			gp = &ctl->gamepad;
 
 			if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
-				c64b_keyboard_cport_press(&keyboard, CPORT_UP);
+				c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
 			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_UP);
+				c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
 
 			if(gp->dpad & BTN_DPAD_DN_MASK)
-				c64b_keyboard_cport_press(&keyboard, CPORT_DN);
+				c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
 			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_DN);
+				c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
 
 			if(gp->dpad & BTN_DPAD_RR_MASK)
-				c64b_keyboard_cport_press(&keyboard, CPORT_RR);
+				c64b_keyboard_cport_press(&keyboard, CPORT_RR, cport_idx);
 			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_RR);
+				c64b_keyboard_cport_release(&keyboard, CPORT_RR, cport_idx);
 
 			if(gp->dpad & (BTN_DPAD_LL_MASK))
-				c64b_keyboard_cport_press(&keyboard, CPORT_LL);
+				c64b_keyboard_cport_press(&keyboard, CPORT_LL, cport_idx);
 			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_LL);
+				c64b_keyboard_cport_release(&keyboard, CPORT_LL, cport_idx);
 
 			if(gp->buttons & BTN_B_MASK)
-				c64b_keyboard_cport_press(&keyboard, CPORT_FF);
+				c64b_keyboard_cport_press(&keyboard, CPORT_FF, cport_idx);
 			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_FF);
+				c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
 
 			// shift + run
 			if(gp->misc_buttons & BTN_SELECT_MASK)
@@ -210,37 +210,6 @@ static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 				c64b_keyboard_char_press(&keyboard, " ");
 			else
 				c64b_keyboard_char_release(&keyboard, " ");
-
-/*
-			// Debugging
-			// Axis ry: control rumble
-			if ((gp->buttons & BUTTON_A) && d->report_parser.set_rumble != NULL) {
-				d->report_parser.set_rumble(d, 128, 128);
-			}
-			// Buttons: Control LEDs On/Off
-			if ((gp->buttons & BUTTON_B) && d->report_parser.set_player_leds != NULL) {
-				d->report_parser.set_player_leds(d, leds++ & 0x0f);
-			}
-			// Axis: control RGB color
-			if ((gp->buttons & BUTTON_X) && d->report_parser.set_lightbar_color != NULL) {
-				uint8_t r = (gp->axis_x * 256) / 512;
-				uint8_t g = (gp->axis_y * 256) / 512;
-				uint8_t b = (gp->axis_rx * 256) / 512;
-				d->report_parser.set_lightbar_color(d, r, g, b);
-			}
-
-			// Toggle Bluetooth connections
-			if ((gp->buttons & BUTTON_SHOULDER_L) && enabled) {
-				logi("*** Disabling Bluetooth connections\n");
-				uni_bt_enable_new_connections_safe(false);
-				enabled = false;
-			}
-			if ((gp->buttons & BUTTON_SHOULDER_R) && !enabled) {
-				logi("*** Enabling Bluetooth connections\n");
-				uni_bt_enable_new_connections_safe(true);
-				enabled = true;
-			}
-*/
 			break;
 		default:
 			break;
