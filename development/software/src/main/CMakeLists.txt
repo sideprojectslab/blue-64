@@ -1,4 +1,5 @@
 set(srcs "main.c"
+         "c64b_keyboard.c"
          "uni_platform_custom.c"
          "uni_platform_c64_blue.c")
 

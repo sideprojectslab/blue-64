@@ -13,5 +13,4 @@ void bluepad32(void *arg)
 
 void app_main(void) {
 	uni_esp32_main();
-	//xTaskCreatePinnedToCore(bluepad32, "bluepad32", 1024 * 64, NULL, 3, NULL, tskNO_AFFINITY);
 }

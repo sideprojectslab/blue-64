@@ -19,7 +19,9 @@
 		"esp_idf_version.h": "c",
 		"esp_chip_info.h": "c",
 		"uni_config.h": "c",
-		"uni_platform.h": "c"
+		"uni_platform.h": "c",
+		"uni_gpio.h": "c",
+		"c64b_keyboard.h": "c"
 	},
 "cmake.configureOnOpen": false,
 }

@@ -26,29 +26,51 @@ limitations under the License.
 #include "uni_platform.h"
 #include "uni_gpio.h"
 
+#include "c64b_keyboard.h"
+
 //
 // Globals
 //
 static int g_delete_keys = 0;
 
-#define PIN_DPAD_UP 25
-#define PIN_DPAD_LL 25
-#define PIN_DPAD_RR 25
-#define PIN_DPAD_DN 25
-#define PIN_FIRE    25
+// Hardware pin assignments
+
+#define PIN_COL7     32
+#define PIN_COL1     23
+#define PIN_COL2     33
+#define PIN_COL3     22
+#define PIN_COL4     25
+#define PIN_COL5     21
+#define PIN_COL6     26
+#define PIN_COL0     19
+
+#define PIN_ROW0     27
+#define PIN_ROW1     18
+#define PIN_ROW2     14
+#define PIN_ROW7     5
+#define PIN_ROW4     12
+#define PIN_ROW5     4
+#define PIN_ROW6     13
+#define PIN_ROW3     2
+
+#define PIN_nRESTORE 15
+
+// Bluetooth controller masks
 
 #define BTN_DPAD_UP_MASK 1
 #define BTN_DPAD_DN_MASK 2
 #define BTN_DPAD_RR_MASK 4
 #define BTN_DPAD_LL_MASK 8
 
-#define BTN_A_MASK 1
-#define BTN_B_MASK 2
-#define BTN_X_MASK 4
-#define BTN_Y_MASK 8
+#define BTN_A_MASK       1
+#define BTN_B_MASK       2
+#define BTN_X_MASK       4
+#define BTN_Y_MASK       8
 
+#define BTN_SELECT_MASK  2
+#define BTN_START_MASK   4
 
-// Custom-1 "instance"
+// c64-blue "instance"
 typedef struct c64_blue_instance_s {
     uni_gamepad_seat_t gamepad_seat;  // which "seat" is being used
 } c64_blue_instance_t;
@@ -56,6 +78,8 @@ typedef struct c64_blue_instance_s {
 // Declarations
 static void trigger_event_on_gamepad(uni_hid_device_t* d);
 static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d);
+
+static t_c64b_keyboard keyboard;
 
 //
 // Platform Overrides
@@ -67,19 +91,29 @@ static void c64_blue_init(int argc, const char** argv) {
 
 	logi("custom: init()\n");
 
-	gpio_set_level(PIN_DPAD_UP, 0);
-	gpio_set_level(PIN_DPAD_DN, 0);
-	gpio_set_level(PIN_DPAD_RR, 0);
-	gpio_set_level(PIN_DPAD_LL, 0);
-	gpio_set_level(PIN_FIRE   , 0);
+	keyboard.pin_col[0] = PIN_COL0;
+	keyboard.pin_col[1] = PIN_COL1;
+	keyboard.pin_col[2] = PIN_COL2;
+	keyboard.pin_col[3] = PIN_COL3;
+	keyboard.pin_col[4] = PIN_COL4;
+	keyboard.pin_col[5] = PIN_COL5;
+	keyboard.pin_col[6] = PIN_COL6;
+	keyboard.pin_col[7] = PIN_COL7;
 
-	gpio_set_direction(PIN_DPAD_UP, GPIO_MODE_OUTPUT);
-	gpio_set_direction(PIN_DPAD_DN, GPIO_MODE_OUTPUT);
-	gpio_set_direction(PIN_DPAD_RR, GPIO_MODE_OUTPUT);
-	gpio_set_direction(PIN_DPAD_LL, GPIO_MODE_OUTPUT);
-	gpio_set_direction(PIN_FIRE   , GPIO_MODE_OUTPUT);
+	keyboard.pin_row[0] = PIN_ROW0;
+	keyboard.pin_row[1] = PIN_ROW1;
+	keyboard.pin_row[2] = PIN_ROW2;
+	keyboard.pin_row[3] = PIN_ROW3;
+	keyboard.pin_row[4] = PIN_ROW4;
+	keyboard.pin_row[5] = PIN_ROW5;
+	keyboard.pin_row[6] = PIN_ROW6;
+	keyboard.pin_row[7] = PIN_ROW7;
 
+	keyboard.pin_nrestore = PIN_nRESTORE;
 
+	keyboard.feed_rate_ms = 50;
+
+	c64b_keyboard_init(&keyboard);
 
 #if 0
 	uni_gamepad_mappings_t mappings = GAMEPAD_DEFAULT_MAPPINGS;
@@ -126,40 +160,56 @@ static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 	static uni_controller_t prev = {0};
 	uni_gamepad_t* gp;
 
-	static bool wait_for_space = false;
-
 	if (memcmp(&prev, ctl, sizeof(*ctl)) == 0) {
 		return;
 	}
-	prev = *ctl;
-	// Print device Id before dumping gamepad.
-	logi("(%p) ", d);
-	uni_controller_dump(ctl);
 
-	gpio_set_level(PIN_DPAD_UP, 0);
-	gpio_set_level(PIN_DPAD_DN, 0);
-	gpio_set_level(PIN_DPAD_RR, 0);
-	gpio_set_level(PIN_DPAD_LL, 0);
-	gpio_set_level(PIN_FIRE   , 0);
+	prev = *ctl;
+
+	// Print device Id before dumping gamepad.
+//	logi("(%p) ", d);
+//	uni_controller_dump(ctl);
 
 	switch (ctl->klass) {
 		case UNI_CONTROLLER_CLASS_GAMEPAD:
 			gp = &ctl->gamepad;
 
-			if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_B_MASK))
-				gpio_set_level(PIN_DPAD_UP, 1);
+			if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
+				c64b_keyboard_cport_press(&keyboard, CPORT_UP);
+			else
+				c64b_keyboard_cport_release(&keyboard, CPORT_UP);
 
 			if(gp->dpad & BTN_DPAD_DN_MASK)
-				gpio_set_level(PIN_DPAD_DN, 1);
+				c64b_keyboard_cport_press(&keyboard, CPORT_DN);
+			else
+				c64b_keyboard_cport_release(&keyboard, CPORT_DN);
 
 			if(gp->dpad & BTN_DPAD_RR_MASK)
-				gpio_set_level(PIN_DPAD_RR, 1);
+				c64b_keyboard_cport_press(&keyboard, CPORT_RR);
+			else
+				c64b_keyboard_cport_release(&keyboard, CPORT_RR);
 
 			if(gp->dpad & (BTN_DPAD_LL_MASK))
-				gpio_set_level(PIN_DPAD_LL, 1);
+				c64b_keyboard_cport_press(&keyboard, CPORT_LL);
+			else
+				c64b_keyboard_cport_release(&keyboard, CPORT_LL);
 
-			if(gp->buttons & BTN_A_MASK)
-				gpio_set_level(PIN_FIRE, 1);
+			if(gp->buttons & BTN_B_MASK)
+				c64b_keyboard_cport_press(&keyboard, CPORT_FF);
+			else
+				c64b_keyboard_cport_release(&keyboard, CPORT_FF);
+
+			// shift + run
+			if(gp->misc_buttons & BTN_SELECT_MASK)
+				c64b_keyboard_char_press(&keyboard, "~run~");
+			else
+				c64b_keyboard_char_release(&keyboard, "~run~");
+
+			// space
+			if(gp->misc_buttons & BTN_START_MASK)
+				c64b_keyboard_char_press(&keyboard, " ");
+			else
+				c64b_keyboard_char_release(&keyboard, " ");
 
 /*
 			// Debugging
