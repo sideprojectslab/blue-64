@@ -19,6 +19,10 @@ limitations under the License.
 #include <stdio.h>
 #include <string.h>
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+
 #include "uni_config.h"
 #include "uni_bt.h"
 #include "uni_gamepad.h"
@@ -67,7 +71,10 @@ static int g_delete_keys = 0;
 #define BTN_B_MASK       2
 #define BTN_X_MASK       4
 #define BTN_Y_MASK       8
+#define BTN_L3_MASK      0x0100
+#define BTN_R3_MASK      0x0200
 
+#define BTN_HOME_MASK    1
 #define BTN_SELECT_MASK  2
 #define BTN_START_MASK   4
 
@@ -80,7 +87,24 @@ typedef struct c64_blue_instance_s {
 static void trigger_event_on_gamepad(uni_hid_device_t* d);
 static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d);
 
-static t_c64b_keyboard keyboard;
+static t_c64b_keyboard   keyboard;
+static uni_hid_device_t* ctrl_id[2]  = {NULL, NULL};
+static uni_controller_t  ctrl_dat[2] = {{0}, {0}};
+static bool              swap_ports  = false;
+static SemaphoreHandle_t keyboard_sem_h;
+
+// keyboard string feeds
+static char feed_hello_world[] = "qq 22 ~arll~~arll~";
+
+
+static void task_keyboard_feed(void *arg)
+{
+	logi("Starting Keyboard Feed\n");
+	xSemaphoreTake(keyboard_sem_h, (TickType_t)10);
+	c64b_keyboard_feed_string(&keyboard, (char *)arg);
+	xSemaphoreGive(keyboard_sem_h);
+	vTaskDelete(NULL);
+}
 
 //
 // Platform Overrides
@@ -112,9 +136,12 @@ static void c64_blue_init(int argc, const char** argv) {
 
 	keyboard.pin_nrestore = PIN_nRESTORE;
 
-	keyboard.feed_rate_ms = 50;
+	keyboard.feed_press_ms = 40;
+	keyboard.feed_clear_ms = 20;
 
 	c64b_keyboard_init(&keyboard);
+
+	keyboard_sem_h = xSemaphoreCreateMutex();
 
 #if 0
 	uni_gamepad_mappings_t mappings = GAMEPAD_DEFAULT_MAPPINGS;
@@ -140,10 +167,21 @@ static void c64_blue_on_init_complete(void) {
 
 static void c64_blue_on_device_connected(uni_hid_device_t* d) {
 	logi("custom: device connected: %p\n", d);
+
+	// inserting the ID in the first free location of the device list
+	if(ctrl_id[0] == NULL)
+		ctrl_id[0] = d;
+	else if(ctrl_id[1] == NULL)
+		ctrl_id[1] = d;
 }
 
 static void c64_blue_on_device_disconnected(uni_hid_device_t* d) {
 	logi("custom: device disconnected: %p\n", d);
+
+	if(ctrl_id[0] == d)
+		ctrl_id[0] = NULL;
+	else if(ctrl_id[1] == d)
+		ctrl_id[1] = NULL;
 }
 
 static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
@@ -156,64 +194,98 @@ static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
 }
 
 static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
-	static uni_controller_t prev = {0};
-	uni_gamepad_t*          gp;
-	t_c64b_cport_idx        cport_idx = CPORT_2;
+	uni_gamepad_t*   gp;
+	uni_gamepad_t*   gp_old;
+	unsigned int     idx;
+	t_c64b_cport_idx cport_idx;
 
-	if (memcmp(&prev, ctl, sizeof(*ctl)) == 0) {
-		return;
+	if(ctrl_id[0] == d)
+	{
+		idx = 0;
+		cport_idx = swap_ports ? CPORT_1 : CPORT_2;
 	}
+	else if(ctrl_id[1] == d)
+	{
+		idx = 1;
+		cport_idx = swap_ports ? CPORT_2 : CPORT_1;
+	}
+	else
+		return;
 
-	prev = *ctl;
+	if (memcmp(&(ctrl_dat[idx]), ctl, sizeof(uni_controller_t)) == 0)
+		return;
 
 	// Print device Id before dumping gamepad.
-//	logi("(%p) ", d);
-//	uni_controller_dump(ctl);
+	//uni_controller_dump(ctl);
 
-	switch (ctl->klass) {
-		case UNI_CONTROLLER_CLASS_GAMEPAD:
-			gp = &ctl->gamepad;
+	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
+	{
+		switch (ctl->klass)
+		{
+			case UNI_CONTROLLER_CLASS_GAMEPAD:
+				gp     = &(ctl->gamepad);
+				gp_old = &(ctrl_dat[idx].gamepad);
 
-			if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
-				c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
-			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
+				if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
+					c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
+				else
+					c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
 
-			if(gp->dpad & BTN_DPAD_DN_MASK)
-				c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
-			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
+				if(gp->dpad & BTN_DPAD_DN_MASK)
+					c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
+				else
+					c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
 
-			if(gp->dpad & BTN_DPAD_RR_MASK)
-				c64b_keyboard_cport_press(&keyboard, CPORT_RR, cport_idx);
-			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_RR, cport_idx);
+				if(gp->dpad & BTN_DPAD_RR_MASK)
+					c64b_keyboard_cport_press(&keyboard, CPORT_RR, cport_idx);
+				else
+					c64b_keyboard_cport_release(&keyboard, CPORT_RR, cport_idx);
 
-			if(gp->dpad & (BTN_DPAD_LL_MASK))
-				c64b_keyboard_cport_press(&keyboard, CPORT_LL, cport_idx);
-			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_LL, cport_idx);
+				if(gp->dpad & BTN_DPAD_LL_MASK)
+					c64b_keyboard_cport_press(&keyboard, CPORT_LL, cport_idx);
+				else
+					c64b_keyboard_cport_release(&keyboard, CPORT_LL, cport_idx);
 
-			if(gp->buttons & BTN_B_MASK)
-				c64b_keyboard_cport_press(&keyboard, CPORT_FF, cport_idx);
-			else
-				c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
+				if(gp->buttons & BTN_B_MASK)
+					c64b_keyboard_cport_press(&keyboard, CPORT_FF, cport_idx);
+				else
+					c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
 
-			// shift + run
-			if(gp->misc_buttons & BTN_SELECT_MASK)
-				c64b_keyboard_char_press(&keyboard, "~run~");
-			else
-				c64b_keyboard_char_release(&keyboard, "~run~");
+				// shift + run
+				if(gp->misc_buttons & BTN_SELECT_MASK)
+					c64b_keyboard_char_press(&keyboard, "~run~");
+				else
+					c64b_keyboard_char_release(&keyboard, "~run~");
 
-			// space
-			if(gp->misc_buttons & BTN_START_MASK)
-				c64b_keyboard_char_press(&keyboard, " ");
-			else
-				c64b_keyboard_char_release(&keyboard, " ");
-			break;
-		default:
-			break;
+				// space
+				if(gp->misc_buttons & BTN_START_MASK)
+					c64b_keyboard_char_press(&keyboard, " ");
+				else
+					c64b_keyboard_char_release(&keyboard, " ");
+
+				// swap ports
+				if(gp->misc_buttons & BTN_HOME_MASK)
+				{
+					logi("Swapping Ports\n");
+					swap_ports ^= true;
+				}
+
+				// easter egg
+				if((gp->buttons & BTN_L3_MASK) && !(gp_old->buttons & BTN_L3_MASK))
+				{
+					xTaskCreatePinnedToCore(task_keyboard_feed, "keyboard-feed", 4096, feed_hello_world, 3, NULL, tskNO_AFFINITY);
+				}
+
+				// key parsing finished
+				break;
+			default:
+				break;
+		}
+
+		xSemaphoreGive(keyboard_sem_h);
 	}
+
+	ctrl_dat[idx] = *ctl;
 }
 
 static int32_t c64_blue_get_property(uni_platform_property_t key) {

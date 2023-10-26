@@ -219,16 +219,16 @@ bool c64b_keyboard_key_press(t_c64b_keyboard *h, const t_c64b_key_id *k)
 	if((h == NULL) || (k == NULL))
 		return false;
 
-	logi("keyboard: pressing key \"%s\"\n", k->string);
+	logi("pressing key \"%s\": %d-%d\n", k->string, k->row, k->col);
 
 	if(k->shift)
 	{
-		gpio_set_level(h->pin_col[SHIFT_COL], 1);
+//		gpio_set_level(h->pin_col[SHIFT_COL], 1);
 		gpio_set_level(h->pin_row[SHIFT_ROW], 1);
-		vTaskDelay(h->feed_rate_ms / portTICK_PERIOD_MS);
+		vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 	}
 
-	gpio_set_level(h->pin_col[k->col], 1);
+//	gpio_set_level(h->pin_col[k->col], 1);
 	gpio_set_level(h->pin_row[k->row], 1);
 	return true;
 }
@@ -238,8 +238,6 @@ bool c64b_keyboard_key_release(t_c64b_keyboard *h, const t_c64b_key_id *k)
 {
 	if((h == NULL) || (k == NULL))
 		return false;
-
-	logi("keyboard: releasing key \"%s\"\n", k->string);
 
 	gpio_set_level(h->pin_row[k->row], 0);
 	gpio_set_level(h->pin_col[k->col], 0);
@@ -384,8 +382,9 @@ bool c64b_keyboard_feed_string(t_c64b_keyboard *h, char* s)
 			return false;
 
 		c64b_keyboard_key_press(h, key);
-		vTaskDelay(h->feed_rate_ms / portTICK_PERIOD_MS);
+		vTaskDelay(h->feed_press_ms / portTICK_PERIOD_MS);
 		c64b_keyboard_key_release(h, key);
+		vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 
 		head += strlen(key->string);
 	}

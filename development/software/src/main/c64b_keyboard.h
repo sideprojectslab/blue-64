@@ -26,7 +26,8 @@ typedef struct
 	unsigned int pin_col[8];
 	unsigned int pin_row[8];
 	unsigned int pin_nrestore;
-	unsigned int feed_rate_ms;
+	unsigned int feed_press_ms;
+	unsigned int feed_clear_ms;
 } t_c64b_keyboard;
 
 
