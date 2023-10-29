@@ -71,7 +71,9 @@ static int g_delete_keys = 0;
 #define BTN_B_MASK       2
 #define BTN_X_MASK       4
 #define BTN_Y_MASK       8
+#define BTN_L1_MASK      0x0010
 #define BTN_L3_MASK      0x0100
+#define BTN_R1_MASK      0x0020
 #define BTN_R3_MASK      0x0200
 
 #define BTN_HOME_MASK    1
@@ -136,8 +138,8 @@ static void c64_blue_init(int argc, const char** argv) {
 
 	keyboard.pin_nrestore = PIN_nRESTORE;
 
-	keyboard.feed_press_ms = 40;
-	keyboard.feed_clear_ms = 20;
+	keyboard.feed_press_ms = 25;
+	keyboard.feed_clear_ms = 25;
 
 	c64b_keyboard_init(&keyboard);
 
@@ -216,7 +218,7 @@ static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 		return;
 
 	// Print device Id before dumping gamepad.
-	//uni_controller_dump(ctl);
+	uni_controller_dump(ctl);
 
 	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
 	{
@@ -226,12 +228,37 @@ static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 				gp     = &(ctl->gamepad);
 				gp_old = &(ctrl_dat[idx].gamepad);
 
+				// shift + run
+				if(gp->misc_buttons & BTN_SELECT_MASK)
+					c64b_keyboard_char_press(&keyboard, "~run~");
+				else
+					c64b_keyboard_char_release(&keyboard, "~run~");
+
+				// space
+				if(gp->misc_buttons & BTN_START_MASK)
+					c64b_keyboard_char_press(&keyboard, " ");
+				else
+					c64b_keyboard_char_release(&keyboard, " ");
+
+				// easter egg
+				if((gp->buttons & BTN_L3_MASK) && !(gp_old->buttons & BTN_L3_MASK))
+				{
+					xTaskCreatePinnedToCore(task_keyboard_feed,
+					                        "keyboard-feed",
+					                        4096,
+					                        feed_hello_world,
+					                        3,
+					                        NULL,
+					                        tskNO_AFFINITY);
+				}
+
+				// controller ports override characters
 				if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
 					c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
 				else
 					c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
 
-				if(gp->dpad & BTN_DPAD_DN_MASK)
+				if((gp->dpad & BTN_DPAD_DN_MASK) || gp->throttle != 0)
 					c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
 				else
 					c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
@@ -251,29 +278,12 @@ static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* c
 				else
 					c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
 
-				// shift + run
-				if(gp->misc_buttons & BTN_SELECT_MASK)
-					c64b_keyboard_char_press(&keyboard, "~run~");
-				else
-					c64b_keyboard_char_release(&keyboard, "~run~");
-
-				// space
-				if(gp->misc_buttons & BTN_START_MASK)
-					c64b_keyboard_char_press(&keyboard, " ");
-				else
-					c64b_keyboard_char_release(&keyboard, " ");
-
 				// swap ports
-				if(gp->misc_buttons & BTN_HOME_MASK)
+				if((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK))
 				{
 					logi("Swapping Ports\n");
 					swap_ports ^= true;
-				}
-
-				// easter egg
-				if((gp->buttons & BTN_L3_MASK) && !(gp_old->buttons & BTN_L3_MASK))
-				{
-					xTaskCreatePinnedToCore(task_keyboard_feed, "keyboard-feed", 4096, feed_hello_world, 3, NULL, tskNO_AFFINITY);
+					c64b_keyboard_clear(&keyboard);
 				}
 
 				// key parsing finished

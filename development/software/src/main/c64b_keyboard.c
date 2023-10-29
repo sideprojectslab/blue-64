@@ -381,6 +381,8 @@ bool c64b_keyboard_feed_string(t_c64b_keyboard *h, char* s)
 		if(key == NULL)
 			return false;
 
+		c64b_keyboard_clear(h);
+		vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 		c64b_keyboard_key_press(h, key);
 		vTaskDelay(h->feed_press_ms / portTICK_PERIOD_MS);
 		c64b_keyboard_key_release(h, key);
