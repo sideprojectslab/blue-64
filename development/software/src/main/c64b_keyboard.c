@@ -96,7 +96,7 @@ const t_c64b_key_id KEY_IDS[] =
 	{"5"       , 2, 0, false},
 
 	// 48
-	{"lsh"     , 1, 7, false},
+	{"~lsh~"   , 1, 7, false},
 	{"e"       , 1, 6, false},
 	{"s"       , 1, 5, false},
 	{"z"       , 1, 4, false},
