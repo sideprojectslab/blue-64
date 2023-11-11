@@ -24,4 +24,5 @@
 		"c64b_keyboard.h": "c"
 	},
 "cmake.configureOnOpen": false,
+"C_Cpp.errorSquiggles": "disabled",
 }

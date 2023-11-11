@@ -31,6 +31,7 @@ limitations under the License.
 #include "uni_platform.h"
 #include "uni_gpio.h"
 
+#include "sdkconfig.h"
 #include "c64b_keyboard.h"
 
 //
@@ -40,25 +41,37 @@ static int g_delete_keys = 0;
 
 // Hardware pin assignments
 
-#define PIN_COL7     32
-#define PIN_COL1     23
-#define PIN_COL2     33
-#define PIN_COL3     22
-#define PIN_COL4     25
-#define PIN_COL5     21
-#define PIN_COL6     26
-#define PIN_COL0     19
+#define PIN_KCA0 21
+#define PIN_KCA1 19
+#define PIN_KCA2 18
 
-#define PIN_ROW0     27
-#define PIN_ROW1     18
-#define PIN_ROW2     14
-#define PIN_ROW7     5
-#define PIN_ROW4     12
-#define PIN_ROW5     4
-#define PIN_ROW6     13
-#define PIN_ROW3     2
+#define PIN_COL0 26
+#define PIN_COL1 22
+#define PIN_COL2 23
+#define PIN_COL3 33
+#define PIN_COL4 32
 
-#define PIN_nRESTORE 15
+#define PIN_KRA0 17
+#define PIN_KRA1 16
+#define PIN_KRA2 4
+
+#define PIN_ROW0 25
+#define PIN_ROW1 14
+#define PIN_ROW2 27
+#define PIN_ROW3 12
+#define PIN_ROW4 13
+
+
+#define PIN_CTRL  2
+#define PIN_SHIFT 0
+#define PIN_CMDR  15
+#define PIN_KEN   5
+
+#if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
+	#define PIN_nRST  1
+#else
+	#define PIN_nRST  255
+#endif
 
 // Bluetooth controller masks
 
@@ -123,20 +136,25 @@ static void c64_blue_init(int argc, const char** argv) {
 	keyboard.pin_col[2] = PIN_COL2;
 	keyboard.pin_col[3] = PIN_COL3;
 	keyboard.pin_col[4] = PIN_COL4;
-	keyboard.pin_col[5] = PIN_COL5;
-	keyboard.pin_col[6] = PIN_COL6;
-	keyboard.pin_col[7] = PIN_COL7;
+
+	keyboard.pin_kca[0] = PIN_KCA0;
+	keyboard.pin_kca[1] = PIN_KCA1;
+	keyboard.pin_kca[2] = PIN_KCA2;
 
 	keyboard.pin_row[0] = PIN_ROW0;
 	keyboard.pin_row[1] = PIN_ROW1;
 	keyboard.pin_row[2] = PIN_ROW2;
 	keyboard.pin_row[3] = PIN_ROW3;
 	keyboard.pin_row[4] = PIN_ROW4;
-	keyboard.pin_row[5] = PIN_ROW5;
-	keyboard.pin_row[6] = PIN_ROW6;
-	keyboard.pin_row[7] = PIN_ROW7;
 
-	keyboard.pin_nrestore = PIN_nRESTORE;
+	keyboard.pin_kra[0] = PIN_KRA0;
+	keyboard.pin_kra[1] = PIN_KRA1;
+	keyboard.pin_kra[2] = PIN_KRA2;
+
+	keyboard.pin_nrst  = PIN_nRST;
+	keyboard.pin_ctrl  = PIN_CTRL;
+	keyboard.pin_shift = PIN_SHIFT;
+	keyboard.pin_cmdr  = PIN_CMDR;
 
 	keyboard.feed_press_ms = 25;
 	keyboard.feed_clear_ms = 25;

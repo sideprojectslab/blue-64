@@ -21,11 +21,20 @@ limitations under the License.
 #include <string.h>
 #include <stdbool.h>
 
+#define C64B_CTL_BITS 5
+#define C64B_KKA_BITS 3
+
 typedef struct
 {
-	unsigned int pin_col[8];
-	unsigned int pin_row[8];
-	unsigned int pin_nrestore;
+	unsigned int pin_kca[3];
+	unsigned int pin_kra[3];
+	unsigned int pin_col[5];
+	unsigned int pin_row[5];
+	unsigned int pin_nrst;
+	unsigned int pin_ctrl;
+	unsigned int pin_shift;
+	unsigned int pin_cmdr;
+	unsigned int pin_enable;
 	unsigned int feed_press_ms;
 	unsigned int feed_clear_ms;
 } t_c64b_keyboard;
@@ -65,6 +74,15 @@ void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64
 
 void c64b_keyboard_restore_press(t_c64b_keyboard *h);
 void c64b_keyboard_restore_release(t_c64b_keyboard *h);
+
+void c64b_keyboard_ctrl_press(t_c64b_keyboard *h);
+void c64b_keyboard_ctrl_release(t_c64b_keyboard *h);
+
+void c64b_keyboard_shift_press(t_c64b_keyboard *h);
+void c64b_keyboard_shift_release(t_c64b_keyboard *h);
+
+void c64b_keyboard_cmdr_press(t_c64b_keyboard *h);
+void c64b_keyboard_cmdr_release(t_c64b_keyboard *h);
 
 bool c64b_keyboard_key_press(t_c64b_keyboard *h, const t_c64b_key_id *k);
 bool c64b_keyboard_key_release(t_c64b_keyboard *h, const t_c64b_key_id *k);
