@@ -218,6 +218,7 @@ static void process_gamepad(uni_hid_device_t* d)
 		logi("Swapping Ports\n");
 		swap_ports ^= true;
 		c64b_keyboard_clear(&keyboard);
+		trigger_event_on_gamepad(d);
 	}
 
 	*gp_old = *gp;
@@ -320,7 +321,6 @@ static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
 		logi("custom: keyboard connected: %p\n", d);
 		ctrl_id[0] = NULL;
 	}
-
 	// inserting controller ID in the first free location after 0
 	else if(d->controller.klass == UNI_CONTROLLER_CLASS_GAMEPAD)
 	{
@@ -330,7 +330,10 @@ static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
 		else if(ctrl_id[2] == NULL)
 			ctrl_id[2] = d;
 	}
-	logi("custom: device class not supported: %d\n", d->controller.klass);
+	else
+	{
+		logi("custom: device class not supported: %d\n", d->controller.klass);
+	}
 
 	c64_blue_instance_t* ins = get_c64_blue_instance(d);
 	ins->gamepad_seat = GAMEPAD_SEAT_A;
@@ -389,20 +392,28 @@ static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d) {
 }
 
 static void trigger_event_on_gamepad(uni_hid_device_t* d) {
-	c64_blue_instance_t* ins = get_c64_blue_instance(d);
+
+	unsigned int seat;
+	if(ctrl_id[1] == d)
+		seat = GAMEPAD_SEAT_A;
+	else if(ctrl_id[2] == d)
+		seat = GAMEPAD_SEAT_B;
+	else
+		return;
 
 	if (d->report_parser.set_rumble != NULL) {
 		d->report_parser.set_rumble(d, 0x80 /* value */, 15 /* duration */);
 	}
 
 	if (d->report_parser.set_player_leds != NULL) {
-		d->report_parser.set_player_leds(d, ins->gamepad_seat);
+		logi("setting leds for seat %d\n", seat);
+		d->report_parser.set_player_leds(d, seat);
 	}
 
 	if (d->report_parser.set_lightbar_color != NULL) {
-		uint8_t red = (ins->gamepad_seat & 0x01) ? 0xff : 0;
-		uint8_t green = (ins->gamepad_seat & 0x02) ? 0xff : 0;
-		uint8_t blue = (ins->gamepad_seat & 0x04) ? 0xff : 0;
+		uint8_t red   = (seat & 0x01) ? 0xff : 0;
+		uint8_t green = (seat & 0x02) ? 0xff : 0;
+		uint8_t blue  = (seat & 0x04) ? 0xff : 0;
 		d->report_parser.set_lightbar_color(d, red, green, blue);
 	}
 }
