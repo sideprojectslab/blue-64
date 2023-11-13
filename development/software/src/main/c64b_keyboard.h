@@ -34,7 +34,7 @@ typedef struct
 	unsigned int pin_ctrl;
 	unsigned int pin_shift;
 	unsigned int pin_cmdr;
-	unsigned int pin_enable;
+	unsigned int pin_ken;
 	unsigned int feed_press_ms;
 	unsigned int feed_clear_ms;
 } t_c64b_keyboard;
@@ -67,7 +67,9 @@ typedef enum
 extern const t_c64b_key_id KEY_IDS[];
 
 void c64b_keyboard_init(t_c64b_keyboard *h);
-void c64b_keyboard_clear(t_c64b_keyboard *h);
+void c64b_keyboard_reset(t_c64b_keyboard *h);
+
+void c64b_keyboard_keys_release(t_c64b_keyboard *h, bool clear_shift);
 
 void c64b_keyboard_cport_press(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
 void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);

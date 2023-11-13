@@ -158,6 +158,10 @@ const t_c64b_key_id KEY_IDS[] =
 };
 
 
+static const uint8_t col_perm[1 << C64B_KKA_BITS] = {5, 1, 0, 3, 4, 6, 7, 2};
+static const uint8_t row_perm[1 << C64B_KKA_BITS] = {2, 1, 0, 5, 4, 6, 7, 3};
+
+
 static const t_c64b_key_id * c64b_keyboard_char_to_key(const char* s)
 {
 	if(s == NULL)
@@ -186,7 +190,7 @@ void c64b_keyboard_init(t_c64b_keyboard *h)
 		return;
 
 	logi("Clearing Keyboard\n");
-	c64b_keyboard_clear(h);
+	c64b_keyboard_reset(h);
 
 	logi("Initialising Controller Pins\n");
 	for(unsigned int i = 0; i < C64B_CTL_BITS; ++i)
@@ -213,17 +217,30 @@ void c64b_keyboard_init(t_c64b_keyboard *h)
 		gpio_set_direction(h->pin_nrst , GPIO_MODE_OUTPUT);
 	}
 
+	gpio_reset_pin    (h->pin_ken);
 	gpio_reset_pin    (h->pin_ctrl);
 	gpio_reset_pin    (h->pin_shift);
 	gpio_reset_pin    (h->pin_cmdr);
 
+	gpio_set_direction(h->pin_ken  , GPIO_MODE_OUTPUT);
 	gpio_set_direction(h->pin_ctrl , GPIO_MODE_OUTPUT);
 	gpio_set_direction(h->pin_shift, GPIO_MODE_OUTPUT);
 	gpio_set_direction(h->pin_cmdr , GPIO_MODE_OUTPUT);
 }
 
 
-void c64b_keyboard_clear(t_c64b_keyboard *h)
+void c64b_keyboard_keys_release(t_c64b_keyboard *h, bool clear_shift)
+{
+	if(h == NULL)
+		return;
+
+	gpio_set_level(h->pin_ken, 1);
+	if(clear_shift)
+		gpio_set_level(h->pin_shift, 0);
+
+}
+
+void c64b_keyboard_reset(t_c64b_keyboard *h)
 {
 	if(h == NULL)
 		return;
@@ -240,6 +257,7 @@ void c64b_keyboard_clear(t_c64b_keyboard *h)
 		gpio_set_level(h->pin_kra[i], 0);
 	}
 
+	gpio_set_level(h->pin_ken  , 1);
 	gpio_set_level(h->pin_ctrl , 0);
 	gpio_set_level(h->pin_shift, 0);
 	gpio_set_level(h->pin_cmdr , 0);
@@ -253,17 +271,20 @@ bool c64b_keyboard_set_mux(t_c64b_keyboard *h, unsigned int col, unsigned int ro
 	if(h == NULL)
 		return false;
 
-	gpio_set_level(h->pin_col[0], (col >> 0) & 1);
-	gpio_set_level(h->pin_col[1], (col >> 1) & 1);
-	gpio_set_level(h->pin_col[2], (col >> 2) & 1);
+	col = col_perm[col];
+	row = row_perm[row];
 
-	gpio_set_level(h->pin_row[0], (row >> 0) & 1);
-	gpio_set_level(h->pin_row[1], (row >> 1) & 1);
-	gpio_set_level(h->pin_row[2], (row >> 2) & 1);
+	gpio_set_level(h->pin_kca[0], (col >> 0) & 1);
+	gpio_set_level(h->pin_kca[1], (col >> 1) & 1);
+	gpio_set_level(h->pin_kca[2], (col >> 2) & 1);
+
+	gpio_set_level(h->pin_kra[0], (row >> 0) & 1);
+	gpio_set_level(h->pin_kra[1], (row >> 1) & 1);
+	gpio_set_level(h->pin_kra[2], (row >> 2) & 1);
 
 	vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 
-	gpio_set_level(h->pin_enable, 1);
+	gpio_set_level(h->pin_ken, 0);
 	vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 
 	return true;
@@ -275,7 +296,7 @@ bool c64b_keyboard_clr_mux(t_c64b_keyboard *h)
 	if(h == NULL)
 		return false;
 
-	gpio_set_level(h->pin_enable, 0);
+	gpio_set_level(h->pin_ken, 1);
 	vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 	return true;
 }
@@ -495,7 +516,7 @@ bool c64b_keyboard_feed_string(t_c64b_keyboard *h, char* s)
 		if(key == NULL)
 			return false;
 
-		c64b_keyboard_clear(h);
+		c64b_keyboard_reset(h);
 		vTaskDelay(h->feed_clear_ms / portTICK_PERIOD_MS);
 		c64b_keyboard_key_press(h, key);
 		vTaskDelay(h->feed_press_ms / portTICK_PERIOD_MS);

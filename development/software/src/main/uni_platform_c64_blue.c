@@ -23,9 +23,12 @@ limitations under the License.
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
+#include "hid_usage.h"
+
 #include "uni_config.h"
 #include "uni_bt.h"
 #include "uni_gamepad.h"
+#include "uni_keyboard.h"
 #include "uni_hid_device.h"
 #include "uni_log.h"
 #include "uni_platform.h"
@@ -109,7 +112,7 @@ static bool              swap_ports  = false;
 static SemaphoreHandle_t keyboard_sem_h;
 
 // keyboard string feeds
-static char feed_hello_world[] = "qq 22 ~arll~~arll~";
+static char feed_hello_world[] = "hello world!";
 
 
 static void task_keyboard_macro_feed(void *arg)
@@ -124,14 +127,214 @@ static void task_keyboard_macro_feed(void *arg)
 
 static void process_keyboard(uni_hid_device_t* d)
 {
+	if(d == NULL)
+		return;
 
+	uni_controller_t* ctl = &(d->controller);
+
+	// this function only supports keyboard
+	if(ctl->klass != UNI_CONTROLLER_CLASS_KEYBOARD)
+		return;
+
+	uni_keyboard_t*   kb = &(ctl->keyboard);
+	uni_keyboard_t*   kb_old;
+	bool              kb_nop;
+	bool              shift;
+
+	if(ctrl_id[0] == d)
+	{
+		kb_old = &(ctrl_dat[0].keyboard);
+	}
+	else
+	{
+		logi("custom: keyboard unregistered\n");
+		return;
+	}
+
+	if (memcmp(kb_old, kb, sizeof(uni_keyboard_t)) == 0)
+		return;
+
+	uni_controller_dump(ctl);
+
+	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
+	{
+		// key modifiers
+		for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
+		{
+			const uint8_t key = kb->pressed_keys[i];
+
+			// modifiers
+			if((key == HID_USAGE_KB_LEFT_SHIFT ) || (key == HID_USAGE_KB_RIGHT_SHIFT))
+			{
+				c64b_keyboard_shift_press(&keyboard);
+				shift = true;
+			}
+			else
+			{
+				c64b_keyboard_shift_release(&keyboard);
+				shift = false;
+			}
+
+			if((key == HID_USAGE_KB_LEFT_CONTROL) || (key == HID_USAGE_KB_RIGHT_CONTROL))
+				c64b_keyboard_ctrl_press(&keyboard);
+			else
+				c64b_keyboard_ctrl_release(&keyboard);
+
+			if((key == HID_USAGE_KB_LEFT_GUI) || (key == HID_USAGE_KB_RIGHT_GUI))
+				c64b_keyboard_cmdr_press(&keyboard);
+			else
+				c64b_keyboard_cmdr_release(&keyboard);
+
+			// restore key
+			if(key == HID_USAGE_KB_ESCAPE)
+				c64b_keyboard_restore_press(&keyboard);
+			else
+				c64b_keyboard_restore_release(&keyboard);
+		}
+
+		// regular keys
+		for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
+		{
+			const uint8_t key = kb->pressed_keys[i];
+			kb_nop = false;
+
+			// regular keys (only one pressed at a time
+			switch(key) {
+				// basic letters
+				case HID_USAGE_KB_A:
+					c64b_keyboard_char_press(&keyboard, "a");
+					break;
+				case HID_USAGE_KB_B:
+					c64b_keyboard_char_press(&keyboard, "b");
+					break;
+				case HID_USAGE_KB_C:
+					c64b_keyboard_char_press(&keyboard, "c");
+					break;
+				case HID_USAGE_KB_D:
+					c64b_keyboard_char_press(&keyboard, "d");
+					break;
+				case HID_USAGE_KB_E:
+					c64b_keyboard_char_press(&keyboard, "e");
+					break;
+				case HID_USAGE_KB_F:
+					c64b_keyboard_char_press(&keyboard, "f");
+					break;
+				case HID_USAGE_KB_G:
+					c64b_keyboard_char_press(&keyboard, "g");
+					break;
+				case HID_USAGE_KB_H:
+					c64b_keyboard_char_press(&keyboard, "h");
+					break;
+				case HID_USAGE_KB_I:
+					c64b_keyboard_char_press(&keyboard, "i");
+					break;
+				case HID_USAGE_KB_J:
+					c64b_keyboard_char_press(&keyboard, "j");
+					break;
+				case HID_USAGE_KB_K:
+					c64b_keyboard_char_press(&keyboard, "k");
+					break;
+				case HID_USAGE_KB_L:
+					c64b_keyboard_char_press(&keyboard, "l");
+					break;
+				case HID_USAGE_KB_M:
+					c64b_keyboard_char_press(&keyboard, "m");
+					break;
+				case HID_USAGE_KB_N:
+					c64b_keyboard_char_press(&keyboard, "n");
+					break;
+				case HID_USAGE_KB_O:
+					c64b_keyboard_char_press(&keyboard, "o");
+					break;
+				case HID_USAGE_KB_P:
+					c64b_keyboard_char_press(&keyboard, "p");
+					break;
+				case HID_USAGE_KB_Q:
+					c64b_keyboard_char_press(&keyboard, "q");
+					break;
+				case HID_USAGE_KB_R:
+					c64b_keyboard_char_press(&keyboard, "r");
+					break;
+				case HID_USAGE_KB_S:
+					c64b_keyboard_char_press(&keyboard, "s");
+					break;
+				case HID_USAGE_KB_T:
+					c64b_keyboard_char_press(&keyboard, "t");
+					break;
+				case HID_USAGE_KB_U:
+					c64b_keyboard_char_press(&keyboard, "u");
+					break;
+				case HID_USAGE_KB_V:
+					c64b_keyboard_char_press(&keyboard, "v");
+					break;
+				case HID_USAGE_KB_W:
+					c64b_keyboard_char_press(&keyboard, "w");
+					break;
+				case HID_USAGE_KB_X:
+					c64b_keyboard_char_press(&keyboard, "x");
+					break;
+				case HID_USAGE_KB_Y:
+					c64b_keyboard_char_press(&keyboard, "y");
+					break;
+				case HID_USAGE_KB_Z:
+					c64b_keyboard_char_press(&keyboard, "z");
+					break;
+
+				// numbers
+
+				// other ascii keys
+				case HID_USAGE_KB_SPACEBAR:
+					c64b_keyboard_char_press(&keyboard, " ");
+					break;
+				case HID_USAGE_KB_RETURN:
+					c64b_keyboard_char_press(&keyboard, "~ret~");
+					break;
+				case HID_USAGE_KB_BACKSPACE:
+					c64b_keyboard_char_press(&keyboard, "~del~");
+					break;
+				case HID_USAGE_KB_DELETE:
+					c64b_keyboard_char_press(&keyboard, "~clr~");
+					break;
+
+				// arrows
+				case HID_USAGE_KB_LEFT_ARROW:
+					c64b_keyboard_char_press(&keyboard, "~ll~");
+					break;
+				case HID_USAGE_KB_RIGHT_ARROW:
+					c64b_keyboard_char_press(&keyboard, "~rr~");
+					break;
+				case HID_USAGE_KB_UP_ARROW:
+					c64b_keyboard_char_press(&keyboard, "~up~");
+					break;
+				case HID_USAGE_KB_DOWN_ARROW:
+					c64b_keyboard_char_press(&keyboard, "~dn~");
+					break;
+
+				default:
+					kb_nop = true;
+					break;
+			}
+
+			// only the first key pressed (other than the modifiers) is registered
+			if(!kb_nop)
+				break;
+		}
+
+		if(kb_nop)
+			c64b_keyboard_keys_release(&keyboard, !shift);
+
+		xSemaphoreGive(keyboard_sem_h);
+	}
+	*kb_old = *kb;
 }
 
 
 static void process_gamepad(uni_hid_device_t* d)
 {
-	//logi("custom: processing gamepad\n");
-	uni_controller_t* ctl = &(d->controller);
+	if(d == NULL)
+		return;
+
+	uni_controller_t* ctl    = &(d->controller);
 
 	// this function only supports gamepads
 	if(ctl->klass != UNI_CONTROLLER_CLASS_GAMEPAD)
@@ -140,6 +343,7 @@ static void process_gamepad(uni_hid_device_t* d)
 	t_c64b_cport_idx cport_idx;
 	uni_gamepad_t*   gp = &(ctl->gamepad);
 	uni_gamepad_t*   gp_old;
+	bool              kb_nop = true;
 
 	if(ctrl_id[1] == d)
 	{
@@ -160,67 +364,77 @@ static void process_gamepad(uni_hid_device_t* d)
 	if (memcmp(gp_old, gp, sizeof(uni_gamepad_t)) == 0)
 		return;
 
-	uni_controller_dump(ctl);
+//	uni_controller_dump(ctl);
+	logi("custom: processing gamepad event\n");
 
-	// shift + run
-	if(gp->misc_buttons & BTN_SELECT_MASK)
-		c64b_keyboard_char_press(&keyboard, "~run~");
-	else
-		c64b_keyboard_char_release(&keyboard, "~run~");
-
-	// space
-	if(gp->misc_buttons & BTN_START_MASK)
-		c64b_keyboard_char_press(&keyboard, " ");
-	else
-		c64b_keyboard_char_release(&keyboard, " ");
-
-	// easter egg
-	if((gp->buttons & BTN_L3_MASK) && !(gp_old->buttons & BTN_L3_MASK))
+	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
 	{
-		xTaskCreatePinnedToCore(task_keyboard_macro_feed,
-		                        "keyboard-feed",
-		                        4096,
-		                        feed_hello_world,
-		                        3,
-		                        NULL,
-		                        tskNO_AFFINITY);
+		// shift + run
+		if(gp->misc_buttons & BTN_SELECT_MASK)
+		{
+			kb_nop = false;
+			c64b_keyboard_char_press(&keyboard, "~run~");
+		}
+
+		// space
+		if(gp->misc_buttons & BTN_START_MASK)
+		{
+			kb_nop = false;
+			c64b_keyboard_char_press(&keyboard, " ");
+		}
+
+		// keyboard macros
+		if((gp->buttons & BTN_L3_MASK) && !(gp_old->buttons & BTN_L3_MASK))
+		{
+			xTaskCreatePinnedToCore(task_keyboard_macro_feed,
+			                        "keyboard-feed",
+			                        4096,
+			                        feed_hello_world,
+			                        3,
+			                        NULL,
+			                        tskNO_AFFINITY);
+		}
+
+		// controller ports override characters
+		if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
+			c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
+		else
+			c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
+
+		if((gp->dpad & BTN_DPAD_DN_MASK) || gp->throttle != 0)
+			c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
+		else
+			c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
+
+		if(gp->dpad & BTN_DPAD_RR_MASK)
+			c64b_keyboard_cport_press(&keyboard, CPORT_RR, cport_idx);
+		else
+			c64b_keyboard_cport_release(&keyboard, CPORT_RR, cport_idx);
+
+		if(gp->dpad & BTN_DPAD_LL_MASK)
+			c64b_keyboard_cport_press(&keyboard, CPORT_LL, cport_idx);
+		else
+			c64b_keyboard_cport_release(&keyboard, CPORT_LL, cport_idx);
+
+		if(gp->buttons & BTN_B_MASK)
+			c64b_keyboard_cport_press(&keyboard, CPORT_FF, cport_idx);
+		else
+			c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
+
+		// swap ports
+		if((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK))
+		{
+			logi("Swapping Ports\n");
+			swap_ports ^= true;
+			c64b_keyboard_reset(&keyboard);
+			trigger_event_on_gamepad(d);
+		}
+
+		if(kb_nop)
+			c64b_keyboard_keys_release(&keyboard, true);
+
+		xSemaphoreGive(keyboard_sem_h);
 	}
-
-	// controller ports override characters
-	if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
-		c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
-	else
-		c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
-
-	if((gp->dpad & BTN_DPAD_DN_MASK) || gp->throttle != 0)
-		c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
-	else
-		c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
-
-	if(gp->dpad & BTN_DPAD_RR_MASK)
-		c64b_keyboard_cport_press(&keyboard, CPORT_RR, cport_idx);
-	else
-		c64b_keyboard_cport_release(&keyboard, CPORT_RR, cport_idx);
-
-	if(gp->dpad & BTN_DPAD_LL_MASK)
-		c64b_keyboard_cport_press(&keyboard, CPORT_LL, cport_idx);
-	else
-		c64b_keyboard_cport_release(&keyboard, CPORT_LL, cport_idx);
-
-	if(gp->buttons & BTN_B_MASK)
-		c64b_keyboard_cport_press(&keyboard, CPORT_FF, cport_idx);
-	else
-		c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
-
-	// swap ports
-	if((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK))
-	{
-		logi("Swapping Ports\n");
-		swap_ports ^= true;
-		c64b_keyboard_clear(&keyboard);
-		trigger_event_on_gamepad(d);
-	}
-
 	*gp_old = *gp;
 }
 
@@ -255,6 +469,7 @@ static void c64_blue_init(int argc, const char** argv) {
 	keyboard.pin_kra[1] = PIN_KRA1;
 	keyboard.pin_kra[2] = PIN_KRA2;
 
+	keyboard.pin_ken   = PIN_KEN;
 	keyboard.pin_nrst  = PIN_nRST;
 	keyboard.pin_ctrl  = PIN_CTRL;
 	keyboard.pin_shift = PIN_SHIFT;
@@ -436,98 +651,3 @@ struct uni_platform* uni_platform_c64_blue_create(void) {
 
 	return &plat;
 }
-
-
-
-
-
-
-/*
-static void to_joy_from_keyboard(const uni_keyboard_t* kb, uni_joystick_t* out_joy1, uni_joystick_t* out_joy2) {
-    // Sanity check. Joy1 must be valid, joy2 can be null
-    if (!out_joy1) {
-        loge("Joystick: Invalid joy1 for keyboard\n");
-        return;
-    }
-
-    // Keys
-    for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++) {
-        // Stop on values from 0-3, they invalid codes.
-        const uint8_t key = kb->pressed_keys[i];
-        if (key <= HID_USAGE_KB_ERROR_UNDEFINED)
-            break;
-        switch (key) {
-            // Valid for both "single" and "twin stick" modes
-            // 1st joystick: Arrow keys
-            case HID_USAGE_KB_LEFT_ARROW:
-                out_joy1->left = 1;
-                break;
-            case HID_USAGE_KB_RIGHT_ARROW:
-                out_joy1->right = 1;
-                break;
-            case HID_USAGE_KB_UP_ARROW:
-                out_joy1->up = 1;
-                break;
-            case HID_USAGE_KB_DOWN_ARROW:
-                out_joy1->down = 1;
-                break;
-
-            // Only valid in "single" mode
-            // 1st joystick: Buttons
-            case HID_USAGE_KB_SPACEBAR:
-            case HID_USAGE_KB_Z:
-                if (out_joy2 == NULL)
-                    out_joy1->fire = 1;
-                break;
-            case HID_USAGE_KB_X:
-                if (out_joy2 == NULL)
-                    out_joy1->button2 = 1;
-                break;
-            case HID_USAGE_KB_C:
-                if (out_joy2 == NULL)
-                    out_joy1->button3 = 1;
-                break;
-
-            // Only valid in "twin stick" mode
-            // 2nd joystick: WASD and buttons (Q, E, R)
-            case HID_USAGE_KB_W:
-                if (out_joy2)
-                    out_joy2->up = 1;
-                break;
-
-            case HID_USAGE_KB_A:
-                if (out_joy2)
-                    out_joy2->left = 1;
-                break;
-
-            case HID_USAGE_KB_S:
-                if (out_joy2)
-                    out_joy2->down = 1;
-                break;
-
-            case HID_USAGE_KB_D:
-                if (out_joy2)
-                    out_joy2->right = 1;
-                break;
-
-            case HID_USAGE_KB_Q:
-                if (out_joy2)
-                    out_joy2->button2 = 1;
-                break;
-
-            case HID_USAGE_KB_E:
-                if (out_joy2)
-                    out_joy2->fire = 1;
-                break;
-
-            case HID_USAGE_KB_R:
-                if (out_joy2)
-                    out_joy2->button3 = 1;
-                break;
-
-            default:
-                break;
-        }
-    }
-}
-*/
