@@ -1,3 +1,17 @@
+//----------------------------------------------------------------------------//
+//         .XXXXXXXXXXXXXXXX.  .XXXXXXXXXXXXXXXX.  .XX.                       //
+//         XXXXXXXXXXXXXXXXX'  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         XXXX                XXXX          XXXX  XXXX                       //
+//         XXXXXXXXXXXXXXXXX.  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         'XXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXX'  XXXX                       //
+//                       XXXX  XXXX                XXXX                       //
+//         .XXXXXXXXXXXXXXXXX  XXXX                XXXXXXXXXXXXXXXXX.         //
+//         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
+//----------------------------------------------------------------------------//
+//             Copyright 2023 Vittorio Pascucci (SideProjectsLab)             //
+// Software licensed under the licensed under CC BY-NC-SA 4.0. To view a copy //
+//  of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/  //
+//----------------------------------------------------------------------------//
 
 #ifndef C64B_PINOUT_0V1_H
 #define C64B_PINOUT_0V1_H

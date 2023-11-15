@@ -1,3 +1,18 @@
+//----------------------------------------------------------------------------//
+//         .XXXXXXXXXXXXXXXX.  .XXXXXXXXXXXXXXXX.  .XX.                       //
+//         XXXXXXXXXXXXXXXXX'  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         XXXX                XXXX          XXXX  XXXX                       //
+//         XXXXXXXXXXXXXXXXX.  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         'XXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXX'  XXXX                       //
+//                       XXXX  XXXX                XXXX                       //
+//         .XXXXXXXXXXXXXXXXX  XXXX                XXXXXXXXXXXXXXXXX.         //
+//         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
+//----------------------------------------------------------------------------//
+//             Copyright 2023 Vittorio Pascucci (SideProjectsLab)             //
+// Software licensed under the licensed under CC BY-NC-SA 4.0. To view a copy //
+//  of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/  //
+//----------------------------------------------------------------------------//
+
 #include "c64b_parser.h"
 
 static t_c64b_keyboard   keyboard;
@@ -407,23 +422,24 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 
 			if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
 			{
+				if(kb_macro_sel)
+					kb_macro_id = kb_macro_id == KB_MACRO_COUNT - 1 ? 0 : kb_macro_id + 1;
 				kb_macro_sel = true;
 				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
-				kb_macro_id = (unsigned int)(kb_macro_id + 1) % KB_MACRO_COUNT;
 			}
 
 			if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
 			{
+				if(kb_macro_sel)
+					kb_macro_id = kb_macro_id == 0 ? KB_MACRO_COUNT - 1 : kb_macro_id - 1;
 				kb_macro_sel = true;
 				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
-				kb_macro_id = (unsigned int)(kb_macro_id - 1) % KB_MACRO_COUNT;
 			}
 
 			if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
 			{
 				if(kb_macro_sel)
 				{
-					kb_macro_id = (unsigned int)(kb_macro_id - 1) % KB_MACRO_COUNT;
 					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
 					kb_macro_sel = false;
 				}
