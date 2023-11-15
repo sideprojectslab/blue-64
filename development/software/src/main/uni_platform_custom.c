@@ -18,14 +18,14 @@ limitations under the License.
 #include "uni_log.h"
 #include "uni_platform.h"
 
-extern struct uni_platform* uni_platform_c64_blue_create(void);
+extern struct uni_platform* c64b_platform_create(void);
 
 struct uni_platform* uni_platform_custom_create() {
     // These CONFIG_BLUEPAD32_PLATFORM_ defines are defined in the Makefile
     // and Kconfig files.
 
 #ifdef CONFIG_BLUEPAD32_PLATFORM_C64_BLUE
-    return uni_platform_c64_blue_create();
+    return c64b_platform_create();
 #else
 #error "Custom Platform not defined."
 #endif

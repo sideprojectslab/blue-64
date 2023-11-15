@@ -1,8 +1,9 @@
 set(srcs "main.c"
-         "c64b_keyboard.c"
          "uni_platform_custom.c"
-         "uni_platform_c64_blue.c"
-         "keyboard_macros.c")
+         "c64b_keyboard.c"
+         "c64b_platform.c"
+         "c64b_macros.c"
+         "c64b_parser.c")
 
 set(requires "bluepad32")
 
