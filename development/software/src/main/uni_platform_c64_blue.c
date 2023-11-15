@@ -11,7 +11,7 @@ You may obtain a copy of the License at
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expsh or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ****************************************************************************/
@@ -36,6 +36,7 @@ limitations under the License.
 
 #include "sdkconfig.h"
 #include "c64b_keyboard.h"
+#include "keyboard_macros.h"
 
 //
 // Globals
@@ -96,34 +97,68 @@ static int g_delete_keys = 0;
 #define BTN_SELECT_MASK  2
 #define BTN_START_MASK   4
 
-// c64-blue "instance"
-typedef struct c64_blue_instance_s {
-    uni_gamepad_seat_t gamepad_seat;  // which "seat" is being used
-} c64_blue_instance_t;
+//----------------------------------------------------------------------------//
+// keyboard owner must always be protected by kb_sem
 
-// Declarations
-static void trigger_event_on_gamepad(uni_hid_device_t* d);
-static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d);
+typedef enum
+{
+	KB_OWNER_NONE = -1,
+	KB_OWNER_KBRD,
+	KB_OWNER_CTL1,
+	KB_OWNER_CTL2,
+	KB_OWNER_FEED,
+	KB_OWNER_COUNT
+} t_c64b_kb_owner;
+
 
 static t_c64b_keyboard   keyboard;
 static uni_hid_device_t* ctrl_id [3] = {NULL, NULL, NULL};
 static uni_controller_t  ctrl_dat[3] = {{0}, {0}, {0}};
 static bool              swap_ports  = false;
-static SemaphoreHandle_t keyboard_sem_h;
+static SemaphoreHandle_t kb_sem_h;
+static SemaphoreHandle_t feed_sem_h;
+static t_c64b_kb_owner   kb_owner = KB_OWNER_NONE;
+static t_c64b_macro_id   kb_macro_id = 0;
+static bool              kb_macro_sel = false;
 
-// keyboard string feeds
-static char feed_hello_world[] = "hello world!";
+//----------------------------------------------------------------------------//
+// forward declarations
 
+static void trigger_event_on_gamepad(uni_hid_device_t* d);
+
+//----------------------------------------------------------------------------//
+// C64-Blue functions
 
 static void task_keyboard_macro_feed(void *arg)
 {
 	logi("Starting Keyboard Feed\n");
-	xSemaphoreTake(keyboard_sem_h, (TickType_t)10);
-	c64b_keyboard_feed_string(&keyboard, (char *)arg);
-	xSemaphoreGive(keyboard_sem_h);
+	if(xSemaphoreTake(kb_sem_h, (TickType_t)10) == pdTRUE)
+	{
+		if((kb_owner == KB_OWNER_FEED) || (kb_owner == KB_OWNER_NONE))
+		{
+			kb_owner = KB_OWNER_FEED;
+			c64b_keyboard_feed_str(&keyboard, (char *)arg);
+			kb_owner = KB_OWNER_NONE;
+		}
+		xSemaphoreGive(kb_sem_h);
+	}
+	xSemaphoreGive(feed_sem_h);
 	vTaskDelete(NULL);
 }
 
+//----------------------------------------------------------------------------//
+void keyboard_macro_feed(char* str)
+{
+	xTaskCreatePinnedToCore(task_keyboard_macro_feed,
+	                        "keyboard-macro-feed",
+	                        4096,
+	                        str,
+	                        3,
+	                        NULL,
+	                        tskNO_AFFINITY);
+}
+
+//----------------------------------------------------------------------------//
 
 static void process_keyboard(uni_hid_device_t* d)
 {
@@ -136,10 +171,10 @@ static void process_keyboard(uni_hid_device_t* d)
 	if(ctl->klass != UNI_CONTROLLER_CLASS_KEYBOARD)
 		return;
 
-	uni_keyboard_t*   kb = &(ctl->keyboard);
-	uni_keyboard_t*   kb_old;
-	bool              kb_nop;
-	bool              shift;
+	uni_keyboard_t* kb = &(ctl->keyboard);
+	uni_keyboard_t* kb_old;
+	bool            kb_nop;
+	bool            shft;
 
 	if(ctrl_id[0] == d)
 	{
@@ -154,180 +189,188 @@ static void process_keyboard(uni_hid_device_t* d)
 	if (memcmp(kb_old, kb, sizeof(uni_keyboard_t)) == 0)
 		return;
 
-	uni_controller_dump(ctl);
+	//uni_controller_dump(ctl);
 
-	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
+	if (xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
 	{
-		// key modifiers
-		for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
+		if((kb_owner == KB_OWNER_KBRD) || (kb_owner == KB_OWNER_NONE))
 		{
-			const uint8_t key = kb->pressed_keys[i];
+			kb_owner = KB_OWNER_KBRD;
 
-			// modifiers
-			if((key == HID_USAGE_KB_LEFT_SHIFT ) || (key == HID_USAGE_KB_RIGHT_SHIFT))
+			// key modifiers
+			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
-				c64b_keyboard_shift_press(&keyboard);
-				shift = true;
+				const uint8_t key = kb->pressed_keys[i];
+
+				// modifiers
+				if((key == HID_USAGE_KB_LEFT_SHIFT ) || (key == HID_USAGE_KB_RIGHT_SHIFT))
+				{
+					c64b_keyboard_shft_psh(&keyboard);
+					shft = true;
+				}
+				else
+				{
+					c64b_keyboard_shft_rel(&keyboard);
+					shft = false;
+				}
+
+				if((key == HID_USAGE_KB_LEFT_CONTROL) || (key == HID_USAGE_KB_RIGHT_CONTROL))
+					c64b_keyboard_ctrl_psh(&keyboard);
+				else
+					c64b_keyboard_ctrl_rel(&keyboard);
+
+				if((key == HID_USAGE_KB_LEFT_GUI) || (key == HID_USAGE_KB_RIGHT_GUI))
+					c64b_keyboard_cmdr_psh(&keyboard);
+				else
+					c64b_keyboard_cmdr_rel(&keyboard);
+
+				// rest key
+				if(key == HID_USAGE_KB_ESCAPE)
+					c64b_keyboard_rest_psh(&keyboard);
+				else
+					c64b_keyboard_rest_rel(&keyboard);
 			}
-			else
+
+			// regular keys
+			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
-				c64b_keyboard_shift_release(&keyboard);
-				shift = false;
-			}
+				const uint8_t key = kb->pressed_keys[i];
+				kb_nop = false;
 
-			if((key == HID_USAGE_KB_LEFT_CONTROL) || (key == HID_USAGE_KB_RIGHT_CONTROL))
-				c64b_keyboard_ctrl_press(&keyboard);
-			else
-				c64b_keyboard_ctrl_release(&keyboard);
+				// regular keys (only one pshed at a time
+				switch(key) {
+					// basic letters
+					case HID_USAGE_KB_A:
+						c64b_keyboard_char_psh(&keyboard, "a");
+						break;
+					case HID_USAGE_KB_B:
+						c64b_keyboard_char_psh(&keyboard, "b");
+						break;
+					case HID_USAGE_KB_C:
+						c64b_keyboard_char_psh(&keyboard, "c");
+						break;
+					case HID_USAGE_KB_D:
+						c64b_keyboard_char_psh(&keyboard, "d");
+						break;
+					case HID_USAGE_KB_E:
+						c64b_keyboard_char_psh(&keyboard, "e");
+						break;
+					case HID_USAGE_KB_F:
+						c64b_keyboard_char_psh(&keyboard, "f");
+						break;
+					case HID_USAGE_KB_G:
+						c64b_keyboard_char_psh(&keyboard, "g");
+						break;
+					case HID_USAGE_KB_H:
+						c64b_keyboard_char_psh(&keyboard, "h");
+						break;
+					case HID_USAGE_KB_I:
+						c64b_keyboard_char_psh(&keyboard, "i");
+						break;
+					case HID_USAGE_KB_J:
+						c64b_keyboard_char_psh(&keyboard, "j");
+						break;
+					case HID_USAGE_KB_K:
+						c64b_keyboard_char_psh(&keyboard, "k");
+						break;
+					case HID_USAGE_KB_L:
+						c64b_keyboard_char_psh(&keyboard, "l");
+						break;
+					case HID_USAGE_KB_M:
+						c64b_keyboard_char_psh(&keyboard, "m");
+						break;
+					case HID_USAGE_KB_N:
+						c64b_keyboard_char_psh(&keyboard, "n");
+						break;
+					case HID_USAGE_KB_O:
+						c64b_keyboard_char_psh(&keyboard, "o");
+						break;
+					case HID_USAGE_KB_P:
+						c64b_keyboard_char_psh(&keyboard, "p");
+						break;
+					case HID_USAGE_KB_Q:
+						c64b_keyboard_char_psh(&keyboard, "q");
+						break;
+					case HID_USAGE_KB_R:
+						c64b_keyboard_char_psh(&keyboard, "r");
+						break;
+					case HID_USAGE_KB_S:
+						c64b_keyboard_char_psh(&keyboard, "s");
+						break;
+					case HID_USAGE_KB_T:
+						c64b_keyboard_char_psh(&keyboard, "t");
+						break;
+					case HID_USAGE_KB_U:
+						c64b_keyboard_char_psh(&keyboard, "u");
+						break;
+					case HID_USAGE_KB_V:
+						c64b_keyboard_char_psh(&keyboard, "v");
+						break;
+					case HID_USAGE_KB_W:
+						c64b_keyboard_char_psh(&keyboard, "w");
+						break;
+					case HID_USAGE_KB_X:
+						c64b_keyboard_char_psh(&keyboard, "x");
+						break;
+					case HID_USAGE_KB_Y:
+						c64b_keyboard_char_psh(&keyboard, "y");
+						break;
+					case HID_USAGE_KB_Z:
+						c64b_keyboard_char_psh(&keyboard, "z");
+						break;
 
-			if((key == HID_USAGE_KB_LEFT_GUI) || (key == HID_USAGE_KB_RIGHT_GUI))
-				c64b_keyboard_cmdr_press(&keyboard);
-			else
-				c64b_keyboard_cmdr_release(&keyboard);
+					// numbers
 
-			// restore key
-			if(key == HID_USAGE_KB_ESCAPE)
-				c64b_keyboard_restore_press(&keyboard);
-			else
-				c64b_keyboard_restore_release(&keyboard);
-		}
+					// other ascii keys
+					case HID_USAGE_KB_SPACEBAR:
+						c64b_keyboard_char_psh(&keyboard, " ");
+						break;
+					case HID_USAGE_KB_RETURN:
+						c64b_keyboard_char_psh(&keyboard, "~ret~");
+						break;
+					case HID_USAGE_KB_BACKSPACE:
+						c64b_keyboard_char_psh(&keyboard, "~del~");
+						break;
+					case HID_USAGE_KB_DELETE:
+						c64b_keyboard_char_psh(&keyboard, "~rel~");
+						break;
 
-		// regular keys
-		for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
-		{
-			const uint8_t key = kb->pressed_keys[i];
-			kb_nop = false;
+					// arrows
+					case HID_USAGE_KB_LEFT_ARROW:
+						c64b_keyboard_char_psh(&keyboard, "~ll~");
+						break;
+					case HID_USAGE_KB_RIGHT_ARROW:
+						c64b_keyboard_char_psh(&keyboard, "~rr~");
+						break;
+					case HID_USAGE_KB_UP_ARROW:
+						c64b_keyboard_char_psh(&keyboard, "~up~");
+						break;
+					case HID_USAGE_KB_DOWN_ARROW:
+						c64b_keyboard_char_psh(&keyboard, "~dn~");
+						break;
 
-			// regular keys (only one pressed at a time
-			switch(key) {
-				// basic letters
-				case HID_USAGE_KB_A:
-					c64b_keyboard_char_press(&keyboard, "a");
-					break;
-				case HID_USAGE_KB_B:
-					c64b_keyboard_char_press(&keyboard, "b");
-					break;
-				case HID_USAGE_KB_C:
-					c64b_keyboard_char_press(&keyboard, "c");
-					break;
-				case HID_USAGE_KB_D:
-					c64b_keyboard_char_press(&keyboard, "d");
-					break;
-				case HID_USAGE_KB_E:
-					c64b_keyboard_char_press(&keyboard, "e");
-					break;
-				case HID_USAGE_KB_F:
-					c64b_keyboard_char_press(&keyboard, "f");
-					break;
-				case HID_USAGE_KB_G:
-					c64b_keyboard_char_press(&keyboard, "g");
-					break;
-				case HID_USAGE_KB_H:
-					c64b_keyboard_char_press(&keyboard, "h");
-					break;
-				case HID_USAGE_KB_I:
-					c64b_keyboard_char_press(&keyboard, "i");
-					break;
-				case HID_USAGE_KB_J:
-					c64b_keyboard_char_press(&keyboard, "j");
-					break;
-				case HID_USAGE_KB_K:
-					c64b_keyboard_char_press(&keyboard, "k");
-					break;
-				case HID_USAGE_KB_L:
-					c64b_keyboard_char_press(&keyboard, "l");
-					break;
-				case HID_USAGE_KB_M:
-					c64b_keyboard_char_press(&keyboard, "m");
-					break;
-				case HID_USAGE_KB_N:
-					c64b_keyboard_char_press(&keyboard, "n");
-					break;
-				case HID_USAGE_KB_O:
-					c64b_keyboard_char_press(&keyboard, "o");
-					break;
-				case HID_USAGE_KB_P:
-					c64b_keyboard_char_press(&keyboard, "p");
-					break;
-				case HID_USAGE_KB_Q:
-					c64b_keyboard_char_press(&keyboard, "q");
-					break;
-				case HID_USAGE_KB_R:
-					c64b_keyboard_char_press(&keyboard, "r");
-					break;
-				case HID_USAGE_KB_S:
-					c64b_keyboard_char_press(&keyboard, "s");
-					break;
-				case HID_USAGE_KB_T:
-					c64b_keyboard_char_press(&keyboard, "t");
-					break;
-				case HID_USAGE_KB_U:
-					c64b_keyboard_char_press(&keyboard, "u");
-					break;
-				case HID_USAGE_KB_V:
-					c64b_keyboard_char_press(&keyboard, "v");
-					break;
-				case HID_USAGE_KB_W:
-					c64b_keyboard_char_press(&keyboard, "w");
-					break;
-				case HID_USAGE_KB_X:
-					c64b_keyboard_char_press(&keyboard, "x");
-					break;
-				case HID_USAGE_KB_Y:
-					c64b_keyboard_char_press(&keyboard, "y");
-					break;
-				case HID_USAGE_KB_Z:
-					c64b_keyboard_char_press(&keyboard, "z");
-					break;
+					default:
+						kb_nop = true;
+						break;
+				}
 
-				// numbers
-
-				// other ascii keys
-				case HID_USAGE_KB_SPACEBAR:
-					c64b_keyboard_char_press(&keyboard, " ");
-					break;
-				case HID_USAGE_KB_RETURN:
-					c64b_keyboard_char_press(&keyboard, "~ret~");
-					break;
-				case HID_USAGE_KB_BACKSPACE:
-					c64b_keyboard_char_press(&keyboard, "~del~");
-					break;
-				case HID_USAGE_KB_DELETE:
-					c64b_keyboard_char_press(&keyboard, "~clr~");
-					break;
-
-				// arrows
-				case HID_USAGE_KB_LEFT_ARROW:
-					c64b_keyboard_char_press(&keyboard, "~ll~");
-					break;
-				case HID_USAGE_KB_RIGHT_ARROW:
-					c64b_keyboard_char_press(&keyboard, "~rr~");
-					break;
-				case HID_USAGE_KB_UP_ARROW:
-					c64b_keyboard_char_press(&keyboard, "~up~");
-					break;
-				case HID_USAGE_KB_DOWN_ARROW:
-					c64b_keyboard_char_press(&keyboard, "~dn~");
-					break;
-
-				default:
-					kb_nop = true;
+				// only the first key pshed (other than the modifiers) is registered
+				if(!kb_nop)
 					break;
 			}
 
-			// only the first key pressed (other than the modifiers) is registered
-			if(!kb_nop)
-				break;
+			if(kb_nop)
+			{
+				c64b_keyboard_keys_rel(&keyboard, !shft);
+				kb_owner = KB_OWNER_NONE;
+			}
 		}
-
-		if(kb_nop)
-			c64b_keyboard_keys_release(&keyboard, !shift);
-
-		xSemaphoreGive(keyboard_sem_h);
+		xSemaphoreGive(kb_sem_h);
 	}
 	*kb_old = *kb;
 }
 
+//----------------------------------------------------------------------------//
 
 static void process_gamepad(uni_hid_device_t* d)
 {
@@ -343,7 +386,8 @@ static void process_gamepad(uni_hid_device_t* d)
 	t_c64b_cport_idx cport_idx;
 	uni_gamepad_t*   gp = &(ctl->gamepad);
 	uni_gamepad_t*   gp_old;
-	bool              kb_nop = true;
+	bool             kb_nop = true;
+	bool             cport_inhibit = false;
 
 	if(ctrl_id[1] == d)
 	{
@@ -364,90 +408,139 @@ static void process_gamepad(uni_hid_device_t* d)
 	if (memcmp(gp_old, gp, sizeof(uni_gamepad_t)) == 0)
 		return;
 
-//	uni_controller_dump(ctl);
-	logi("custom: processing gamepad event\n");
+	//uni_controller_dump(ctl);
 
-	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
+	//------------------------------------------------------------------------//
+//	if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
 	{
-		// shift + run
 		if(gp->misc_buttons & BTN_SELECT_MASK)
 		{
-			kb_nop = false;
-			c64b_keyboard_char_press(&keyboard, "~run~");
-		}
+			cport_inhibit = true;
 
-		// space
-		if(gp->misc_buttons & BTN_START_MASK)
+			//--------------------------------------------------------------------//
+			// keyboard macros
+
+			if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
+			{
+				kb_macro_sel = true;
+				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
+				kb_macro_id = (unsigned int)(kb_macro_id + 1) % KB_MACRO_COUNT;
+			}
+
+			if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
+			{
+				kb_macro_sel = true;
+				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
+				kb_macro_id = (unsigned int)(kb_macro_id - 1) % KB_MACRO_COUNT;
+			}
+
+			if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
+			{
+				if(kb_macro_sel)
+				{
+					kb_macro_id = (unsigned int)(kb_macro_id - 1) % KB_MACRO_COUNT;
+					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
+					kb_macro_sel = false;
+				}
+			}
+		}
+	}
+
+	//---------------------------------------------------------------------//
+	// direct keyboard control
+	if(xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
+	{
+		if((kb_owner == cport_idx + 1) || (kb_owner == KB_OWNER_NONE))
 		{
-			kb_nop = false;
-			c64b_keyboard_char_press(&keyboard, " ");
+			kb_owner = cport_idx + 1;
+
+			// space
+			if(!cport_inhibit)
+				if(gp->misc_buttons & BTN_START_MASK)
+				{
+					kb_nop = false;
+					if(!(gp->misc_buttons & BTN_SELECT_MASK))
+					{
+						c64b_keyboard_char_psh(&keyboard, " ");
+						c64b_keyboard_cmdr_psh(&keyboard);
+					}
+					else
+					{
+						c64b_keyboard_char_psh(&keyboard, "~ret~");
+					}
+				}
+
+			if(kb_nop)
+			{
+				c64b_keyboard_keys_rel(&keyboard, true);
+				c64b_keyboard_cmdr_rel(&keyboard);
+				kb_owner = KB_OWNER_NONE;
+			}
+
+			// swap ports
+			if((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK))
+			{
+				logi("Swapping Ports\n");
+				swap_ports ^= true;
+				c64b_keyboard_reset(&keyboard);
+				trigger_event_on_gamepad(d);
+			}
 		}
+		xSemaphoreGive(kb_sem_h);
+	}
 
-		// keyboard macros
-		if((gp->buttons & BTN_L3_MASK) && !(gp_old->buttons & BTN_L3_MASK))
-		{
-			xTaskCreatePinnedToCore(task_keyboard_macro_feed,
-			                        "keyboard-feed",
-			                        4096,
-			                        feed_hello_world,
-			                        3,
-			                        NULL,
-			                        tskNO_AFFINITY);
-		}
-
-		// controller ports override characters
-		if((gp->dpad & BTN_DPAD_UP_MASK) | (gp->buttons & BTN_A_MASK))
-			c64b_keyboard_cport_press(&keyboard, CPORT_UP, cport_idx);
+	//------------------------------------------------------------------------//
+	// controller ports override characters
+	if(!cport_inhibit)
+	{
+		if((gp->dpad & BTN_DPAD_UP_MASK) || (gp->buttons & BTN_A_MASK))
+			c64b_keyboard_cport_psh(&keyboard, CPORT_UP, cport_idx);
 		else
-			c64b_keyboard_cport_release(&keyboard, CPORT_UP, cport_idx);
+			c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
 
-		if((gp->dpad & BTN_DPAD_DN_MASK) || gp->throttle != 0)
-			c64b_keyboard_cport_press(&keyboard, CPORT_DN, cport_idx);
+		if((gp->dpad & BTN_DPAD_DN_MASK) || (gp->throttle != 0))
+			c64b_keyboard_cport_psh(&keyboard, CPORT_DN, cport_idx);
 		else
-			c64b_keyboard_cport_release(&keyboard, CPORT_DN, cport_idx);
+			c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);
 
 		if(gp->dpad & BTN_DPAD_RR_MASK)
-			c64b_keyboard_cport_press(&keyboard, CPORT_RR, cport_idx);
+			c64b_keyboard_cport_psh(&keyboard, CPORT_RR, cport_idx);
 		else
-			c64b_keyboard_cport_release(&keyboard, CPORT_RR, cport_idx);
+			c64b_keyboard_cport_rel(&keyboard, CPORT_RR, cport_idx);
 
 		if(gp->dpad & BTN_DPAD_LL_MASK)
-			c64b_keyboard_cport_press(&keyboard, CPORT_LL, cport_idx);
+			c64b_keyboard_cport_psh(&keyboard, CPORT_LL, cport_idx);
 		else
-			c64b_keyboard_cport_release(&keyboard, CPORT_LL, cport_idx);
+			c64b_keyboard_cport_rel(&keyboard, CPORT_LL, cport_idx);
 
 		if(gp->buttons & BTN_B_MASK)
-			c64b_keyboard_cport_press(&keyboard, CPORT_FF, cport_idx);
+			c64b_keyboard_cport_psh(&keyboard, CPORT_FF, cport_idx);
 		else
-			c64b_keyboard_cport_release(&keyboard, CPORT_FF, cport_idx);
-
-		// swap ports
-		if((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK))
-		{
-			logi("Swapping Ports\n");
-			swap_ports ^= true;
-			c64b_keyboard_reset(&keyboard);
-			trigger_event_on_gamepad(d);
-		}
-
-		if(kb_nop)
-			c64b_keyboard_keys_release(&keyboard, true);
-
-		xSemaphoreGive(keyboard_sem_h);
+			c64b_keyboard_cport_rel(&keyboard, CPORT_FF, cport_idx);
 	}
+	else
+	{
+		c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
+		c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);
+		c64b_keyboard_cport_rel(&keyboard, CPORT_LL, cport_idx);
+		c64b_keyboard_cport_rel(&keyboard, CPORT_RR, cport_idx);
+		c64b_keyboard_cport_rel(&keyboard, CPORT_FF, cport_idx);
+	}
+
 	*gp_old = *gp;
 }
 
-
-//
+//----------------------------------------------------------------------------//
 // Platform Overrides
-//
+
 static void c64_blue_init(int argc, const char** argv) {
 
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
 	logi("custom: init()\n");
+
+	kb_owner = KB_OWNER_NONE;
 
 	keyboard.pin_col[0] = PIN_COL0;
 	keyboard.pin_col[1] = PIN_COL1;
@@ -469,18 +562,22 @@ static void c64_blue_init(int argc, const char** argv) {
 	keyboard.pin_kra[1] = PIN_KRA1;
 	keyboard.pin_kra[2] = PIN_KRA2;
 
-	keyboard.pin_ken   = PIN_KEN;
+	keyboard.pin_kben   = PIN_KEN;
 	keyboard.pin_nrst  = PIN_nRST;
 	keyboard.pin_ctrl  = PIN_CTRL;
-	keyboard.pin_shift = PIN_SHIFT;
+	keyboard.pin_shft = PIN_SHIFT;
 	keyboard.pin_cmdr  = PIN_CMDR;
 
-	keyboard.feed_press_ms = 25;
-	keyboard.feed_clear_ms = 25;
+	keyboard.feed_psh_ms = 30;
+	keyboard.feed_rel_ms = 30;
 
 	c64b_keyboard_init(&keyboard);
 
-	keyboard_sem_h = xSemaphoreCreateMutex();
+	kb_sem_h   = xSemaphoreCreateMutex();
+	feed_sem_h = xSemaphoreCreateMutex();
+
+//	xSemaphoreGive(kb_sem_h);
+//	xSemaphoreGive(feed_sem_h);
 
 #if 0
 	uni_gamepad_mappings_t mappings = GAMEPAD_DEFAULT_MAPPINGS;
@@ -550,24 +647,15 @@ static uni_error_t c64_blue_on_device_ready(uni_hid_device_t* d) {
 		logi("custom: device class not supported: %d\n", d->controller.klass);
 	}
 
-	c64_blue_instance_t* ins = get_c64_blue_instance(d);
-	ins->gamepad_seat = GAMEPAD_SEAT_A;
-
 	trigger_event_on_gamepad(d);
 	return UNI_ERROR_SUCCESS;
 }
 
 static void c64_blue_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
-
-	if (xSemaphoreTake(keyboard_sem_h, (TickType_t)0) == pdTRUE)
-	{
-		if(ctrl_id[0] == d)
-			process_keyboard(d);
-		else
-			process_gamepad(d);
-
-		xSemaphoreGive(keyboard_sem_h);
-	}
+	if(ctrl_id[0] == d)
+		process_keyboard(d);
+	else
+		process_gamepad(d);
 }
 
 
@@ -593,18 +681,11 @@ static void c64_blue_on_oob_event(uni_platform_oob_event_t event, void* data) {
 		return;
 	}
 
-	c64_blue_instance_t* ins = get_c64_blue_instance(d);
-	ins->gamepad_seat = ins->gamepad_seat == GAMEPAD_SEAT_A ? GAMEPAD_SEAT_B : GAMEPAD_SEAT_A;
-
 	trigger_event_on_gamepad(d);
 }
 
-//
+//----------------------------------------------------------------------------//
 // Helpers
-//
-static c64_blue_instance_t* get_c64_blue_instance(uni_hid_device_t* d) {
-	return (c64_blue_instance_t*)&d->platform_data[0];
-}
 
 static void trigger_event_on_gamepad(uni_hid_device_t* d) {
 
@@ -633,9 +714,9 @@ static void trigger_event_on_gamepad(uni_hid_device_t* d) {
 	}
 }
 
-//
+//----------------------------------------------------------------------------//
 // Entry Point
-//
+
 struct uni_platform* uni_platform_c64_blue_create(void) {
 	static struct uni_platform plat = {
 		.name = "c64_blue",

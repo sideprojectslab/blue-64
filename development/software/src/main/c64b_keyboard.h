@@ -9,7 +9,7 @@ You may obtain a copy of the License at
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expsh or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ****************************************************************************/
@@ -32,20 +32,21 @@ typedef struct
 	unsigned int pin_row[5];
 	unsigned int pin_nrst;
 	unsigned int pin_ctrl;
-	unsigned int pin_shift;
+	unsigned int pin_shft;
 	unsigned int pin_cmdr;
-	unsigned int pin_ken;
-	unsigned int feed_press_ms;
-	unsigned int feed_clear_ms;
+	unsigned int pin_kben;
+	unsigned int feed_psh_ms;
+	unsigned int feed_rel_ms;
 } t_c64b_keyboard;
 
 
 typedef struct
 {
-	char         *string;
+	char*        str;
 	unsigned int col;
 	unsigned int row;
-	bool         shift;
+	bool         shft;
+	bool         ctrl;
 } t_c64b_key_id;
 
 
@@ -58,40 +59,47 @@ typedef enum
 	CPORT_FF
 }t_c64b_cport_key;
 
+
 typedef enum
 {
 	CPORT_1,
 	CPORT_2
 }t_c64b_cport_idx;
 
+
 extern const t_c64b_key_id KEY_IDS[];
+
+//----------------------------------------------------------------------------//
+// FUNCTIONS
 
 void c64b_keyboard_init(t_c64b_keyboard *h);
 void c64b_keyboard_reset(t_c64b_keyboard *h);
 
-void c64b_keyboard_keys_release(t_c64b_keyboard *h, bool clear_shift);
+void c64b_keyboard_cport_psh(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
+void c64b_keyboard_cport_rel(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
 
-void c64b_keyboard_cport_press(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
-void c64b_keyboard_cport_release(t_c64b_keyboard *h, t_c64b_cport_key key, t_c64b_cport_idx idx);
+void c64b_keyboard_rest_psh(t_c64b_keyboard *h);
+void c64b_keyboard_rest_rel(t_c64b_keyboard *h);
 
-void c64b_keyboard_restore_press(t_c64b_keyboard *h);
-void c64b_keyboard_restore_release(t_c64b_keyboard *h);
+void c64b_keyboard_ctrl_psh(t_c64b_keyboard *h);
+void c64b_keyboard_ctrl_rel(t_c64b_keyboard *h);
 
-void c64b_keyboard_ctrl_press(t_c64b_keyboard *h);
-void c64b_keyboard_ctrl_release(t_c64b_keyboard *h);
+void c64b_keyboard_shft_psh(t_c64b_keyboard *h);
+void c64b_keyboard_shft_rel(t_c64b_keyboard *h);
 
-void c64b_keyboard_shift_press(t_c64b_keyboard *h);
-void c64b_keyboard_shift_release(t_c64b_keyboard *h);
+void c64b_keyboard_cmdr_psh(t_c64b_keyboard *h);
+void c64b_keyboard_cmdr_rel(t_c64b_keyboard *h);
 
-void c64b_keyboard_cmdr_press(t_c64b_keyboard *h);
-void c64b_keyboard_cmdr_release(t_c64b_keyboard *h);
+bool c64b_keyboard_key_psh(t_c64b_keyboard *h, const t_c64b_key_id *k);
+bool c64b_keyboard_key_rel(t_c64b_keyboard *h, const t_c64b_key_id *k);
 
-bool c64b_keyboard_key_press(t_c64b_keyboard *h, const t_c64b_key_id *k);
-bool c64b_keyboard_key_release(t_c64b_keyboard *h, const t_c64b_key_id *k);
+void c64b_keyboard_keys_rel(t_c64b_keyboard *h, bool rel_shft);
+void c64b_keyboard_mods_rel(t_c64b_keyboard *h);
 
-bool c64b_keyboard_char_press(t_c64b_keyboard *h, char *s);
-bool c64b_keyboard_char_release(t_c64b_keyboard *h, char *s);
+bool c64b_keyboard_char_psh(t_c64b_keyboard *h, char *s);
+bool c64b_keyboard_char_rel(t_c64b_keyboard *h, char *s);
 
-bool c64b_keyboard_feed_string(t_c64b_keyboard *h, char* s);
+bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s);
+bool c64b_keyboard_feed_prg(t_c64b_keyboard *h, char** s, uint32_t nlines);
 
 #endif
