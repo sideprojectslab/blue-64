@@ -35,6 +35,11 @@ extern void trigger_event_on_gamepad(uni_hid_device_t* d);
 
 void c64b_parser_init()
 {
+	kb_sem_h   = xSemaphoreCreateBinary();
+	feed_sem_h = xSemaphoreCreateBinary();
+	xSemaphoreGive(kb_sem_h);
+	xSemaphoreGive(feed_sem_h);
+
 	kb_owner = KB_OWNER_NONE;
 
 	keyboard.pin_col[0] = PIN_COL0;
@@ -67,9 +72,6 @@ void c64b_parser_init()
 	keyboard.feed_rel_ms = 30;
 
 	c64b_keyboard_init(&keyboard);
-
-	kb_sem_h   = xSemaphoreCreateMutex();
-	feed_sem_h = xSemaphoreCreateMutex();
 }
 
 //----------------------------------------------------------------------------//
@@ -147,12 +149,12 @@ static void task_keyboard_macro_feed(void *arg)
 }
 
 //----------------------------------------------------------------------------//
-void keyboard_macro_feed(char* str)
+void keyboard_macro_feed(const char* str)
 {
 	xTaskCreatePinnedToCore(task_keyboard_macro_feed,
 	                        "keyboard-macro-feed",
-	                        4096,
-	                        str,
+	                        2048,
+	                        (void * const)str,
 	                        3,
 	                        NULL,
 	                        tskNO_AFFINITY);
@@ -191,7 +193,7 @@ void c64b_parse_keyboard(uni_hid_device_t* d)
 
 	//uni_controller_dump(ctl);
 
-	if (xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
+	if(xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
 	{
 		if((kb_owner == KB_OWNER_KBRD) || (kb_owner == KB_OWNER_NONE))
 		{
@@ -411,15 +413,15 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 	//uni_controller_dump(ctl);
 
 	//------------------------------------------------------------------------//
-//	if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
+
+	if(gp->misc_buttons & BTN_SELECT_MASK)
 	{
-		if(gp->misc_buttons & BTN_SELECT_MASK)
+		cport_inhibit = true;
+		//--------------------------------------------------------------------//
+		// keyboard macros
+
+		if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
 		{
-			cport_inhibit = true;
-
-			//--------------------------------------------------------------------//
-			// keyboard macros
-
 			if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
 			{
 				if(kb_macro_sel)
@@ -428,7 +430,7 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
 			}
 
-			if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
+			else if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
 			{
 				if(kb_macro_sel)
 					kb_macro_id = kb_macro_id == 0 ? KB_MACRO_COUNT - 1 : kb_macro_id - 1;
@@ -436,13 +438,18 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
 			}
 
-			if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
+			else if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
 			{
 				if(kb_macro_sel)
 				{
-					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
 					kb_macro_sel = false;
+					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
 				}
+			}
+
+			else
+			{
+				xSemaphoreGive(feed_sem_h);
 			}
 		}
 	}
@@ -464,10 +471,6 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 					{
 						c64b_keyboard_char_psh(&keyboard, " ");
 						c64b_keyboard_cmdr_psh(&keyboard);
-					}
-					else
-					{
-						c64b_keyboard_char_psh(&keyboard, "~ret~");
 					}
 				}
 

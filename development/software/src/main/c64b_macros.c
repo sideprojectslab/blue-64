@@ -47,5 +47,9 @@ const char* feed_cmd_str[KB_MACRO_COUNT] =
 	"~clr~load \"$\",8~ret~",
 	"~clr~load \"*\",8~ret~",
 	device_info,
-	color_change
+	color_change,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };

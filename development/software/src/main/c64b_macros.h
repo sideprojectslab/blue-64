@@ -16,6 +16,8 @@
 #ifndef KEYBOARD_MACROS_H
 #define KEYBOARD_MACROS_H
 
+#include <stddef.h>
+
 typedef enum
 {
 	KB_MACRO_NONE = -1,
