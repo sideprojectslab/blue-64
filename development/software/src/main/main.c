@@ -9,7 +9,7 @@
 //         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
 //----------------------------------------------------------------------------//
 //             Copyright 2023 Vittorio Pascucci (SideProjectsLab)             //
-//                  Based on riginal work by Ricardo Quesada                  //
+//                  Based on original work by Ricardo Quesada                 //
 //                                                                            //
 // Licensed under the Apache License, Version 2.0 (the "License");            //
 // you may not use this file except in compliance with the License.           //
