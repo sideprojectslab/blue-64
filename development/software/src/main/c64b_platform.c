@@ -1,20 +1,28 @@
-/****************************************************************************
-http://retro.moe/unijoysticle2
-
-Copyright 2019 Ricardo Quesada
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expsh or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-****************************************************************************/
+//----------------------------------------------------------------------------//
+//         .XXXXXXXXXXXXXXXX.  .XXXXXXXXXXXXXXXX.  .XX.                       //
+//         XXXXXXXXXXXXXXXXX'  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         XXXX                XXXX          XXXX  XXXX                       //
+//         XXXXXXXXXXXXXXXXX.  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         'XXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXX'  XXXX                       //
+//                       XXXX  XXXX                XXXX                       //
+//         .XXXXXXXXXXXXXXXXX  XXXX                XXXXXXXXXXXXXXXXX.         //
+//         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
+//----------------------------------------------------------------------------//
+//             Copyright 2023 Vittorio Pascucci (SideProjectsLab)             //
+//                  Based on riginal work by Ricardo Quesada                  //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// You may obtain a copy of the License at                                    //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS,          //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expsh or implied.     //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//----------------------------------------------------------------------------//
 
 #include <stdio.h>
 #include <string.h>
@@ -42,32 +50,6 @@ limitations under the License.
 static int g_delete_keys = 0;
 
 //----------------------------------------------------------------------------//
-// helpers
-
-void trigger_event_on_gamepad(uni_hid_device_t* d) {
-
-	if (d->report_parser.set_rumble != NULL) {
-		d->report_parser.set_rumble(d, 0x80 /* value */, 15 /* duration */);
-	}
-
-//	// I still need to figure this out
-//
-//	unsigned int seat = (1 << c64b_parser_get_idx(d));
-//
-//	if (d->report_parser.set_player_leds != NULL) {
-//		logi("setting leds for seat %d\n", seat);
-//		d->report_parser.set_player_leds(d, seat);
-//	}
-//
-//	if (d->report_parser.set_lightbar_color != NULL) {
-//		uint8_t red   = (seat & 0x01) ? 0xff : 0;
-//		uint8_t green = (seat & 0x02) ? 0xff : 0;
-//		uint8_t blue  = (seat & 0x04) ? 0xff : 0;
-//		d->report_parser.set_lightbar_color(d, red, green, blue);
-//	}
-}
-
-//----------------------------------------------------------------------------//
 // Platform Overrides
 
 static void c64b_init(int argc, const char** argv) {
@@ -75,28 +57,27 @@ static void c64b_init(int argc, const char** argv) {
 	ARG_UNUSED(argc);
 	ARG_UNUSED(argv);
 
-	logi("custom: init()\n");
+	logi("c64b: init()\n");
 	c64b_parser_init();
 }
 
 static void c64b_on_init_complete(void) {
-	logi("custom: on_init_complete()\n");
+	logi("c64b: on_init_complete()\n");
 }
 
 static void c64b_on_device_connected(uni_hid_device_t* d) {
-	logi("custom: device connected: %p\n", d);
+	logi("c64b: device connected: %p\n", d);
 }
 
 static void c64b_on_device_disconnected(uni_hid_device_t* d) {
-	logi("custom: device disconnected: %p\n", d);
+	logi("c64b: device disconnected: %p\n", d);
 	c64b_parser_disconnect(d);
 }
 
 static uni_error_t c64b_on_device_ready(uni_hid_device_t* d) {
-	logi("custom: device ready: %p\n", d);
+	logi("c64b: device ready: %p\n", d);
 	d->report_parser.init_report(d);
 	c64b_parser_connect(d);
-	trigger_event_on_gamepad(d);
 	return UNI_ERROR_SUCCESS;
 }
 
@@ -105,14 +86,14 @@ static void c64b_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) 
 }
 
 static int32_t c64b_get_property(uni_platform_property_t key) {
-	logi("custom: get_property(): %d\n", key);
+	logi("c64b: get_property(): %d\n", key);
 	if (key != UNI_PLATFORM_PROPERTY_DELETE_STORED_KEYS)
 		return -1;
 	return g_delete_keys;
 }
 
 static void c64b_on_oob_event(uni_platform_oob_event_t event, void* data) {
-	logi("custom: on_device_oob_event(): %d\n", event);
+	logi("c64b: on_device_oob_event(): %d\n", event);
 
 	if (event != UNI_PLATFORM_OOB_GAMEPAD_SYSTEM_BUTTON) {
 		logi("c64b_on_device_gamepad_event: unsupported event: 0x%04x\n", event);
@@ -125,8 +106,6 @@ static void c64b_on_oob_event(uni_platform_oob_event_t event, void* data) {
 		loge("ERROR: c64b_on_device_gamepad_event: Invalid NULL device\n");
 		return;
 	}
-
-	trigger_event_on_gamepad(d);
 }
 
 //----------------------------------------------------------------------------//

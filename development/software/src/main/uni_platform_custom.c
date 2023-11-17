@@ -1,32 +1,34 @@
-/****************************************************************************
-Copyright 2023 Vittorio Pascucci
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-****************************************************************************/
+//----------------------------------------------------------------------------//
+//         .XXXXXXXXXXXXXXXX.  .XXXXXXXXXXXXXXXX.  .XX.                       //
+//         XXXXXXXXXXXXXXXXX'  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         XXXX                XXXX          XXXX  XXXX                       //
+//         XXXXXXXXXXXXXXXXX.  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         'XXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXX'  XXXX                       //
+//                       XXXX  XXXX                XXXX                       //
+//         .XXXXXXXXXXXXXXXXX  XXXX                XXXXXXXXXXXXXXXXX.         //
+//         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
+//----------------------------------------------------------------------------//
+//             Copyright 2023 Vittorio Pascucci (SideProjectsLab)             //
+//                  Based on riginal work by Ricardo Quesada                  //
+//                                                                            //
+// Licensed under the Apache License, Version 2.0 (the "License");            //
+// you may not use this file except in compliance with the License.           //
+// You may obtain a copy of the License at                                    //
+//                                                                            //
+//     http://www.apache.org/licenses/LICENSE-2.0                             //
+//                                                                            //
+// Unless required by applicable law or agreed to in writing, software        //
+// distributed under the License is distributed on an "AS IS" BASIS,          //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either expsh or implied.     //
+// See the License for the specific language governing permissions and        //
+// limitations under the License.                                             //
+//----------------------------------------------------------------------------//
 
 #include "sdkconfig.h"
-#include "uni_log.h"
 #include "uni_platform.h"
 
 extern struct uni_platform* c64b_platform_create(void);
 
 struct uni_platform* uni_platform_custom_create() {
-    // These CONFIG_BLUEPAD32_PLATFORM_ defines are defined in the Makefile
-    // and Kconfig files.
-
-#ifdef CONFIG_BLUEPAD32_PLATFORM_C64_BLUE
-    return c64b_platform_create();
-#else
-#error "Custom Platform not defined."
-#endif
+	return c64b_platform_create();
 }

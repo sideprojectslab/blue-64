@@ -1,0 +1,16 @@
+//----------------------------------------------------------------------------//
+//         .XXXXXXXXXXXXXXXX.  .XXXXXXXXXXXXXXXX.  .XX.                       //
+//         XXXXXXXXXXXXXXXXX'  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         XXXX                XXXX          XXXX  XXXX                       //
+//         XXXXXXXXXXXXXXXXX.  XXXXXXXXXXXXXXXXXX  XXXX                       //
+//         'XXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXX'  XXXX                       //
+//                       XXXX  XXXX                XXXX                       //
+//         .XXXXXXXXXXXXXXXXX  XXXX                XXXXXXXXXXXXXXXXX.         //
+//         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
+//----------------------------------------------------------------------------//
+//      Unless otherwise stated in individual files, all hardware design      //
+//      Schematics, Bill of Material and Gerber files are licensed under      //
+//                              CC BY-NC-SA 4.0.                              //
+//                    To view a copy of this license, visit                   //
+//              http://creativecommons.org/licenses/by-nc-sa/4.0/             //
+//----------------------------------------------------------------------------//
