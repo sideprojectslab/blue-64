@@ -21,7 +21,8 @@
 		"uni_config.h": "c",
 		"uni_platform.h": "c",
 		"uni_gpio.h": "c",
-		"c64b_keyboard.h": "c"
+		"c64b_keyboard.h": "c",
+		"stddef.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",
