@@ -9,8 +9,9 @@
 //         'XXXXXXXXXXXXXXXX'  'XX'                'XXXXXXXXXXXXXXXX'         //
 //----------------------------------------------------------------------------//
 //             Copyright 2023 Vittorio Pascucci (SideProjectsLab)             //
-// Software licensed under the licensed under CC BY-NC-SA 4.0. To view a copy //
-//  of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/  //
+//                   Software licensed under CC BY-NC-SA 4.0.                 //
+//                    To view a copy of this license, visit                   //
+//               http://creativecommons.org/licenses/by-nc-sa/4.0/            //
 //----------------------------------------------------------------------------//
 
 #ifndef C64B_PARSER_H
