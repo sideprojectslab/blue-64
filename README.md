@@ -6,7 +6,7 @@ Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto 
 Special button combinations are assigned to commonly used keyboard macros (such as `LOAD`, `LOAD "*",8`, `RUN` and more) and can be launched directly with the controller instead of physically typing on the keyboard.
 
 ## Compatibility
-DC-64 aims to be compatible with all versions of the C64 motherboard. If and when incompatibilities become known they will be detailed in this README file.
+Blue-64 aims to be compatible with all versions of the C64 motherboard. If and when incompatibilities become known they will be detailed in this README file.
 
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
