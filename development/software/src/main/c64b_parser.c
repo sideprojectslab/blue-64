@@ -35,6 +35,9 @@ static t_c64b_kb_owner   kb_owner = KB_OWNER_NONE;
 static t_c64b_macro_id   kb_macro_id = 0;
 static bool              kb_macro_sel = false;
 
+static const uint8_t     col_perm[] = COL_PERM;
+static const uint8_t     row_perm[] = ROW_PERM;
+
 //----------------------------------------------------------------------------//
 // C64-Blue functions
 
@@ -75,6 +78,9 @@ void c64b_parser_init()
 
 	keyboard.feed_psh_ms = 30;
 	keyboard.feed_rel_ms = 30;
+
+	keyboard.col_perm  = col_perm;
+	keyboard.row_perm  = row_perm;
 
 	c64b_keyboard_init(&keyboard);
 }

@@ -48,7 +48,7 @@
 #include "c64b_keyboard.h"
 #include "c64b_macros.h"
 
-#include "c64b_pinout_0v1.h"
+#include "c64b_pinout_0v2.h"
 
 //----------------------------------------------------------------------------//
 // Bluetooth controller masks

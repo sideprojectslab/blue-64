@@ -38,9 +38,6 @@
 #define SHIFT_COL   1
 #define SHIFT_ROW   7
 
-static const uint8_t col_perm[1 << C64B_KKA_BITS] = {5, 1, 0, 3, 4, 6, 7, 2};
-static const uint8_t row_perm[1 << C64B_KKA_BITS] = {2, 1, 0, 5, 4, 6, 7, 3};
-
 // the "~" character is used to "escape" complex characters.
 // It is not present on the c64 keyboard and thus is free to use
 
@@ -247,8 +244,8 @@ bool c64b_keyboard_set_mux(t_c64b_keyboard *h, unsigned int col, unsigned int ro
 	if(h == NULL)
 		return false;
 
-	col = col_perm[col];
-	row = row_perm[row];
+	col = h->col_perm[col];
+	row = h->row_perm[row];
 
 	gpio_set_level(h->pin_kca[0], (col >> 0) & 1);
 	gpio_set_level(h->pin_kca[1], (col >> 1) & 1);
