@@ -3,13 +3,33 @@ Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto 
 
 ![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/IMG_0158.png)
 
-Special button combinations are assigned to commonly used keyboard macros (such as `LOAD`, `LOAD "*",8`, `RUN` and more) and can be launched directly with the controller instead of physically typing on the keyboard.
+## Button Mapping (xInput)
+
+| Joystick     | Controller  | Controller Alt. |
+|:---:         |:---:        |:---:            |
+| UP           | D-Pad UP    | Button A        |
+| DOWN         | D-Pad DOWN  | Right Trigger   |
+| LEFT         | D-Pad LEFT  | -               |
+| RIGHT        | D-Pad RIGHT | -               |
+| FIRE         | Button B    | -               |
+
+### Additional functions
+
+Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc.
+
+| Function         | Button(s)   |
+|:---:             |:---:        |
+| Swap Player 1-2  | Xbox        |
+| Keyboard "space" | Menu        |
+| Cycle Menu       | View + A/B  |
+| Select/Run Menu  | View + Menu |
 
 ## Compatibility
 Blue-64 aims to be compatible with all versions of the C64 motherboard. If and when incompatibilities become known they will be detailed in this README file.
 
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
+At the moment bluetooth keyboard support is still work in progress.
 
 ## Installation & Precautions
 Instruction manuals on how to install and operate the board are available in PDF format alongside the fabrication data (work in progress). Users shall read these instructions carefully and fully understand the circuit's limitations before installing and/or using it. Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.
