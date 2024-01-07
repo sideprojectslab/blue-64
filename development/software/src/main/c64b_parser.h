@@ -71,6 +71,8 @@
 #define BTN_SELECT_MASK  2
 #define BTN_START_MASK   4
 
+#define ANL_DEADZONE     256
+
 //----------------------------------------------------------------------------//
 // keyboard owner must always be protected by a semaphore
 
@@ -88,9 +90,6 @@ void c64b_parser_init();
 void c64b_parser_connect(uni_hid_device_t* d);
 void c64b_parser_disconnect(uni_hid_device_t* d);
 int  c64b_parser_get_idx(uni_hid_device_t* d);
-
-void c64b_parse_keyboard(uni_hid_device_t* d);
-void c64b_parse_gamepad(uni_hid_device_t* d);
 void c64b_parse(uni_hid_device_t* d);
 
 #endif

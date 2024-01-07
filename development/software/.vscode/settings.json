@@ -24,7 +24,8 @@
 		"c64b_keyboard.h": "c",
 		"stddef.h": "c",
 		"uni_gamepad.h": "c",
-		"freertos.h": "c"
+		"freertos.h": "c",
+		"c64b_parser.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",

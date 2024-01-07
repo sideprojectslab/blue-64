@@ -27,8 +27,10 @@
 
 static t_c64b_keyboard   keyboard;
 static uni_hid_device_t* ctrl_id [3] = {NULL, NULL, NULL};
+static uni_controller_t  ctrl_tmp   = {0};
 static uni_controller_t  ctrl_dat[3] = {{0}, {0}, {0}};
 static bool              swap_ports  = false;
+static SemaphoreHandle_t parse_sem_h;
 static SemaphoreHandle_t kb_sem_h;
 static SemaphoreHandle_t feed_sem_h;
 static t_c64b_kb_owner   kb_owner = KB_OWNER_NONE;
@@ -43,10 +45,12 @@ static const uint8_t     row_perm[] = ROW_PERM;
 
 void c64b_parser_init()
 {
-	kb_sem_h   = xSemaphoreCreateBinary();
-	feed_sem_h = xSemaphoreCreateBinary();
+	parse_sem_h = xSemaphoreCreateBinary();
+	kb_sem_h    = xSemaphoreCreateBinary();
+	feed_sem_h  = xSemaphoreCreateBinary();
 	xSemaphoreGive(kb_sem_h);
 	xSemaphoreGive(feed_sem_h);
+	xSemaphoreGive(parse_sem_h);
 
 	kb_owner = KB_OWNER_NONE;
 
@@ -173,12 +177,10 @@ void keyboard_macro_feed(const char* str)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parse_keyboard(uni_hid_device_t* d)
+void c64b_parse_keyboard(uni_controller_t* ctl)
 {
-	if(d == NULL)
+	if(ctl == NULL)
 		return;
-
-	uni_controller_t* ctl = &(d->controller);
 
 	// this function only supports keyboard
 	if(ctl->klass != UNI_CONTROLLER_CLASS_KEYBOARD)
@@ -189,20 +191,14 @@ void c64b_parse_keyboard(uni_hid_device_t* d)
 	bool            kb_nop;
 	bool            shft;
 
-	if(ctrl_id[0] == d)
-	{
-		kb_old = &(ctrl_dat[0].keyboard);
-	}
-	else
-	{
-		logi("parser: keyboard unregistered\n");
-		return;
-	}
+	kb_old = &(ctrl_dat[0].keyboard);
 
 	if (memcmp(kb_old, kb, sizeof(uni_keyboard_t)) == 0)
 		return;
 
-	//uni_controller_dump(ctl);
+	#if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
+		uni_controller_dump(ctl);
+	#endif
 
 	if(xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
 	{
@@ -380,17 +376,16 @@ void c64b_parse_keyboard(uni_hid_device_t* d)
 		}
 		xSemaphoreGive(kb_sem_h);
 	}
+
 	*kb_old = *kb;
 }
 
 //----------------------------------------------------------------------------//
 
-void c64b_parse_gamepad(uni_hid_device_t* d)
+void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 {
-	if(d == NULL)
+	if(ctl == NULL)
 		return;
-
-	uni_controller_t* ctl    = &(d->controller);
 
 	// this function only supports gamepads
 	if(ctl->klass != UNI_CONTROLLER_CLASS_GAMEPAD)
@@ -402,12 +397,12 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 	bool             kb_nop = true;
 	bool             cport_inhibit = false;
 
-	if(ctrl_id[1] == d)
+	if(player_idx == 1)
 	{
 		gp_old    = &(ctrl_dat[1].gamepad);
 		cport_idx = swap_ports ? CPORT_1 : CPORT_2;
 	}
-	else if(ctrl_id[2] == d)
+	else if(player_idx == 2)
 	{
 		gp_old    = &(ctrl_dat[2].gamepad);
 		cport_idx = swap_ports ? CPORT_2 : CPORT_1;
@@ -421,7 +416,9 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 	if (memcmp(gp_old, gp, sizeof(uni_gamepad_t)) == 0)
 		return;
 
-	//uni_controller_dump(ctl);
+	#if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
+		uni_controller_dump(ctl);
+	#endif
 
 	//------------------------------------------------------------------------//
 
@@ -505,29 +502,91 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 
 	//------------------------------------------------------------------------//
 	// controller ports override characters
+
 	if(!cport_inhibit)
 	{
+		bool rr_pressed = false;
+		bool ll_pressed = false;
+		bool up_pressed = false;
+		bool dn_pressed = false;
+		bool ff_pressed = false;
+
 		if((gp->dpad & BTN_DPAD_UP_MASK) || (gp->buttons & BTN_A_MASK))
-			c64b_keyboard_cport_psh(&keyboard, CPORT_UP, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
+			up_pressed = true;
 
 		if((gp->dpad & BTN_DPAD_DN_MASK) || (gp->throttle != 0))
-			c64b_keyboard_cport_psh(&keyboard, CPORT_DN, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);
+			dn_pressed = true;
 
 		if(gp->dpad & BTN_DPAD_RR_MASK)
+			rr_pressed = true;
+
+		if(gp->dpad & BTN_DPAD_LL_MASK)
+			ll_pressed = true;
+
+		if(gp->buttons & BTN_B_MASK)
+			ff_pressed = true;
+
+		// if left analog stick is outside the dead zone it overrides
+		// the dpad
+		if((abs(gp->axis_x) > ANL_DEADZONE) || (abs(gp->axis_y) > ANL_DEADZONE))
+		{
+
+			unsigned int quadrant = 0;
+			if((gp->axis_x >= 0) && (gp->axis_y < 0))
+			{
+				quadrant = 0;
+			}
+			else if((gp->axis_x < 0) && (gp->axis_y < 0))
+			{
+				quadrant = 1;
+			}
+			else if((gp->axis_x < 0) && (gp->axis_y >= 0))
+			{
+				quadrant = 2;
+			}
+			else if((gp->axis_x >= 0) && (gp->axis_y >= 0))
+			{
+				quadrant = 3;
+			}
+
+			if(abs(gp->axis_y) < abs(gp->axis_x) * 2)
+			{
+				if(quadrant == 0 || quadrant == 3)
+					rr_pressed = true;
+				else
+					ll_pressed = true;
+			}
+
+			if(abs(gp->axis_x) < abs(gp->axis_y * 2))
+			{
+				if(quadrant == 0 || quadrant == 1)
+					up_pressed = true;
+				else
+					dn_pressed = true;
+			}
+		}
+
+		if(rr_pressed)
 			c64b_keyboard_cport_psh(&keyboard, CPORT_RR, cport_idx);
 		else
 			c64b_keyboard_cport_rel(&keyboard, CPORT_RR, cport_idx);
 
-		if(gp->dpad & BTN_DPAD_LL_MASK)
+		if(ll_pressed)
 			c64b_keyboard_cport_psh(&keyboard, CPORT_LL, cport_idx);
 		else
 			c64b_keyboard_cport_rel(&keyboard, CPORT_LL, cport_idx);
 
-		if(gp->buttons & BTN_B_MASK)
+		if(up_pressed)
+			c64b_keyboard_cport_psh(&keyboard, CPORT_UP, cport_idx);
+		else
+			c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
+
+		if(dn_pressed)
+			c64b_keyboard_cport_psh(&keyboard, CPORT_DN, cport_idx);
+		else
+			c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);
+
+		if(ff_pressed)
 			c64b_keyboard_cport_psh(&keyboard, CPORT_FF, cport_idx);
 		else
 			c64b_keyboard_cport_rel(&keyboard, CPORT_FF, cport_idx);
@@ -546,10 +605,41 @@ void c64b_parse_gamepad(uni_hid_device_t* d)
 
 //----------------------------------------------------------------------------//
 
+static void task_c64b_parse(void *arg)
+{
+	uni_hid_device_t* d = (uni_hid_device_t*)arg;
+
+	if(ctrl_id[0] == d)
+	{
+		c64b_parse_keyboard(&ctrl_tmp);
+	}
+	else if(ctrl_id[1] == d)
+	{
+		c64b_parse_gamepad(&ctrl_tmp, 1);
+	}
+	else if(ctrl_id[2] == d)
+	{
+		c64b_parse_gamepad(&ctrl_tmp, 2);
+	}
+
+	xSemaphoreGive(parse_sem_h);
+	vTaskDelete(NULL);
+}
+
 void c64b_parse(uni_hid_device_t* d)
 {
-	if(ctrl_id[0] == d)
-		c64b_parse_keyboard(d);
-	else
-		c64b_parse_gamepad(d);
+	if(xSemaphoreTake(parse_sem_h, (TickType_t)0) == pdTRUE)
+	{
+		ctrl_tmp = d->controller;
+
+		// address copy of d is only used to detect the device, all data
+		// is parked in ctrl_tmp
+		xTaskCreatePinnedToCore(task_c64b_parse,
+		                        "parse task",
+		                        4096,
+		                        (void * const)d,
+		                        3,
+		                        NULL,
+		                        tskNO_AFFINITY);
+	}
 }
