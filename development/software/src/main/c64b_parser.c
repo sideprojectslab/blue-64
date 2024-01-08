@@ -24,10 +24,13 @@
 //----------------------------------------------------------------------------//
 
 #include "c64b_parser.h"
+#include "esp_task_wdt.h"
 
 static t_c64b_keyboard   keyboard;
 static uni_hid_device_t* ctrl_id [3] = {NULL, NULL, NULL};
-static uni_controller_t  ctrl_tmp   = {0};
+static uni_hid_device_t* dev_tmp     = NULL;
+static uni_controller_t  ctrl_tmp    = {0};
+static uni_controller_t  ctrl_latch[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_dat[3] = {{0}, {0}, {0}};
 static bool              swap_ports  = false;
 static SemaphoreHandle_t parse_sem_h;
@@ -42,54 +45,6 @@ static const uint8_t     row_perm[] = ROW_PERM;
 
 //----------------------------------------------------------------------------//
 // C64-Blue functions
-
-void c64b_parser_init()
-{
-	parse_sem_h = xSemaphoreCreateBinary();
-	kb_sem_h    = xSemaphoreCreateBinary();
-	feed_sem_h  = xSemaphoreCreateBinary();
-	xSemaphoreGive(kb_sem_h);
-	xSemaphoreGive(feed_sem_h);
-	xSemaphoreGive(parse_sem_h);
-
-	kb_owner = KB_OWNER_NONE;
-
-	keyboard.pin_col[0] = PIN_COL0;
-	keyboard.pin_col[1] = PIN_COL1;
-	keyboard.pin_col[2] = PIN_COL2;
-	keyboard.pin_col[3] = PIN_COL3;
-	keyboard.pin_col[4] = PIN_COL4;
-
-	keyboard.pin_kca[0] = PIN_KCA0;
-	keyboard.pin_kca[1] = PIN_KCA1;
-	keyboard.pin_kca[2] = PIN_KCA2;
-
-	keyboard.pin_row[0] = PIN_ROW0;
-	keyboard.pin_row[1] = PIN_ROW1;
-	keyboard.pin_row[2] = PIN_ROW2;
-	keyboard.pin_row[3] = PIN_ROW3;
-	keyboard.pin_row[4] = PIN_ROW4;
-
-	keyboard.pin_kra[0] = PIN_KRA0;
-	keyboard.pin_kra[1] = PIN_KRA1;
-	keyboard.pin_kra[2] = PIN_KRA2;
-
-	keyboard.pin_kben  = PIN_KBEN;
-	keyboard.pin_nrst  = PIN_nRST;
-	keyboard.pin_ctrl  = PIN_CTRL;
-	keyboard.pin_shft  = PIN_SHFT;
-	keyboard.pin_cmdr  = PIN_CMDR;
-
-	keyboard.feed_psh_ms = 30;
-	keyboard.feed_rel_ms = 30;
-
-	keyboard.col_perm  = col_perm;
-	keyboard.row_perm  = row_perm;
-
-	c64b_keyboard_init(&keyboard);
-}
-
-//----------------------------------------------------------------------------//
 
 void c64b_parser_connect(uni_hid_device_t* d)
 {
@@ -382,7 +337,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
+void c64b_parse_gamepad(uni_controller_t* ctl)
 {
 	if(ctl == NULL)
 		return;
@@ -397,12 +352,12 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 	bool             kb_nop = true;
 	bool             cport_inhibit = false;
 
-	if(player_idx == 1)
+	if(ctl == &(ctrl_latch[1]))
 	{
 		gp_old    = &(ctrl_dat[1].gamepad);
 		cport_idx = swap_ports ? CPORT_1 : CPORT_2;
 	}
-	else if(player_idx == 2)
+	else if(ctl == &(ctrl_latch[2]))
 	{
 		gp_old    = &(ctrl_dat[2].gamepad);
 		cport_idx = swap_ports ? CPORT_2 : CPORT_1;
@@ -425,6 +380,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 	if(gp->misc_buttons & BTN_SELECT_MASK)
 	{
 		cport_inhibit = true;
+
 		//--------------------------------------------------------------------//
 		// keyboard macros
 
@@ -437,7 +393,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 				kb_macro_sel = true;
 				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
 			}
-
 			else if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
 			{
 				if(kb_macro_sel)
@@ -445,7 +400,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 				kb_macro_sel = true;
 				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
 			}
-
 			else if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
 			{
 				if(kb_macro_sel)
@@ -454,7 +408,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
 				}
 			}
-
 			else
 			{
 				xSemaphoreGive(feed_sem_h);
@@ -464,6 +417,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 
 	//---------------------------------------------------------------------//
 	// direct keyboard control
+
 	if(xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
 	{
 		if((kb_owner == cport_idx + 1) || (kb_owner == KB_OWNER_NONE))
@@ -472,6 +426,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 
 			// space
 			if(!cport_inhibit)
+			{
 				if(gp->misc_buttons & BTN_START_MASK)
 				{
 					kb_nop = false;
@@ -481,6 +436,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 						c64b_keyboard_cmdr_psh(&keyboard);
 					}
 				}
+			}
 
 			if(kb_nop)
 			{
@@ -526,11 +482,9 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 		if(gp->buttons & BTN_B_MASK)
 			ff_pressed = true;
 
-		// if left analog stick is outside the dead zone it overrides
-		// the dpad
+		// if left analog stick is outside the dead zone it overrides the dpad
 		if((abs(gp->axis_x) > ANL_DEADZONE) || (abs(gp->axis_y) > ANL_DEADZONE))
 		{
-
 			unsigned int quadrant = 0;
 			if((gp->axis_x >= 0) && (gp->axis_y < 0))
 			{
@@ -605,41 +559,119 @@ void c64b_parse_gamepad(uni_controller_t* ctl, unsigned int player_idx)
 
 //----------------------------------------------------------------------------//
 
+static void c64b_parse_gp_1()
+{
+	c64b_parse_gamepad(&(ctrl_latch[1]));
+}
+
+//----------------------------------------------------------------------------//
+
+static void c64b_parse_gp_2()
+{
+	c64b_parse_gamepad(&(ctrl_latch[2]));
+}
+
+//----------------------------------------------------------------------------//
+
 static void task_c64b_parse(void *arg)
 {
-	uni_hid_device_t* d = (uni_hid_device_t*)arg;
+	while(1)
+	{
+		if(xSemaphoreTake(parse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+		{
+			if(ctrl_id[0] == dev_tmp)
+			{
+				ctrl_latch[0] = ctrl_tmp;
+			}
+			else if(ctrl_id[1] == dev_tmp)
+			{
+				ctrl_latch[1] = ctrl_tmp;
+			}
+			else if(ctrl_id[2] == dev_tmp)
+			{
+				ctrl_latch[2] = ctrl_tmp;
+			}
+			xSemaphoreGive(parse_sem_h);
 
-	if(ctrl_id[0] == d)
-	{
-		c64b_parse_keyboard(&ctrl_tmp);
+			c64b_parse_gp_1();
+			c64b_parse_gp_2();
+			//c64b_parse_keyboard();
+		}
 	}
-	else if(ctrl_id[1] == d)
-	{
-		c64b_parse_gamepad(&ctrl_tmp, 1);
-	}
-	else if(ctrl_id[2] == d)
-	{
-		c64b_parse_gamepad(&ctrl_tmp, 2);
-	}
-
-	xSemaphoreGive(parse_sem_h);
-	vTaskDelete(NULL);
 }
+
+//----------------------------------------------------------------------------//
 
 void c64b_parse(uni_hid_device_t* d)
 {
-	if(xSemaphoreTake(parse_sem_h, (TickType_t)0) == pdTRUE)
+	static bool first_parse = true;
+	if(first_parse)
 	{
-		ctrl_tmp = d->controller;
-
-		// address copy of d is only used to detect the device, all data
-		// is parked in ctrl_tmp
+		// this task always runs in the background so it needs to have
+		// very low priority
 		xTaskCreatePinnedToCore(task_c64b_parse,
 		                        "parse task",
-		                        4096,
-		                        (void * const)d,
-		                        3,
+		                        4096 * 4,
+		                        NULL,
+		                        1,
 		                        NULL,
 		                        tskNO_AFFINITY);
 	}
+
+	first_parse = false;
+
+	if(xSemaphoreTake(parse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+	{
+		ctrl_tmp = d->controller;
+		dev_tmp  = d;
+		xSemaphoreGive(parse_sem_h);
+	}
+}
+
+//----------------------------------------------------------------------------//
+
+void c64b_parser_init()
+{
+	parse_sem_h = xSemaphoreCreateBinary();
+	kb_sem_h    = xSemaphoreCreateBinary();
+	feed_sem_h  = xSemaphoreCreateBinary();
+	xSemaphoreGive(parse_sem_h);
+	xSemaphoreGive(kb_sem_h);
+	xSemaphoreGive(feed_sem_h);
+
+	kb_owner = KB_OWNER_NONE;
+
+	keyboard.pin_col[0] = PIN_COL0;
+	keyboard.pin_col[1] = PIN_COL1;
+	keyboard.pin_col[2] = PIN_COL2;
+	keyboard.pin_col[3] = PIN_COL3;
+	keyboard.pin_col[4] = PIN_COL4;
+
+	keyboard.pin_kca[0] = PIN_KCA0;
+	keyboard.pin_kca[1] = PIN_KCA1;
+	keyboard.pin_kca[2] = PIN_KCA2;
+
+	keyboard.pin_row[0] = PIN_ROW0;
+	keyboard.pin_row[1] = PIN_ROW1;
+	keyboard.pin_row[2] = PIN_ROW2;
+	keyboard.pin_row[3] = PIN_ROW3;
+	keyboard.pin_row[4] = PIN_ROW4;
+
+	keyboard.pin_kra[0] = PIN_KRA0;
+	keyboard.pin_kra[1] = PIN_KRA1;
+	keyboard.pin_kra[2] = PIN_KRA2;
+
+	keyboard.pin_kben  = PIN_KBEN;
+	keyboard.pin_nrst  = PIN_nRST;
+	keyboard.pin_ctrl  = PIN_CTRL;
+	keyboard.pin_shft  = PIN_SHFT;
+	keyboard.pin_cmdr  = PIN_CMDR;
+
+	keyboard.feed_psh_ms = 30;
+	keyboard.feed_rel_ms = 30;
+
+	keyboard.col_perm  = col_perm;
+	keyboard.row_perm  = row_perm;
+
+	c64b_keyboard_init(&keyboard);
 }
