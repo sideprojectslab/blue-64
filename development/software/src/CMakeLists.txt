@@ -11,4 +11,4 @@ set(EXTRA_COMPONENT_DIRS "components/btstack"
                          "../../../resources/bluepad32/src/components/cmd_system_4.4")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(bluepad32-app)
+project(blue-64-app)

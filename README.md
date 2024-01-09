@@ -34,6 +34,23 @@ At the moment bluetooth keyboard support is still work in progress.
 ## Installation & Precautions
 Instruction manuals on how to install and operate the board are available in PDF format alongside the fabrication data (work in progress). Users shall read these instructions carefully and fully understand the circuit's limitations before installing and/or using it. Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.
 
+## Firmware Update
+Firmware binaries can be found in the "Releases" section of the GitHub page. The three files in the "binaries.zip" folder are necessary to perform a firmware update:
+- bootloader.bin
+- partition-table.bin
+- blue-64-app.bin
+
+Download the Espressif Flash Download Tool at this website:
+https://www.espressif.com/en/support/download/other-tools
+
+Run the .exe application and select "ESP32" as target and "Develop" as work mode when prompted. In the following screen upload the three binary files in the order at the addresses shown in the screenshot below:
+
+![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/flash_tool.png)
+
+Connect the PC to the USB port on the Blue-64 and select the appropriate COM port in the Flash Download Tool. Finally press start and the new firmware will be downloaded to the board (it might take a few minutes).
+
+Don't worry you can't brick it (as far as I know), if something fails you will always be able to re-try flashing the new firmware.
+
 ## License
 License information is included on top of all software source files as well as in all schematics. Files that do not contain explicit licensing information are subject to the licensing terms stated in the LICENSE.txt provided in the main project folder:
 

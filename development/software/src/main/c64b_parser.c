@@ -26,22 +26,26 @@
 #include "c64b_parser.h"
 #include "esp_task_wdt.h"
 
-static t_c64b_keyboard   keyboard;
-static uni_hid_device_t* ctrl_id [3] = {NULL, NULL, NULL};
-static uni_hid_device_t* dev_tmp     = NULL;
-static uni_controller_t  ctrl_tmp    = {0};
-static uni_controller_t  ctrl_latch[3] = {{0}, {0}, {0}};
-static uni_controller_t  ctrl_dat[3] = {{0}, {0}, {0}};
-static bool              swap_ports  = false;
-static SemaphoreHandle_t parse_sem_h;
-static SemaphoreHandle_t kb_sem_h;
-static SemaphoreHandle_t feed_sem_h;
-static t_c64b_kb_owner   kb_owner = KB_OWNER_NONE;
-static t_c64b_macro_id   kb_macro_id = 0;
+//----------------------------------------------------------------------------//
+// Static Variables
+
+static uni_controller_t* ctrl_ptr[3] = {NULL, NULL, NULL};
+static uni_controller_t  ctrl_tmp[3] = {{0}, {0}, {0}};
+static uni_controller_t  ctrl_new[3] = {{0}, {0}, {0}};
+static uni_controller_t  ctrl_old[3] = {{0}, {0}, {0}};
+
+static t_c64b_keyboard   keyboard     = {0};
+static t_c64b_kb_owner   kb_owner     = KB_OWNER_NONE;
+static t_c64b_macro_id   kb_macro_id  = 0;
 static bool              kb_macro_sel = false;
+static bool              swap_ports   = false;
 
 static const uint8_t     col_perm[] = COL_PERM;
 static const uint8_t     row_perm[] = ROW_PERM;
+
+static SemaphoreHandle_t prse_sem_h; // protects access to controller data
+static SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
+static SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
 
 //----------------------------------------------------------------------------//
 // C64-Blue functions
@@ -52,16 +56,17 @@ void c64b_parser_connect(uni_hid_device_t* d)
 	if(d->controller.klass == UNI_CONTROLLER_CLASS_KEYBOARD)
 	{
 		logi("parser: keyboard connected: %p\n", d);
-		ctrl_id[0] = NULL;
+		if(ctrl_ptr[0] == NULL)
+			ctrl_ptr[0] = &(d->controller);
 	}
 	// inserting controller ID in the first free location after 0
 	else if(d->controller.klass == UNI_CONTROLLER_CLASS_GAMEPAD)
 	{
 		logi("parser: gamepad connected: %p\n", d);
-		if(ctrl_id[1] == NULL)
-			ctrl_id[1] = d;
-		else if(ctrl_id[2] == NULL)
-			ctrl_id[2] = d;
+		if(ctrl_ptr[1] == NULL)
+			ctrl_ptr[1] = &(d->controller);
+		else if(ctrl_ptr[2] == NULL)
+			ctrl_ptr[2] = &(d->controller);
 	}
 	else
 	{
@@ -74,17 +79,17 @@ void c64b_parser_connect(uni_hid_device_t* d)
 void c64b_parser_disconnect(uni_hid_device_t* d)
 {
 	unsigned int idx;
-	if(ctrl_id[0] == d)
+	if(ctrl_ptr[0] == &(d->controller))
 		idx = 0;
-	else if(ctrl_id[1] == d)
+	else if(ctrl_ptr[1] == &(d->controller))
 		idx = 1;
-	else if(ctrl_id[2] == d)
+	else if(ctrl_ptr[2] == &(d->controller))
 		idx = 2;
 	else
 		return;
 
-	ctrl_id[idx] = NULL;
-	memset(&(ctrl_dat[idx]), 0, sizeof(uni_controller_t));
+	ctrl_ptr[idx] = NULL;
+	memset(&(ctrl_old[idx]), 0, sizeof(uni_controller_t));
 }
 
 //----------------------------------------------------------------------------//
@@ -93,7 +98,7 @@ int c64b_parser_get_idx(uni_hid_device_t* d)
 {
 	for(unsigned int i = 0; i < 3; ++i)
 	{
-		if(ctrl_id[i] == d)
+		if(ctrl_ptr[i] == &(d->controller))
 			return (i);
 	}
 	return -1;
@@ -104,7 +109,7 @@ int c64b_parser_get_idx(uni_hid_device_t* d)
 static void task_keyboard_macro_feed(void *arg)
 {
 	logi("Starting Keyboard Feed\n");
-	if(xSemaphoreTake(kb_sem_h, (TickType_t)10) == pdTRUE)
+	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)10) == pdTRUE)
 	{
 		if((kb_owner == KB_OWNER_FEED) || (kb_owner == KB_OWNER_NONE))
 		{
@@ -112,7 +117,7 @@ static void task_keyboard_macro_feed(void *arg)
 			c64b_keyboard_feed_str(&keyboard, (char *)arg);
 			kb_owner = KB_OWNER_NONE;
 		}
-		xSemaphoreGive(kb_sem_h);
+		xSemaphoreGive(kbrd_sem_h);
 	}
 	xSemaphoreGive(feed_sem_h);
 	vTaskDelete(NULL);
@@ -146,7 +151,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 	bool            kb_nop;
 	bool            shft;
 
-	kb_old = &(ctrl_dat[0].keyboard);
+	kb_old = &(ctrl_old[0].keyboard);
 
 	if (memcmp(kb_old, kb, sizeof(uni_keyboard_t)) == 0)
 		return;
@@ -155,7 +160,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 		uni_controller_dump(ctl);
 	#endif
 
-	if(xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
+	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)0) == pdTRUE)
 	{
 		if((kb_owner == KB_OWNER_KBRD) || (kb_owner == KB_OWNER_NONE))
 		{
@@ -329,7 +334,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 				kb_owner = KB_OWNER_NONE;
 			}
 		}
-		xSemaphoreGive(kb_sem_h);
+		xSemaphoreGive(kbrd_sem_h);
 	}
 
 	*kb_old = *kb;
@@ -352,14 +357,14 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	bool             kb_nop = true;
 	bool             cport_inhibit = false;
 
-	if(ctl == &(ctrl_latch[1]))
+	if(ctl == &(ctrl_new[1]))
 	{
-		gp_old    = &(ctrl_dat[1].gamepad);
+		gp_old    = &(ctrl_old[1].gamepad);
 		cport_idx = swap_ports ? CPORT_1 : CPORT_2;
 	}
-	else if(ctl == &(ctrl_latch[2]))
+	else if(ctl == &(ctrl_new[2]))
 	{
-		gp_old    = &(ctrl_dat[2].gamepad);
+		gp_old    = &(ctrl_old[2].gamepad);
 		cport_idx = swap_ports ? CPORT_2 : CPORT_1;
 	}
 	else
@@ -407,6 +412,10 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 					kb_macro_sel = false;
 					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
 				}
+				else
+				{
+					xSemaphoreGive(feed_sem_h);
+				}
 			}
 			else
 			{
@@ -418,7 +427,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	//---------------------------------------------------------------------//
 	// direct keyboard control
 
-	if(xSemaphoreTake(kb_sem_h, (TickType_t)0) == pdTRUE)
+	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)0) == pdTRUE)
 	{
 		if((kb_owner == cport_idx + 1) || (kb_owner == KB_OWNER_NONE))
 		{
@@ -453,7 +462,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 				c64b_keyboard_reset(&keyboard);
 			}
 		}
-		xSemaphoreGive(kb_sem_h);
+		xSemaphoreGive(kbrd_sem_h);
 	}
 
 	//------------------------------------------------------------------------//
@@ -561,14 +570,14 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 static void c64b_parse_gp_1()
 {
-	c64b_parse_gamepad(&(ctrl_latch[1]));
+	c64b_parse_gamepad(&(ctrl_new[1]));
 }
 
 //----------------------------------------------------------------------------//
 
 static void c64b_parse_gp_2()
 {
-	c64b_parse_gamepad(&(ctrl_latch[2]));
+	c64b_parse_gamepad(&(ctrl_new[2]));
 }
 
 //----------------------------------------------------------------------------//
@@ -577,21 +586,13 @@ static void task_c64b_parse(void *arg)
 {
 	while(1)
 	{
-		if(xSemaphoreTake(parse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+		if(xSemaphoreTake(prse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
 		{
-			if(ctrl_id[0] == dev_tmp)
-			{
-				ctrl_latch[0] = ctrl_tmp;
-			}
-			else if(ctrl_id[1] == dev_tmp)
-			{
-				ctrl_latch[1] = ctrl_tmp;
-			}
-			else if(ctrl_id[2] == dev_tmp)
-			{
-				ctrl_latch[2] = ctrl_tmp;
-			}
-			xSemaphoreGive(parse_sem_h);
+			// latching controller data in a thread-safe manner
+			ctrl_new[0] = ctrl_tmp[0];
+			ctrl_new[1] = ctrl_tmp[1];
+			ctrl_new[2] = ctrl_tmp[2];
+			xSemaphoreGive(prse_sem_h);
 
 			c64b_parse_gp_1();
 			c64b_parse_gp_2();
@@ -611,20 +612,29 @@ void c64b_parse(uni_hid_device_t* d)
 		// very low priority
 		xTaskCreatePinnedToCore(task_c64b_parse,
 		                        "parse task",
-		                        4096 * 4,
+		                        4096 * 2,
 		                        NULL,
 		                        1,
 		                        NULL,
 		                        tskNO_AFFINITY);
 	}
-
 	first_parse = false;
 
-	if(xSemaphoreTake(parse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+	if(xSemaphoreTake(prse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
 	{
-		ctrl_tmp = d->controller;
-		dev_tmp  = d;
-		xSemaphoreGive(parse_sem_h);
+		if(ctrl_ptr[0] == &(d->controller))
+		{
+			ctrl_tmp[0] = d->controller;
+		}
+		else if(ctrl_ptr[1] == &(d->controller))
+		{
+			ctrl_tmp[1] = d->controller;
+		}
+		else if(ctrl_ptr[2] == &(d->controller))
+		{
+			ctrl_tmp[2] = d->controller;
+		}
+		xSemaphoreGive(prse_sem_h);
 	}
 }
 
@@ -632,11 +642,11 @@ void c64b_parse(uni_hid_device_t* d)
 
 void c64b_parser_init()
 {
-	parse_sem_h = xSemaphoreCreateBinary();
-	kb_sem_h    = xSemaphoreCreateBinary();
-	feed_sem_h  = xSemaphoreCreateBinary();
-	xSemaphoreGive(parse_sem_h);
-	xSemaphoreGive(kb_sem_h);
+	prse_sem_h = xSemaphoreCreateBinary();
+	kbrd_sem_h = xSemaphoreCreateBinary();
+	feed_sem_h = xSemaphoreCreateBinary();
+	xSemaphoreGive(prse_sem_h);
+	xSemaphoreGive(kbrd_sem_h);
 	xSemaphoreGive(feed_sem_h);
 
 	kb_owner = KB_OWNER_NONE;
