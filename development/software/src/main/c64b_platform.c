@@ -76,7 +76,6 @@ static void c64b_on_device_disconnected(uni_hid_device_t* d) {
 
 static uni_error_t c64b_on_device_ready(uni_hid_device_t* d) {
 	logi("c64b: device ready: %p\n", d);
-	d->report_parser.init_report(d);
 	c64b_parser_connect(d);
 	return UNI_ERROR_SUCCESS;
 }
