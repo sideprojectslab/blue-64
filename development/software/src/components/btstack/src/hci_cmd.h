@@ -110,6 +110,7 @@ typedef enum {
     HCI_OPCODE_HCI_READ_REMOTE_SUPPORTED_FEATURES_COMMAND = HCI_OPCODE (OGF_LINK_CONTROL, 0x1B),
     HCI_OPCODE_HCI_READ_REMOTE_EXTENDED_FEATURES_COMMAND = HCI_OPCODE (OGF_LINK_CONTROL, 0x1C),
     HCI_OPCODE_HCI_READ_REMOTE_VERSION_INFORMATION = HCI_OPCODE (OGF_LINK_CONTROL, 0x1D),
+    HCI_OPCODE_HCI_READ_CLOCK_OFFSET = HCI_OPCODE (OGF_LINK_CONTROL, 0x1F),
     HCI_OPCODE_HCI_SETUP_SYNCHRONOUS_CONNECTION = HCI_OPCODE (OGF_LINK_CONTROL, 0x0028),
     HCI_OPCODE_HCI_ACCEPT_SYNCHRONOUS_CONNECTION = HCI_OPCODE (OGF_LINK_CONTROL, 0x0029),
     HCI_OPCODE_HCI_IO_CAPABILITY_REQUEST_REPLY = HCI_OPCODE (OGF_LINK_CONTROL, 0x2b),
@@ -208,7 +209,11 @@ typedef enum {
     HCI_OPCODE_HCI_READ_BD_ADDR = HCI_OPCODE (OGF_INFORMATIONAL_PARAMETERS, 0x09),
 
     // Status Parameters
+    HCI_OPCODE_HCI_READ_FAILED_CONTACT_COUNTER = HCI_OPCODE (OGF_STATUS_PARAMETERS, 0x01),
+    HCI_OPCODE_HCI_RESET_FAILED_CONTACT_COUNTER = HCI_OPCODE (OGF_STATUS_PARAMETERS, 0x02),
+    HCI_OPCODE_HCI_READ_LINK_QUALITY = HCI_OPCODE (OGF_STATUS_PARAMETERS, 0x03),
     HCI_OPCODE_HCI_READ_RSSI = HCI_OPCODE (OGF_STATUS_PARAMETERS, 0x05),
+    HCI_OPCODE_HCI_READ_CLOCK = HCI_OPCODE (OGF_STATUS_PARAMETERS, 0x07),
     HCI_OPCODE_HCI_READ_ENCRYPTION_KEY_SIZE = HCI_OPCODE (OGF_STATUS_PARAMETERS, 0x08),
 
     // LE Controller
@@ -337,9 +342,11 @@ typedef enum {
 
     // Broadcom/Cypress/Infineon/Synaptics
     HCI_OPCODE_HCI_BCM_WRITE_SCO_PCM_INT = HCI_OPCODE (0x3f, 0x1c),
+    HCI_OPCODE_HCI_BCM_WRITE_PCM_DATA_FORMAT_PARAM = HCI_OPCODE (0x3f, 0x1e),
     HCI_OPCODE_HCI_BCM_SET_SLEEP_MODE = HCI_OPCODE (0x3f, 0x27),
     HCI_OPCODE_HCI_BCM_WRITE_I2SPCM_INTERFACE_PARAM = HCI_OPCODE (0x3f, 0x6d),
     HCI_OPCODE_HCI_BCM_ENABLE_WBS = HCI_OPCODE(0x3f, 0x7e),
+    HCI_OPCODE_HCI_BCM_PCM2_SETUP = HCI_OPCODE (0x3f, 0xae),
     HCI_OPCODE_HCI_BCM_WRITE_TX_POWER_TABLE = HCI_OPCODE (0x3f, 0x1C9),
     HCI_OPCODE_HCI_BCM_SET_TX_PWR = HCI_OPCODE (0x3f, 0x1A5),
 
@@ -349,6 +356,9 @@ typedef enum {
     // Realtek
     HCI_OPCODE_HCI_RTK_CONFIGURE_SCO_ROUTING = HCI_OPCODE (0x3f, 0x93),
     HCI_OPCODE_HCI_RTK_READ_CARD_INFO = 0xFC61,
+
+    // Zephyr
+    HCI_OPCODE_HCI_ZEPHYR_READ_STATIC_ADDRESS = 0xFC09,
 
     // Marvell/NXP
     HCI_OPCODE_HCI_NXP_WRITE_PCM_I2S_SETTINGS      = 0xFC07,
@@ -396,6 +406,7 @@ extern const hci_cmd_t hci_pin_code_request_reply;
 extern const hci_cmd_t hci_qos_setup;
 extern const hci_cmd_t hci_read_bd_addr;
 extern const hci_cmd_t hci_read_buffer_size;
+extern const hci_cmd_t hci_read_clock_offset;
 extern const hci_cmd_t hci_read_encryption_key_size;
 extern const hci_cmd_t hci_read_extended_inquiry_length;
 extern const hci_cmd_t hci_read_extended_page_timeout;
@@ -408,6 +419,9 @@ extern const hci_cmd_t hci_read_local_name;
 extern const hci_cmd_t hci_read_local_oob_data;
 extern const hci_cmd_t hci_read_inquiry_response_transmit_power_level;
 extern const hci_cmd_t hci_write_inquiry_transmit_power_level;
+extern const hci_cmd_t hci_read_clock;
+extern const hci_cmd_t hci_read_failed_contact_counter;
+extern const hci_cmd_t hci_read_link_quality;
 extern const hci_cmd_t hci_read_local_supported_commands;
 extern const hci_cmd_t hci_read_local_supported_features;
 extern const hci_cmd_t hci_read_local_version_information;
@@ -428,6 +442,7 @@ extern const hci_cmd_t hci_remote_oob_data_request_negative_reply;
 extern const hci_cmd_t hci_remote_oob_data_request_reply;
 extern const hci_cmd_t hci_remote_oob_extended_data_request_reply;
 extern const hci_cmd_t hci_reset;
+extern const hci_cmd_t hci_reset_failed_contact_counter;
 extern const hci_cmd_t hci_role_discovery;
 extern const hci_cmd_t hci_set_connection_encryption;
 extern const hci_cmd_t hci_set_controller_to_host_flow_control;
@@ -599,6 +614,8 @@ extern const hci_cmd_t hci_opcode_hci_le_read_buffer_size_v2;
 
 // Broadcom / Cypress specific HCI commands
 extern const hci_cmd_t hci_bcm_enable_wbs;
+extern const hci_cmd_t hci_bcm_pcm2_setup;
+extern const hci_cmd_t hci_bcm_write_pcm_data_format_param;
 extern const hci_cmd_t hci_bcm_set_sleep_mode;
 extern const hci_cmd_t hci_bcm_write_i2spcm_interface_param;
 extern const hci_cmd_t hci_bcm_write_sco_pcm_int;

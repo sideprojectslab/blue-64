@@ -243,7 +243,7 @@ static void hci_iso_stream_finalize_by_type_and_group_id(hci_iso_type_t iso_type
 static hci_iso_stream_t * hci_iso_stream_for_con_handle(hci_con_handle_t con_handle);
 static void hci_iso_stream_requested_finalize(uint8_t big_handle);
 static void hci_iso_stream_requested_confirm(uint8_t big_handle);
-static void hci_iso_packet_handler(uint8_t * packet, uint16_t size);
+static void hci_iso_packet_handler(hci_iso_stream_t *iso_stream, uint8_t *packet, uint16_t size);
 static le_audio_big_t * hci_big_for_handle(uint8_t big_handle);
 static le_audio_cig_t * hci_cig_for_id(uint8_t cig_id);
 static void hci_iso_notify_can_send_now(void);
@@ -715,7 +715,7 @@ static int hci_number_free_sco_slots(void){
         }
         return hci_stack->sco_packets_total_num - num_sco_packets_sent;
     } else {
-        // implicit flow control -- TODO
+        // implicit flow control
         int num_ready = 0;
         for (it = (btstack_linked_item_t *) hci_stack->connections; it ; it = it->next){
             hci_connection_t * connection = (hci_connection_t *) it;
@@ -2179,8 +2179,61 @@ static void hci_initializing_run(void){
 #endif
                 break;
             }
+        case HCI_INIT_BCM_WRITE_PCM_DATA_FORMAT_PARAM:
+            if (hci_classic_supported() && (hci_stack->manufacturer == BLUETOOTH_COMPANY_ID_BROADCOM_CORPORATION)){
+                hci_stack->substate = HCI_INIT_W4_BCM_WRITE_PCM_DATA_FORMAT_PARAM;
+                log_info("BCM: Config PCM Data format");
+                // msb first, fill bits 0, left justified
+                hci_send_cmd(&hci_bcm_write_pcm_data_format_param, 0, 0, 3, 3, 0);
+                break;
+            }
+#ifdef HAVE_BCM_PCM2
+        case HCI_INIT_BCM_PCM2_SETUP:
+            if (hci_classic_supported() && (hci_stack->manufacturer == BLUETOOTH_COMPANY_ID_BROADCOM_CORPORATION)) {
+                hci_stack->substate = HCI_INIT_W4_BCM_PCM2_SETUP;
+                uint8_t  op_mode = 0;  // Op_Mode = 0 = PCM, 1 = I2S
+                uint32_t pcm_clock_freq;
+                uint8_t  ch_0_period;
+#ifdef ENABLE_BCM_PCM_WBS
+                // 512 kHz, resample 8 kHz to 16 khz
+                pcm_clock_freq = 512000;
+                ch_0_period = 1;
+#else
+                // 256 khz, 8 khz output
+                pcm_clock_freq = 256000;
+                ch_0_period = 0;
 #endif
+                log_info("BCM: Config PCM2 - op mode %u, pcm clock %" PRIu32 ", ch0_period %u", op_mode, pcm_clock_freq, ch_0_period);
+                hci_send_cmd(&hci_bcm_pcm2_setup,
+                             0x00, // Action = Write
+                             0x00, // Test_Options = None
+                             op_mode, // Op_Mode
+                             0x1D, // Sync_and_Clock_Options Sync = Signal | Sync Output Enable | Generate PCM_CLK | Tristate When Idle
+                             pcm_clock_freq, // PCM_Clock_Freq
+                             0x01, // Sync_Signal_Width
+                             0x0F, // Slot_Width
+                             0x01, // NumberOfSlots
+                             0x00, // Bank_0_Fill_Mode = 0s
+                             0x00, // Bank_0_Number_of_Fill_Bits
+                             0x00, // Bank_0_Programmable_Fill_Data
+                             0x00, // Bank_1_Fill_Mode = 0s
+                             0x00, // Bank_1_Number_of_Fill_Bits
+                             0x00, // Bank_1_Programmable_Fill_Data
+                             0x00, // Data_Justify_And_Bit_Order_Options = Left Justify
+                             0x00, // Ch_0_Slot_Number
+                             0x01, // Ch_1_Slot_Number
+                             0x02, // Ch_2_Slot_Number
+                             0x03, // Ch_3_Slot_Number
+                             0x04, // Ch_4_Slot_Number
+                             ch_0_period, // Ch_0_Period
+                             0x00, // Ch_1_Period
+                             0x00  // Ch_2_Period
+                );
+                break;
+            }
 #endif
+#endif /* ENABLE_SCO_OVER_PCM */
+#endif /* ENABLE_CLASSIC */
 
 #ifdef ENABLE_BLE
             /* fall through */
@@ -2705,13 +2758,16 @@ static void hci_store_local_supported_commands(const uint8_t * packet){
 static void handle_command_complete_event(uint8_t * packet, uint16_t size){
     UNUSED(size);
 
+    uint8_t status = 0;
+    if( size > OFFSET_OF_DATA_IN_COMMAND_COMPLETE ) {
+        status = hci_event_command_complete_get_return_parameters(packet)[0];
+    }
     uint16_t manufacturer;
 #ifdef ENABLE_CLASSIC
-    hci_con_handle_t handle;
     hci_connection_t * conn;
 #endif
 #if defined(ENABLE_CLASSIC) || (defined(ENABLE_BLE) && defined(ENABLE_LE_ISOCHRONOUS_STREAMS))
-    uint8_t status;
+    hci_con_handle_t handle;
 #endif
 #ifdef ENABLE_LE_ISOCHRONOUS_STREAMS
     le_audio_cig_t * cig;
@@ -2723,7 +2779,7 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
     uint16_t opcode = hci_event_command_complete_get_command_opcode(packet);
     switch (opcode){
         case HCI_OPCODE_HCI_READ_LOCAL_NAME:
-            if (packet[5]) break;
+            if (status) break;
             // terminate, name 248 chars
             packet[6+248] = 0;
             log_info("local name: %s", &packet[6]);
@@ -2747,7 +2803,7 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             }
             break;
         case HCI_OPCODE_HCI_READ_RSSI:
-            if (packet[5] == ERROR_CODE_SUCCESS){
+            if (status == ERROR_CODE_SUCCESS){
                 uint8_t event[5];
                 event[0] = GAP_EVENT_RSSI_MEASUREMENT;
                 event[1] = 3;
@@ -2811,9 +2867,8 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
                 le_advertising_set_t * advertising_set = hci_advertising_set_for_handle(hci_stack->le_advertising_set_in_current_command);
                 hci_stack->le_advertising_set_in_current_command = 0;
                 if (advertising_set == NULL) break;
-                uint8_t adv_status = packet[5];
-                uint8_t event[] = { HCI_EVENT_META_GAP, 3, GAP_SUBEVENT_ADVERTISING_SET_REMOVED, hci_stack->le_advertising_set_in_current_command, adv_status };
-                if (adv_status == 0){
+                uint8_t event[] = { HCI_EVENT_META_GAP, 3, GAP_SUBEVENT_ADVERTISING_SET_REMOVED, hci_stack->le_advertising_set_in_current_command, status };
+                if (status == 0){
                     btstack_linked_list_remove(&hci_stack->le_advertising_sets, (btstack_linked_item_t *) advertising_set);
                 }
                 hci_emit_event(event, sizeof(event), 1);
@@ -2823,7 +2878,7 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
 #endif
         case HCI_OPCODE_HCI_READ_BD_ADDR:
             reverse_bd_addr(&packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE + 1], hci_stack->local_bd_addr);
-            log_info("Local Address, Status: 0x%02x: Addr: %s", packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE], bd_addr_to_str(hci_stack->local_bd_addr));
+            log_info("Local Address, Status: 0x%02x: Addr: %s", status, bd_addr_to_str(hci_stack->local_bd_addr));
 #ifdef ENABLE_CLASSIC
             if (hci_stack->link_key_db){
                 hci_stack->link_key_db->set_local_bd_addr(hci_stack->local_bd_addr);
@@ -2835,7 +2890,6 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             hci_emit_scan_mode_changed(hci_stack->discoverable, hci_stack->connectable);
             break;
         case HCI_OPCODE_HCI_PERIODIC_INQUIRY_MODE:
-            status = hci_event_command_complete_get_return_parameters(packet)[0];
             if (status == ERROR_CODE_SUCCESS) {
                 hci_stack->inquiry_state = GAP_INQUIRY_STATE_PERIODIC;
             } else {
@@ -2887,11 +2941,10 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             break;
 #ifdef ENABLE_CLASSIC
         case HCI_OPCODE_HCI_WRITE_SYNCHRONOUS_FLOW_CONTROL_ENABLE:
-            if (packet[5]) return;
+            if (status) return;
             hci_stack->synchronous_flow_control_enabled = 1;
             break;
         case HCI_OPCODE_HCI_READ_ENCRYPTION_KEY_SIZE:
-            status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
             handle = little_endian_read_16(packet, OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1);
             conn   = hci_connection_for_handle(handle);
             if (conn != NULL) {
@@ -2925,7 +2978,7 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             event[0] = GAP_EVENT_LOCAL_OOB_DATA;
             event[1] = 65;
             (void)memset(&event[2], 0, 65);
-            if (packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE] == ERROR_CODE_SUCCESS){
+            if (status == ERROR_CODE_SUCCESS){
                 (void)memcpy(&event[3], &packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE+1], 32);
                 if (opcode == HCI_OPCODE_HCI_READ_LOCAL_EXTENDED_OOB_DATA){
                     event[2] = 3;
@@ -2953,7 +3006,6 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             // lookup CIG
             cig = hci_cig_for_id(hci_stack->iso_active_operation_group_id);
             if (cig != NULL){
-                status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
                 uint8_t i = 0;
                 if (status == ERROR_CODE_SUCCESS){
                     // assign CIS handles to pre-allocated CIS
@@ -2979,13 +3031,11 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             hci_stack->iso_active_operation_type = HCI_ISO_TYPE_INVALID;
             break;
         case HCI_OPCODE_HCI_LE_CREATE_CIS:
-            status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
             if (status != ERROR_CODE_SUCCESS){
                 hci_iso_stream_requested_finalize(HCI_ISO_GROUP_ID_INVALID);
             }
             break;
         case HCI_OPCODE_HCI_LE_ACCEPT_CIS_REQUEST:
-            status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
             if (status != ERROR_CODE_SUCCESS){
                 hci_iso_stream_requested_finalize(HCI_ISO_GROUP_ID_INVALID);
             }
@@ -2997,7 +3047,6 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             while (btstack_linked_list_iterator_has_next(&it)) {
                 le_audio_big_t *big = (le_audio_big_t *) btstack_linked_list_iterator_next(&it);
                 if (big->state == LE_AUDIO_BIG_STATE_W4_SETUP_ISO_PATH){
-                    status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
                     if (status == ERROR_CODE_SUCCESS){
                         big->state_vars.next_bis++;
                         if (big->state_vars.next_bis == big->num_bis){
@@ -3017,7 +3066,6 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
             while (btstack_linked_list_iterator_has_next(&it)) {
                 le_audio_big_sync_t *big_sync = (le_audio_big_sync_t *) btstack_linked_list_iterator_next(&it);
                 if (big_sync->state == LE_AUDIO_BIG_STATE_W4_SETUP_ISO_PATH){
-                    status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
                     if (status == ERROR_CODE_SUCCESS){
                         big_sync->state_vars.next_bis++;
                         if (big_sync->state_vars.next_bis == big_sync->num_bis){
@@ -3039,9 +3087,7 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
                     hci_stack->iso_active_operation_type = HCI_ISO_TYPE_INVALID;
 
                     // lookup CIS by state
-                    btstack_linked_list_iterator_t it;
                     btstack_linked_list_iterator_init(&it, &hci_stack->iso_streams);
-                    status = packet[OFFSET_OF_DATA_IN_COMMAND_COMPLETE];
                     while (btstack_linked_list_iterator_has_next(&it)){
                         hci_iso_stream_t * iso_stream = (hci_iso_stream_t *) btstack_linked_list_iterator_next(&it);
                         handle = iso_stream->cis_handle;
@@ -3080,6 +3126,7 @@ static void handle_command_complete_event(uint8_t * packet, uint16_t size){
                         // if outgoing has been setup, or incoming was setup but outgoing not required
                         if ((cis_direction == 1) || (outgoing_needed == false)){
                             // lookup iso stream by cig/cis
+                            btstack_linked_list_iterator_init(&it, &hci_stack->iso_streams);
                             while (btstack_linked_list_iterator_has_next(&it)) {
                                 hci_iso_stream_t *iso_stream = (hci_iso_stream_t *) btstack_linked_list_iterator_next(&it);
                                 if ((iso_stream->group_id == cig->cig_id) && (iso_stream->stream_id == cis_index)){
@@ -3243,7 +3290,6 @@ static void event_handle_le_connection_complete(const uint8_t * packet){
 		if (status == ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER){
 		    // reset state
             hci_stack->le_connecting_state   = LE_CONNECTING_IDLE;
-            hci_stack->le_connecting_request = LE_CONNECTING_IDLE;
 			// get outgoing connection conn struct for direct connect
 			conn = gap_get_outgoing_connection();
 		}
@@ -3702,6 +3748,12 @@ static void event_handler(uint8_t *packet, uint16_t size){
             if (hci_have_usb_transport()){
                 hci_stack->sco_can_send_now = true;
             }
+
+            // setup implict sco flow control
+            conn->sco_tx_ready = 0;
+            conn->sco_tx_active  = 0;
+            conn->sco_established_ms = btstack_run_loop_get_time_ms();
+
 #endif
 #ifdef HAVE_SCO_TRANSPORT
             // configure sco transport
@@ -4266,9 +4318,15 @@ static void event_handler(uint8_t *packet, uint16_t size){
                         uint8_t status = hci_subevent_le_cis_established_get_status(packet);
                         iso_stream = hci_iso_stream_for_con_handle(handle);
                         btstack_assert(iso_stream != NULL);
-                        // track SDU
-                        iso_stream->max_sdu_c_to_p = hci_subevent_le_cis_established_get_max_pdu_c_to_p(packet);
-                        iso_stream->max_sdu_p_to_c = hci_subevent_le_cis_established_get_max_pdu_p_to_c(packet);
+                        // track connection info
+                        iso_stream->number_of_subevents  = hci_subevent_le_cis_established_get_nse(packet);
+                        iso_stream->burst_number_c_to_p  = hci_subevent_le_cis_established_get_bn_c_to_p(packet);
+                        iso_stream->burst_number_p_to_c  = hci_subevent_le_cis_established_get_bn_p_to_c(packet);
+                        iso_stream->flush_timeout_c_to_p = hci_subevent_le_cis_established_get_ft_c_to_p(packet);
+                        iso_stream->flush_timeout_p_to_c = hci_subevent_le_cis_established_get_ft_p_to_c(packet);
+                        iso_stream->max_sdu_c_to_p       = hci_subevent_le_cis_established_get_max_pdu_c_to_p(packet);
+                        iso_stream->max_sdu_p_to_c       = hci_subevent_le_cis_established_get_max_pdu_p_to_c(packet);
+                        iso_stream->iso_interval_1250us  = hci_subevent_le_cis_established_get_iso_interval(packet);
                         if (hci_stack->iso_active_operation_group_id == HCI_ISO_GROUP_ID_SINGLE_CIS){
                             // CIS Accept by Peripheral
                             if (status == ERROR_CODE_SUCCESS){
@@ -4469,45 +4527,6 @@ static void event_handler(uint8_t *packet, uint16_t size){
 
 #ifdef ENABLE_CLASSIC
 
-#ifdef ENABLE_SCO_OVER_HCI
-static void sco_tx_timeout_handler(btstack_timer_source_t * ts);
-static void sco_schedule_tx(hci_connection_t * conn);
-
-static void sco_tx_timeout_handler(btstack_timer_source_t * ts){
-    log_debug("SCO TX Timeout");
-    hci_con_handle_t con_handle = (hci_con_handle_t) (uintptr_t) btstack_run_loop_get_timer_context(ts);
-    hci_connection_t * conn = hci_connection_for_handle(con_handle);
-    if (!conn) return;
-
-    // trigger send
-    conn->sco_tx_ready = 1;
-    // extra packet if CVSD but SCO buffer is too short
-    if (((hci_stack->sco_voice_setting_active & 0x03) != 0x03) && (hci_stack->sco_data_packet_length < 123)){
-        conn->sco_tx_ready++;
-    }
-    hci_notify_if_sco_can_send_now();
-}
-
-
-#define SCO_TX_AFTER_RX_MS (6)
-
-static void sco_schedule_tx(hci_connection_t * conn){
-
-    uint32_t now = btstack_run_loop_get_time_ms();
-    uint32_t sco_tx_ms = conn->sco_rx_ms + SCO_TX_AFTER_RX_MS;
-    int time_delta_ms = sco_tx_ms - now;
-
-    btstack_timer_source_t * timer = (conn->sco_rx_count & 1) ? &conn->timeout : &conn->timeout_sco;
-
-    // log_error("SCO TX at %u in %u", (int) sco_tx_ms, time_delta_ms);
-    btstack_run_loop_remove_timer(timer);
-    btstack_run_loop_set_timer(timer, time_delta_ms);
-    btstack_run_loop_set_timer_context(timer, (void *) (uintptr_t) conn->con_handle);
-    btstack_run_loop_set_timer_handler(timer, &sco_tx_timeout_handler);
-    btstack_run_loop_add_timer(timer);
-}
-#endif
-
 static void sco_handler(uint8_t * packet, uint16_t size){
     // lookup connection struct
     hci_con_handle_t con_handle = READ_SCO_CONNECTION_HANDLE(packet);
@@ -4529,29 +4548,20 @@ static void sco_handler(uint8_t * packet, uint16_t size){
     } else {
         // log_debug("sco flow %u, handle 0x%04x, packets sent %u, bytes send %u", hci_stack->synchronous_flow_control_enabled, (int) con_handle, conn->num_packets_sent, conn->num_sco_bytes_sent);
         if (hci_stack->synchronous_flow_control_enabled == 0){
-            uint32_t now = btstack_run_loop_get_time_ms();
-
-            if (!conn->sco_rx_valid){
-                // ignore first 10 packets
-                conn->sco_rx_count++;
-                // log_debug("sco rx count %u", conn->sco_rx_count);
-                if (conn->sco_rx_count == 10) {
-                    // use first timestamp as is and pretent it just started
-                    conn->sco_rx_ms = now;
-                    conn->sco_rx_valid = 1;
-                    conn->sco_rx_count = 0;
-                    sco_schedule_tx(conn);
+            // ignore received SCO packets for the first 10 ms, then allow for max two HCI_SCO_2EV3_SIZE packets
+            uint16_t max_sco_packets = btstack_min(2 * HCI_SCO_2EV3_SIZE / conn->sco_payload_length, hci_stack->sco_packets_total_num);
+            if (conn->sco_tx_active == 0){
+                if (btstack_time_delta(btstack_run_loop_get_time_ms(), conn->sco_established_ms) > 10){
+                    conn->sco_tx_active = 1;
+                    conn->sco_tx_ready = max_sco_packets;
+                    log_info("Start SCO sending, %u packets", conn->sco_tx_ready);
+                    hci_notify_if_sco_can_send_now();
                 }
             } else {
-                // track expected arrival timme
-                conn->sco_rx_count++;
-                conn->sco_rx_ms += 7;
-                int delta = (int32_t) (now - conn->sco_rx_ms);
-                if (delta > 0){
-                    conn->sco_rx_ms++;
+                if (conn->sco_tx_ready < max_sco_packets){
+                    conn->sco_tx_ready++;
                 }
-                // log_debug("sco rx %u", conn->sco_rx_ms);
-                sco_schedule_tx(conn);
+                hci_notify_if_sco_can_send_now();
             }
         }
     }
@@ -4577,6 +4587,18 @@ static void sco_handler(uint8_t * packet, uint16_t size){
 #endif
 
 static void packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size){
+#ifdef ENABLE_LE_ISOCHRONOUS_STREAMS
+    // propagate ISO packets received as ACL
+    hci_iso_stream_t * iso_stream;
+    if ((packet_type == HCI_ACL_DATA_PACKET) && (size >= HCI_ACL_HEADER_SIZE)){
+        hci_con_handle_t con_handle = READ_ACL_CONNECTION_HANDLE(packet);
+        iso_stream = hci_iso_stream_for_con_handle(con_handle);
+        if (iso_stream != NULL){
+            packet_type = HCI_ISO_DATA_PACKET;
+        }
+    }
+#endif
+
     hci_dump_packet(packet_type, 1, packet, size);
     switch (packet_type) {
         case HCI_EVENT_PACKET:
@@ -4592,7 +4614,11 @@ static void packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size){
 #endif
 #ifdef ENABLE_LE_ISOCHRONOUS_STREAMS
         case HCI_ISO_DATA_PACKET:
-            hci_iso_packet_handler(packet, size);
+            if ((iso_stream == NULL) && (size >= HCI_ISO_HEADER_SIZE)){
+                hci_con_handle_t con_handle = READ_ISO_CONNECTION_HANDLE(packet);
+                iso_stream = hci_iso_stream_for_con_handle(con_handle);
+            }
+            hci_iso_packet_handler(iso_stream, packet, size);
             break;
 #endif
         default:
@@ -5770,7 +5796,7 @@ static bool hci_run_general_gap_classic(void){
     // pairing
     if (hci_stack->gap_pairing_state != GAP_PAIRING_STATE_IDLE){
         uint8_t state = hci_stack->gap_pairing_state;
-        uint8_t pin_code[16];
+        uint8_t pin_code[PIN_CODE_LEN];
         switch (state){
             case GAP_PAIRING_STATE_SEND_PIN:
                 hci_stack->gap_pairing_state = GAP_PAIRING_STATE_IDLE;
@@ -6597,7 +6623,7 @@ static bool hci_run_general_gap_le(void){
             periodic_advertiser_list_entry_t * entry = (periodic_advertiser_list_entry_t*) btstack_linked_list_iterator_next(&lit);
             if (entry->state & LE_PERIODIC_ADVERTISER_LIST_ENTRY_REMOVE_FROM_CONTROLLER){
                 entry->state &= ~LE_PERIODIC_ADVERTISER_LIST_ENTRY_REMOVE_FROM_CONTROLLER;
-                hci_send_cmd(&hci_le_remove_device_from_periodic_advertiser_list, entry->address_type, entry->address);
+                hci_send_cmd(&hci_le_remove_device_from_periodic_advertiser_list, entry->address_type, entry->address, entry->sid);
                 return true;
             }
             if (entry->state & LE_PERIODIC_ADVERTISER_LIST_ENTRY_ADD_TO_CONTROLLER){
@@ -8230,10 +8256,8 @@ uint8_t gap_connect(const bd_addr_t addr, bd_addr_type_t addr_type){
         log_info("gap_connect: no connection exists yet, creating context");
         conn = create_connection_for_bd_addr_and_type(addr, addr_type, HCI_ROLE_MASTER);
         if (!conn){
-            // notify client that alloc failed
-            hci_emit_le_connection_complete(addr_type, addr, 0, BTSTACK_MEMORY_ALLOC_FAILED);
             log_info("gap_connect: failed to alloc hci_connection_t");
-            return GATT_CLIENT_NOT_CONNECTED; // don't sent packet to controller
+            return BTSTACK_MEMORY_ALLOC_FAILED; // don't sent packet to controller
         }
 
         // set le connecting state
@@ -8791,6 +8815,14 @@ uint8_t gap_le_set_phy(hci_con_handle_t con_handle, uint8_t all_phys, uint8_t tx
 }
 
 static uint8_t hci_whitelist_add(bd_addr_type_t address_type, const bd_addr_t address){
+
+#if !defined(HAVE_MALLOC) && (!defined(MAX_NR_WHITELIST_ENTRIES) || (MAX_NR_WHITELIST_ENTRIES == 0))
+    // incorrect configuration:
+    // - as MAX_NR_WHITELIST_ENTRIES is not defined or zero this function always fails
+    // - please set MAX_NR_WHITELIST_ENTRIES in btstack_config.h
+    btstack_assert(false);
+#endif
+
     // check if already in list
     btstack_linked_list_iterator_t it;
     btstack_linked_list_iterator_init(&it, &hci_stack->le_whitelist);
@@ -9110,6 +9142,7 @@ static int gap_pairing_set_state_and_run(const bd_addr_t addr, uint8_t state){
  */
 int gap_pin_code_response_binary(const bd_addr_t addr, const uint8_t * pin_data, uint8_t pin_len){
     if (hci_stack->gap_pairing_state != GAP_PAIRING_STATE_IDLE) return ERROR_CODE_COMMAND_DISALLOWED;
+    if (pin_len > PIN_CODE_LEN) return ERROR_CODE_INVALID_HCI_COMMAND_PARAMETERS;
     hci_stack->gap_pairing_input.gap_pairing_pin = pin_data;
     hci_stack->gap_pairing_pin_len = pin_len;
     return gap_pairing_set_state_and_run(addr, GAP_PAIRING_STATE_SEND_PIN);
@@ -9604,6 +9637,14 @@ void gap_set_peer_privacy_mode(le_privacy_mode_t privacy_mode ){
 #ifdef ENABLE_LE_EXTENDED_ADVERTISING
 
 static uint8_t hci_periodic_advertiser_list_add(bd_addr_type_t address_type, const bd_addr_t address, uint8_t advertising_sid){
+
+#if !defined(HAVE_MALLOC) && (!defined(MAX_NR_PERIODIC_ADVERTISER_LIST_ENTRIES) || (MAX_NR_PERIODIC_ADVERTISER_LIST_ENTRIES == 0))
+    // incorrect configuration:
+    // - as MAX_NR_PERIODIC_ADVERTISER_LIST_ENTRIES is not defined or zero this function always fails
+    // - please set MAX_NR_PERIODIC_ADVERTISER_LIST_ENTRIES in btstack_config.h
+    btstack_assert(false);
+#endif
+
     // check if already in list
     btstack_linked_list_iterator_t it;
     btstack_linked_list_iterator_init(&it, &hci_stack->le_periodic_advertiser_list);
@@ -9822,38 +9863,35 @@ static bool hci_iso_sdu_complete(uint8_t * packet, uint16_t size){
     return (sdu_len_offset + 2 + sdu_len) == size;
 }
 
-static void hci_iso_packet_handler(uint8_t * packet, uint16_t size){
-    if (hci_stack->iso_packet_handler == NULL) {
+static void hci_iso_packet_handler(hci_iso_stream_t *iso_stream, uint8_t *packet, uint16_t size) {
+    if (iso_stream == NULL){
+        log_error("acl_handler called with non-registered handle %u!" , READ_ISO_CONNECTION_HANDLE(packet));
         return;
     }
-    if (size < 4) {
+
+    if (hci_stack->iso_packet_handler == NULL) {
         return;
     }
 
     // parse header
-    uint16_t conn_handle_and_flags = little_endian_read_16(packet, 0);
-    uint16_t iso_data_len = little_endian_read_16(packet, 2);
-    hci_con_handle_t cis_handle = (hci_con_handle_t) (conn_handle_and_flags & 0xfff);
-    hci_iso_stream_t * iso_stream = hci_iso_stream_for_con_handle(cis_handle);
-    uint8_t pb_flag = (conn_handle_and_flags >> 12) & 3;
+    uint16_t con_handle_and_flags = little_endian_read_16(packet, 0);
+    uint16_t data_total_length = little_endian_read_16(packet, 2);
+    uint8_t  pb_flag = (con_handle_and_flags >> 12) & 3;
 
     // assert packet is complete
-    if ((iso_data_len + 4u) != size){
+    if ((data_total_length + 4u) != size){
         return;
     }
 
     if ((pb_flag & 0x01) == 0){
         if (pb_flag == 0x02){
-            // The ISO_Data_Load field contains a header and a complete SDU.
+            // The ISO_SDU_Fragment field contains a header and a complete SDU.
             if (hci_iso_sdu_complete(packet, size)) {
                 (hci_stack->iso_packet_handler)(HCI_ISO_DATA_PACKET, 0, packet, size);
             }
         } else {
             // The ISO_Data_Load field contains a header and the first fragment of a fragmented SDU.
-            if (iso_stream == NULL){
-                return;
-            }
-            if (size > HCI_ISO_PAYLOAD_SIZE){
+            if (size > sizeof(iso_stream->reassembly_buffer)){
                 return;
             }
             memcpy(iso_stream->reassembly_buffer, packet, size);
@@ -9862,31 +9900,32 @@ static void hci_iso_packet_handler(uint8_t * packet, uint16_t size){
             iso_stream->reassembly_pos = size;
         }
     } else {
-        // iso_data_load contains continuation or last fragment of an SDU
-        uint8_t  ts_flag = (conn_handle_and_flags >> 14) & 1;
+        // ISO_SDU_Fragment contains continuation or last fragment of an SDU
+        uint8_t ts_flag = (con_handle_and_flags >> 14) & 1;
         if (ts_flag != 0){
            return;
         }
         // append fragment
-        if (iso_stream == NULL){
-            return;
-        }
         if (iso_stream->reassembly_pos == 0){
             return;
         }
-        if ((iso_stream->reassembly_pos + iso_data_len) > size){
+
+        if ((iso_stream->reassembly_pos + data_total_length) > sizeof(iso_stream->reassembly_buffer)){
             // reset reassembly buffer
             iso_stream->reassembly_pos = 0;
             return;
         }
-        memcpy(&iso_stream->reassembly_buffer[iso_stream->reassembly_pos], &packet[4], iso_data_len);
-        iso_stream->reassembly_pos += iso_data_len;
+        memcpy(&iso_stream->reassembly_buffer[iso_stream->reassembly_pos], &packet[4], data_total_length);
+        iso_stream->reassembly_pos += data_total_length;
 
         // deliver if last fragment and SDU complete
         if (pb_flag == 0x03){
             if (hci_iso_sdu_complete(iso_stream->reassembly_buffer, iso_stream->reassembly_pos)){
+                // fix data_total_length
+                little_endian_store_16(iso_stream->reassembly_buffer, 2, iso_stream->reassembly_pos - HCI_ISO_HEADER_SIZE);
                 (hci_stack->iso_packet_handler)(HCI_ISO_DATA_PACKET, 0, iso_stream->reassembly_buffer, iso_stream->reassembly_pos);
             }
+            // reset reassembly buffer
             iso_stream->reassembly_pos = 0;
         }
     }
@@ -9926,34 +9965,38 @@ static void hci_emit_cig_created(const le_audio_cig_t * cig, uint8_t status){
     hci_emit_event(event, pos, 0);
 }
 
-static void hci_emit_cis_created(uint8_t status, uint8_t cig_id, uint8_t cis_id, hci_con_handle_t cis_con_handle,
-                     hci_con_handle_t acl_con_handle) {
-    uint8_t event [10];
+static uint16_t hci_setup_cis_created(uint8_t * event, hci_iso_stream_t * iso_stream, uint8_t status) {
     uint16_t pos = 0;
     event[pos++] = HCI_EVENT_META_GAP;
     event[pos++] = 8;
     event[pos++] = GAP_SUBEVENT_CIS_CREATED;
     event[pos++] = status;
-    event[pos++] = cig_id;
-    event[pos++] = cis_id;
-    little_endian_store_16(event, pos, cis_con_handle);
+    event[pos++] = iso_stream->group_id;
+    event[pos++] = iso_stream->stream_id;
+    little_endian_store_16(event, pos, iso_stream->cis_handle);
     pos += 2;
-    little_endian_store_16(event, pos, acl_con_handle);
+    little_endian_store_16(event, pos, iso_stream->acl_handle);
     pos += 2;
-    hci_emit_event(event, pos, 0);
+    little_endian_store_16(event, pos, iso_stream->iso_interval_1250us);
+    pos += 2;
+    event[pos++] = iso_stream->number_of_subevents;
+    event[pos++] = iso_stream->burst_number_c_to_p;
+    event[pos++] = iso_stream->burst_number_p_to_c;
+    event[pos++] = iso_stream->flush_timeout_c_to_p;
+    event[pos++] = iso_stream->flush_timeout_p_to_c;
+    return pos;
 }
 
 // emits GAP_SUBEVENT_CIS_CREATED after calling hci_iso_finalize
 static void hci_cis_handle_created(hci_iso_stream_t * iso_stream, uint8_t status){
     // cache data before finalizing struct
-    uint8_t cig_id              = iso_stream->group_id;
-    uint8_t cis_id              = iso_stream->stream_id;
-    hci_con_handle_t cis_handle = iso_stream->cis_handle;
-    hci_con_handle_t acl_handle = iso_stream->acl_handle;
+    uint8_t event [17];
+    uint16_t pos = hci_setup_cis_created(event, iso_stream, status);
+    btstack_assert(pos <= sizeof(event));
     if (status != ERROR_CODE_SUCCESS){
         hci_iso_stream_finalize(iso_stream);
     }
-    hci_emit_cis_created(status, cig_id, cis_id, cis_handle, acl_handle);
+    hci_emit_event(event, pos, 0);
 }
 
 static void hci_emit_big_terminated(const le_audio_big_t * big){

@@ -1979,14 +1979,21 @@ typedef uint8_t sm_key_t[16];
 #define GAP_SUBEVENT_CIG_CREATED                                 0x06u
 
 /**
- * @format 1111HH
+ * @format 1111HH211111
  * @param subevent_code
  * @param status
  * @param cig_id
  * @param cis_id
  * @param cis_con_handle
  * @param acl_con_handle
+ * @param iso_interval_1250us
+ * @param number_of_subevents
+ * @param burst_number_c_to_p
+ * @param burst_number_p_to_c
+ * @param flush_timeout_c_to_p
+ * @param flush_timeout_p_to_c
  */
+
 #define GAP_SUBEVENT_CIS_CREATED                                 0x07u
 
 /** HSP Subevent */
@@ -3903,6 +3910,17 @@ typedef uint8_t sm_key_t[16];
  * @param con_handle
 */
 #define HIDS_SUBEVENT_EXIT_SUSPEND                                          0x09u
+
+/**
+ * @format 1211JV
+ * @param subevent_code
+ * @param con_handle
+ * @param report_id
+ * @param report_type
+ * @param report_length
+ * @param report_data
+*/
+#define HIDS_SUBEVENT_SET_REPORT                                            0x0au
 
 /**
  * @format 1211

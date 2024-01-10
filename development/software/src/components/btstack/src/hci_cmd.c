@@ -476,7 +476,14 @@ const hci_cmd_t hci_read_remote_version_information = {
     HCI_OPCODE_HCI_READ_REMOTE_VERSION_INFORMATION, "H"
 };
 
-/** 
+/**
+ * @param handle
+ */
+const hci_cmd_t hci_read_clock_offset = {
+        HCI_OPCODE_HCI_READ_CLOCK_OFFSET, "H"
+};
+
+/**
  * @param handle
  * @param transmit_bandwidth 8000(64kbps)
  * @param receive_bandwidth  8000(64kbps)
@@ -1226,14 +1233,43 @@ const hci_cmd_t hci_read_bd_addr = {
 };
 
 /**
- * Status Paramters
+ * Status Paramteers
  */
+
+/**
+ * @param handle
+ */
+const hci_cmd_t hci_read_failed_contact_counter = {
+    HCI_OPCODE_HCI_READ_FAILED_CONTACT_COUNTER, "H"
+};
+
+/**
+ * @param handle
+ */
+const hci_cmd_t hci_reset_failed_contact_counter = {
+    HCI_OPCODE_HCI_RESET_FAILED_CONTACT_COUNTER, "H"
+};
+
+/**
+ * @param handle
+ */
+const hci_cmd_t hci_read_link_quality = {
+    HCI_OPCODE_HCI_READ_LINK_QUALITY, "H"
+};
 
 /**
  * @param handle
  */
 const hci_cmd_t hci_read_rssi = {
     HCI_OPCODE_HCI_READ_RSSI, "H"
+};
+
+/**
+ * @param handle
+ * @param which_clock
+ */
+const hci_cmd_t hci_read_clock = {
+    HCI_OPCODE_HCI_READ_CLOCK, "H1"
 };
 
 /**
@@ -2430,6 +2466,37 @@ const hci_cmd_t hci_bcm_enable_wbs = {
 };
 
 /**
+ * @brief Configure PCM2, see Cypress AN214937
+ * @param action
+ * @param test_options
+ * @param op_mode
+ * @param sync_and_clock_options
+ * @param pcm_clock_freq
+ * @param sync_signal_width
+ * @param slot_width
+ * @param number_of_slots
+ * @param bank_0_fill_mode
+ * @param bank_0_number_of_fill_bits
+ * @param bank_0_programmable_fill_data
+ * @param bank_1_fill_mode
+ * @param bank_1_number_of_fill_bits
+ * @param bank_1_programmable_fill_data
+ * @param data_justify_and_bit_order_options
+ * @param ch_0_slot_number
+ * @param ch_1_slot_number
+ * @param ch_2_slot_number
+ * @param ch_3_slot_number
+ * @param ch_4_slot_number
+ * @param ch_0_period
+ * @param ch_1_period
+ * @param ch_2_period
+*
+ */
+const hci_cmd_t hci_bcm_pcm2_setup = {
+        HCI_OPCODE_HCI_BCM_PCM2_SETUP, "11114111111111111111111"
+};
+
+/**
  * @brief Configure SCO Routing (BCM)
  * @param sco_routing is 0 for PCM, 1 for Transport, 2 for Codec and 3 for I2S
  * @param pcm_interface_rate is 0 for 128KBps, 1 for 256 KBps, 2 for 512KBps, 3 for 1024KBps, and 4 for 2048Kbps
@@ -2440,6 +2507,19 @@ const hci_cmd_t hci_bcm_enable_wbs = {
 const hci_cmd_t hci_bcm_write_sco_pcm_int = {
     HCI_OPCODE_HCI_BCM_WRITE_SCO_PCM_INT, "11111"
     // return: status
+};
+
+/**
+ * @brief Configure PCM Data Format (BCM)
+ * @param lsb_position 0x00 – LSB last/MSB first, 0x01 – LSB first/MSB last
+ * @param fill_bits_value three bit value defines the fill bits used by the PCM interface,only if fill_data_selection == programmable
+ * @param fill_data_selection 0x00 zeros, 0x01 ones, 0x02 sign bit, 0x03 programmable
+ * @param number_of_fill_bits 0..3
+ * @param right_left_justification 0x00 left justified, 0x01 right justified
+ */
+const hci_cmd_t hci_bcm_write_pcm_data_format_param = {
+        HCI_OPCODE_HCI_BCM_WRITE_PCM_DATA_FORMAT_PARAM, "11111"
+        // return: status
 };
 
 /**

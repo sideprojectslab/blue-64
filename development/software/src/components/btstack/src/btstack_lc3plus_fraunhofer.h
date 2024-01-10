@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 BlueKitchen GmbH
+ * Copyright (C) 2022 BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,9 +13,6 @@
  * 3. Neither the name of the copyright holders nor the names of
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- * 4. Any redistribution, use, or modification is done solely for
- *    personal benefit and not for any commercial purpose or for
- *    monetary gain.
  *
  * THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -30,62 +27,63 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Please inquire about commercial licensing options at 
- * contact@bluekitchen-gmbh.com
- *
  */
 
 /**
- * @title u-blox SPP Service Server
- * 
+ * @title Adapter for Fraunhofer LC3plus Coddec
+ * only uses suitable subset for lc3 testing
  */
 
-#ifndef UBLOX_SPP_H
-#define UBLOX_SPP_H
+#ifndef BTSTACK_LC3PLUS_FRAUNHOFER_H
+#define BTSTACK_LC3PLUS_FRAUNHOFER_H
 
 #include <stdint.h>
-#include "bluetooth.h"
-#include "btstack_defines.h"
+#include "btstack_lc3.h"
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
+#ifdef HAVE_LC3PLUS
+
+#include "LC3plus/lc3.h"
+
 /* API_START */
 
-/**
- * @text The u-blox SPP Service is implementation of the u-Blox SPP-like profile.
- *
- * To use with your application, add `#import <ublox_spp_service.gatt>` to your .gatt file
- * and call all functions below. All strings and blobs need to stay valid after calling the functions.
- */
+typedef struct {
+    btstack_lc3_frame_duration_t    frame_duration;
+    uint16_t                        octets_per_frame;
+    uint16_t                        samples_per_frame;
+    uint32_t                        sample_rate;
+    // decoder must be 4-byte aligned
+    uint8_t                         decoder[LC3PLUS_DEC_MAX_SIZE];
+} btstack_lc3plus_fraunhofer_decoder_t;
+
+typedef struct {
+    btstack_lc3_frame_duration_t    frame_duration;
+    uint16_t                        octets_per_frame;
+    uint32_t                        sample_rate;
+    // encoder must be 4-byte aligned
+    uint8_t                         encoder[LC3PLUS_ENC_MAX_SIZE];
+} btstack_lc3plus_fraunhofer_encoder_t;
 
 /**
- * @brief Init ublox SPP Service Server with ATT DB
- * @param packet_handler for events and tx data from peer as RFCOMM_DATA_PACKET
+ * Init LC3 Decoder Instance
+ * @param context for Fraunhofer LC3plus decoder
  */
-void ublox_spp_service_server_init(btstack_packet_handler_t packet_handler);
-
-/** 
- * @brief Queue send request. When called, one packet can be send via ublox_spp_service_send below
- * @param request
- * @param con_handle
- */
-void ublox_spp_service_server_request_can_send_now(btstack_context_callback_registration_t * request, hci_con_handle_t con_handle);
+const btstack_lc3_decoder_t * btstack_lc3plus_fraunhofer_decoder_init_instance(btstack_lc3plus_fraunhofer_decoder_t * context);
 
 /**
- * @brief Send data
- * @param con_handle
- * @param data
- * @param size
+ * Init LC3 Encoder Instance
+ * @param context for Fraunhofer LC3plus encoder
  */
-int ublox_spp_service_server_send(hci_con_handle_t con_handle, const uint8_t * data, uint16_t size);
+const btstack_lc3_encoder_t * btstack_lc3plus_fraunhofer_encoder_init_instance(btstack_lc3plus_fraunhofer_encoder_t * context);
 
 /* API_END */
+
+#endif /* HAVE_LC3PLUS */
 
 #if defined __cplusplus
 }
 #endif
-
-#endif
-
+#endif // BTSTACK_LC3_PLUS_FRAUNHOFER_H

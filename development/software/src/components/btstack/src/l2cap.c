@@ -1364,11 +1364,14 @@ bool l2cap_can_send_prepared_packet_now(uint16_t local_cid){
     return hci_can_send_prepared_acl_packet_now(channel->con_handle);
 }
 
+#endif
+
+#ifdef L2CAP_USES_CHANNELS
 uint16_t l2cap_get_remote_mtu_for_local_cid(uint16_t local_cid){
     l2cap_channel_t * channel = l2cap_get_channel_for_local_cid(local_cid);
     if (channel) {
         return channel->remote_mtu;
-    } 
+    }
     return 0;
 }
 #endif
@@ -1924,7 +1927,7 @@ static void l2cap_run_signaling_response(void) {
                             memset(map, 0, 8);
                             // L2CAP Signaling Channel + Connectionless reception
                             map[0] = (1 << L2CAP_CID_SIGNALING) | (1 << L2CAP_CID_CONNECTIONLESS_CHANNEL);
-#if defined(ENABLE_BLE) || defined (ENABLE_EXPLICIT_BR_EDR_SECURITY_MANAGER)
+#if defined (ENABLE_EXPLICIT_BR_EDR_SECURITY_MANAGER) || (defined(ENABLE_BLE) && defined(ENABLE_CROSS_TRANSPORT_KEY_DERIVATION))
                             // BR/EDR Security Manager (bit 7) if BR/EDR Secure Connections possible
                             if (gap_secure_connections_active()){
                                 map[0] |= (1 << L2CAP_CID_BR_EDR_SECURITY_MANAGER);

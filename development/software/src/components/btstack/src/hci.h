@@ -608,9 +608,8 @@ typedef struct {
 
 #ifdef ENABLE_SCO_OVER_HCI
     // track SCO rx event
-    uint32_t sco_rx_ms;
-    uint8_t  sco_rx_count;
-    uint8_t  sco_rx_valid;
+    uint32_t sco_established_ms;
+    uint8_t  sco_tx_active;
 #endif
     // generate sco can send now based on received packets, using timeout below
     uint8_t  sco_tx_ready;
@@ -744,12 +743,18 @@ typedef struct {
     hci_con_handle_t acl_handle;
 
     // connection info
+    uint8_t  number_of_subevents;
+    uint8_t  burst_number_c_to_p;
+    uint8_t  burst_number_p_to_c;
+    uint8_t  flush_timeout_c_to_p;
+    uint8_t  flush_timeout_p_to_c;
     uint16_t max_sdu_c_to_p;
     uint16_t max_sdu_p_to_c;
+    uint16_t iso_interval_1250us;
 
-    // re-assembly buffer
+    // re-assembly buffer (includes ISO packet header with timestamp)
     uint16_t reassembly_pos;
-    uint8_t  reassembly_buffer[HCI_ISO_PAYLOAD_SIZE];
+    uint8_t  reassembly_buffer[12 + HCI_ISO_PAYLOAD_SIZE];
 
     // number packets sent to controller
     uint8_t num_packets_sent;
@@ -852,6 +857,12 @@ typedef enum hci_init_state{
 #ifdef ENABLE_SCO_OVER_PCM
     HCI_INIT_BCM_WRITE_I2SPCM_INTERFACE_PARAM,
     HCI_INIT_W4_BCM_WRITE_I2SPCM_INTERFACE_PARAM,
+    HCI_INIT_BCM_WRITE_PCM_DATA_FORMAT_PARAM,
+    HCI_INIT_W4_BCM_WRITE_PCM_DATA_FORMAT_PARAM,
+#ifdef HAVE_BCM_PCM2
+    HCI_INIT_BCM_PCM2_SETUP,
+    HCI_INIT_W4_BCM_PCM2_SETUP,
+#endif
 #endif
 #endif
 

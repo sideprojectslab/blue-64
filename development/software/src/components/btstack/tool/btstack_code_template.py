@@ -1,5 +1,20 @@
-/*
- * Copyright (C) 2018 BlueKitchen GmbH
+#!/usr/bin/env python3
+
+import glob
+import re
+import sys
+import os
+import datetime
+from pathlib import Path
+
+program_info = '''
+Generate .h and .c with BTstack copyright header in BTstack tree
+
+Usage: tool/btstack_code_template.py path/filename (without extension)
+'''
+
+copyright = """/*
+ * Copyright (C) {copyright_year} BlueKitchen GmbH
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,58 +49,66 @@
  * contact@bluekitchen-gmbh.com
  *
  */
+"""
 
+include_template = '''
 /**
- * @title u-blox SPP Service Server
- * 
+ *  @brief TODO
  */
 
-#ifndef UBLOX_SPP_H
-#define UBLOX_SPP_H
+#ifndef {include_guard}
+#define {include_guard}
+
+#if defined __cplusplus
+extern "C" {{
+#endif
+
+#if defined __cplusplus
+}}
+#endif
+#endif // {include_guard}
+'''
+
+source_template = '''
+#define BTSTACK_FILE__ "{btstack_file}"
+
+#include "{header_file}"
+
+#include "btstack_bool.h"
+#include "btstack_config.h"
+#include "btstack_debug.h"
 
 #include <stdint.h>
-#include "bluetooth.h"
-#include "btstack_defines.h"
+'''
 
-#if defined __cplusplus
-extern "C" {
-#endif
+btstack_root = os.path.abspath(os.path.dirname(sys.argv[0]) + '/..')
 
-/* API_START */
+if len(sys.argv) == 1:
+	print(program_info)
+	sys.exit(0)
 
-/**
- * @text The u-blox SPP Service is implementation of the u-Blox SPP-like profile.
- *
- * To use with your application, add `#import <ublox_spp_service.gatt>` to your .gatt file
- * and call all functions below. All strings and blobs need to stay valid after calling the functions.
- */
+path = sys.argv[1]
+path_object = Path(path)
 
-/**
- * @brief Init ublox SPP Service Server with ATT DB
- * @param packet_handler for events and tx data from peer as RFCOMM_DATA_PACKET
- */
-void ublox_spp_service_server_init(btstack_packet_handler_t packet_handler);
+# include file
+path_include = path + '.h'
+copyright_year = datetime.datetime.now().year
+include_guard = path_object.name.replace('/','_').upper()+'_H'
+with open(btstack_root + '/' + path_include, 'wt') as fout:
+    fout.write(copyright.format(copyright_year=copyright_year))
+    fout.write(include_template.format(include_guard=include_guard))
 
-/** 
- * @brief Queue send request. When called, one packet can be send via ublox_spp_service_send below
- * @param request
- * @param con_handle
- */
-void ublox_spp_service_server_request_can_send_now(btstack_context_callback_registration_t * request, hci_con_handle_t con_handle);
+# source file
+path_source  = path + ".c"
+btstack_file = path_object.name + '.c'
+if path_include.startswith('src/'):
+	# keep path for src/ folder
+	header_file = path_include.replace('src/','')
+else:
+	# only use filename for everything else
+	header_file = Path(path).name + '.h'
+with open(btstack_root + '/' + path_source, 'wt') as fout:
+    fout.write(copyright.format(copyright_year=copyright_year))
+    fout.write(source_template.format(btstack_file=btstack_file,header_file=header_file))
 
-/**
- * @brief Send data
- * @param con_handle
- * @param data
- * @param size
- */
-int ublox_spp_service_server_send(hci_con_handle_t con_handle, const uint8_t * data, uint16_t size);
-
-/* API_END */
-
-#if defined __cplusplus
-}
-#endif
-
-#endif
-
+print("Generated {file}.h and {file}.c in {path}".format(file=path_object.name,path=str(path_object.parent)))
