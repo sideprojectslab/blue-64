@@ -40,6 +40,9 @@ Firmware binaries can be found in the "Releases" section of the GitHub page. The
 - partition-table.bin
 - blue-64-app.bin
 
+Download and install the CP210X Universal Windows Drivers for the on-board programmer at this website:
+https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
+
 Download the Espressif Flash Download Tool at this website:
 https://www.espressif.com/en/support/download/other-tools
 
@@ -47,7 +50,10 @@ Run the .exe application and select "ESP32" as target and "Develop" as work mode
 
 ![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/flash_tool.png)
 
-Connect the PC to the USB port on the Blue-64 and select the appropriate COM port in the Flash Download Tool. Finally press start and the new firmware will be downloaded to the board (it might take a few minutes).
+Connect the PC to the USB port on the Blue-64 and select the appropriate COM port in the Flash Download Tool. Press the "erase" button to erase the FLASH and finally press "start" and the new firmware will be downloaded to the board (should take less than a minute).
+
+In case the method above does not work, please try the online tool at this website:
+https://espressif.github.io/esptool-js/
 
 Don't worry you can't brick it (as far as I know), if something fails you will always be able to re-try flashing the new firmware.
 

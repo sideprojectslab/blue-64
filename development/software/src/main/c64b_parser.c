@@ -53,14 +53,14 @@ static SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
 void c64b_parser_connect(uni_hid_device_t* d)
 {
 //	// keyboard ID always sits on index 0
-//	if(d->controller.klass == UNI_CONTROLLER_CLASS_KEYBOARD)
+//	if(uni_hid_device_is_keyboard(d))
 //	{
 //		logi("parser: keyboard connected: %p\n", d);
 //		if(ctrl_ptr[0] == NULL)
 //			ctrl_ptr[0] = &(d->controller);
 //	}
 //	// inserting controller ID in the first free location after 0
-//	else if(d->controller.klass == UNI_CONTROLLER_CLASS_GAMEPAD)
+	if(uni_hid_device_is_gamepad(d))
 	{
 		logi("parser: gamepad connected: %p\n", d);
 		if(ctrl_ptr[1] == NULL)
@@ -68,10 +68,10 @@ void c64b_parser_connect(uni_hid_device_t* d)
 		else if(ctrl_ptr[2] == NULL)
 			ctrl_ptr[2] = &(d->controller);
 	}
-//	else
-//	{
-//		logi("parser: device class not supported: %d\n", d->controller.klass);
-//	}
+	else
+	{
+		logi("parser: device class not supported: %d\n", d->controller.klass);
+	}
 }
 
 //----------------------------------------------------------------------------//
