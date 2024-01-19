@@ -442,7 +442,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 					if(!(gp->misc_buttons & BTN_SELECT_MASK))
 					{
 						c64b_keyboard_char_psh(&keyboard, " ");
-						c64b_keyboard_cmdr_psh(&keyboard);
+						//c64b_keyboard_cmdr_psh(&keyboard);
 					}
 				}
 			}
@@ -455,7 +455,8 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 			}
 
 			// swap ports
-			if((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK))
+			if(((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK)) ||
+			   ((gp->buttons      & BTN_R3_MASK  ) && !(gp_old->buttons      & BTN_R3_MASK  )))
 			{
 				logi("Swapping Ports\n");
 				swap_ports ^= true;
