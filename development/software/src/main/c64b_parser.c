@@ -422,6 +422,17 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 				xSemaphoreGive(feed_sem_h);
 			}
 		}
+
+		// swap ports
+		if((gp->buttons & BTN_Y_MASK) && !(gp_old->buttons & BTN_Y_MASK))
+		{
+			if((cport_idx == CPORT_2) || (ctrl_ptr[1] == NULL) || (ctrl_ptr[2] == NULL))
+			{
+				logi("Swapping Ports\n");
+				swap_ports ^= true;
+				c64b_keyboard_reset(&keyboard);
+			}
+		}
 	}
 
 	//---------------------------------------------------------------------//
@@ -452,15 +463,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 				c64b_keyboard_keys_rel(&keyboard, true);
 				c64b_keyboard_cmdr_rel(&keyboard);
 				kb_owner = KB_OWNER_NONE;
-			}
-
-			// swap ports
-			if(((gp->misc_buttons & BTN_HOME_MASK) && !(gp_old->misc_buttons & BTN_HOME_MASK)) ||
-			   ((gp->buttons      & BTN_R3_MASK  ) && !(gp_old->buttons      & BTN_R3_MASK  )))
-			{
-				logi("Swapping Ports\n");
-				swap_ports ^= true;
-				c64b_keyboard_reset(&keyboard);
 			}
 		}
 		xSemaphoreGive(kbrd_sem_h);

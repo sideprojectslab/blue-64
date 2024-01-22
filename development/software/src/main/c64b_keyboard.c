@@ -607,6 +607,12 @@ void c64b_keyboard_reset(t_c64b_keyboard *h)
 		gpio_set_level(h->pin_row[i], 0);
 	}
 
+	gpio_set_level(h->pin_kben, 0);
+	gpio_set_level(h->pin_ctrl, 0);
+	gpio_set_level(h->pin_shft, 0);
+	gpio_set_level(h->pin_cmdr, 0);
+	gpio_set_level(h->pin_nrst, 0);
+
 	c64b_keyboard_keys_rel(h, true);
 	c64b_keyboard_mods_rel(h);
 	c64b_keyboard_rest_rel(h);
@@ -652,8 +658,8 @@ void c64b_keyboard_init(t_c64b_keyboard *h)
 	gpio_reset_pin(h->pin_shft);
 	gpio_reset_pin(h->pin_cmdr);
 
-	gpio_set_direction(h->pin_kben  , GPIO_MODE_OUTPUT);
-	gpio_set_direction(h->pin_ctrl , GPIO_MODE_OUTPUT);
+	gpio_set_direction(h->pin_kben, GPIO_MODE_OUTPUT);
+	gpio_set_direction(h->pin_ctrl, GPIO_MODE_OUTPUT);
 	gpio_set_direction(h->pin_shft, GPIO_MODE_OUTPUT);
-	gpio_set_direction(h->pin_cmdr , GPIO_MODE_OUTPUT);
+	gpio_set_direction(h->pin_cmdr, GPIO_MODE_OUTPUT);
 }

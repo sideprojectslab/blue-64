@@ -19,7 +19,7 @@ Blue-64 has an internal menu that is visualized by printing text on screen. The 
 
 | Function         | Button(s)   |
 |:---:             |:---:        |
-| Swap Player 1-2  | Xbox        |
+| Swap Player 1-2  | View + Y    |
 | Keyboard "space" | Menu        |
 | Cycle Menu       | View + A/B  |
 | Select/Run Menu  | View + Menu |
