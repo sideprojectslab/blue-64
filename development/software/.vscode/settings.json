@@ -25,7 +25,8 @@
 		"stddef.h": "c",
 		"uni_gamepad.h": "c",
 		"freertos.h": "c",
-		"c64b_parser.h": "c"
+		"c64b_parser.h": "c",
+		"uni_esp32.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",

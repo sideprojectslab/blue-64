@@ -449,11 +449,19 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 			{
 				if(gp->misc_buttons & BTN_START_MASK)
 				{
-					kb_nop = false;
 					if(!(gp->misc_buttons & BTN_SELECT_MASK))
 					{
+						kb_nop = false;
 						c64b_keyboard_char_psh(&keyboard, " ");
-						//c64b_keyboard_cmdr_psh(&keyboard);
+					}
+				}
+
+				if(gp->buttons & BTN_Y_MASK)
+				{
+					if(!(gp->misc_buttons & BTN_SELECT_MASK))
+					{
+						kb_nop = false;
+						c64b_keyboard_char_psh(&keyboard, "~f1~");
 					}
 				}
 			}
