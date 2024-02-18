@@ -52,15 +52,15 @@ static SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
 
 void c64b_parser_connect(uni_hid_device_t* d)
 {
-//	// keyboard ID always sits on index 0
-//	if(uni_hid_device_is_keyboard(d))
-//	{
-//		logi("parser: keyboard connected: %p\n", d);
-//		if(ctrl_ptr[0] == NULL)
-//			ctrl_ptr[0] = &(d->controller);
-//	}
-//	// inserting controller ID in the first free location after 0
-	if(uni_hid_device_is_gamepad(d))
+	// keyboard ID always sits on index 0
+	if(uni_hid_device_is_keyboard(d))
+	{
+		logi("parser: keyboard connected: %p\n", d);
+		if(ctrl_ptr[0] == NULL)
+			ctrl_ptr[0] = &(d->controller);
+	}
+	// inserting controller ID in the first free location after 0
+	else if(uni_hid_device_is_gamepad(d))
 	{
 		logi("parser: gamepad connected: %p\n", d);
 		if(ctrl_ptr[1] == NULL)
@@ -72,24 +72,6 @@ void c64b_parser_connect(uni_hid_device_t* d)
 	{
 		logi("parser: device class not supported: %d\n", d->controller.klass);
 	}
-}
-
-//----------------------------------------------------------------------------//
-
-void c64b_parser_disconnect(uni_hid_device_t* d)
-{
-	unsigned int idx;
-	if(ctrl_ptr[0] == &(d->controller))
-		idx = 0;
-	else if(ctrl_ptr[1] == &(d->controller))
-		idx = 1;
-	else if(ctrl_ptr[2] == &(d->controller))
-		idx = 2;
-	else
-		return;
-
-	ctrl_ptr[idx] = NULL;
-	memset(&(ctrl_old[idx]), 0, sizeof(uni_controller_t));
 }
 
 //----------------------------------------------------------------------------//
@@ -149,7 +131,13 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 	uni_keyboard_t* kb = &(ctl->keyboard);
 	uni_keyboard_t* kb_old;
 	bool            kb_nop;
-	bool            shft;
+	bool            lshft = false;
+	bool            rshft = false;
+	bool            shft  = false;
+
+	bool            shft_lock_press = false;
+	static bool     shft_lock       = false;
+	static bool     shft_lock_old   = false;
 
 	kb_old = &(ctrl_old[0].keyboard);
 
@@ -166,39 +154,25 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 		{
 			kb_owner = KB_OWNER_KBRD;
 
-			// key modifiers
+			shft_lock_press = false;
 			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
 				const uint8_t key = kb->pressed_keys[i];
 
-				// modifiers
-				if((key == HID_USAGE_KB_LEFT_SHIFT ) || (key == HID_USAGE_KB_RIGHT_SHIFT))
+				// restore key
+				if(key == HID_USAGE_KB_CAPS_LOCK)
 				{
-					c64b_keyboard_shft_psh(&keyboard);
-					shft = true;
+					if(!shft_lock_old)
+						shft_lock = !shft_lock;
+					shft_lock_press = true;
 				}
-				else
-				{
-					c64b_keyboard_shft_rel(&keyboard);
-					shft = false;
-				}
-
-				if((key == HID_USAGE_KB_LEFT_CONTROL) || (key == HID_USAGE_KB_RIGHT_CONTROL))
-					c64b_keyboard_ctrl_psh(&keyboard);
-				else
-					c64b_keyboard_ctrl_rel(&keyboard);
-
-				if((key == HID_USAGE_KB_LEFT_GUI) || (key == HID_USAGE_KB_RIGHT_GUI))
-					c64b_keyboard_cmdr_psh(&keyboard);
-				else
-					c64b_keyboard_cmdr_rel(&keyboard);
-
-				// rest key
-				if(key == HID_USAGE_KB_ESCAPE)
-					c64b_keyboard_rest_psh(&keyboard);
-				else
-					c64b_keyboard_rest_rel(&keyboard);
 			}
+			shft_lock_old = shft_lock_press;
+
+			// detecting shift
+			lshft = kb->modifiers & KB_LSHFT_MASK;
+			rshft = kb->modifiers & KB_RSHFT_MASK;
+			shft = lshft || rshft || shft_lock;
 
 			// regular keys
 			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
@@ -290,6 +264,67 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 
 					// numbers
 
+					case HID_USAGE_KB_1_EXCLAMATION_MARK:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "1");
+						else
+							c64b_keyboard_char_psh(&keyboard, "!");
+						break;
+					case HID_USAGE_KB_2_AT:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "2");
+						else
+							c64b_keyboard_char_psh(&keyboard, "@");
+						break;
+					case HID_USAGE_KB_3_NUMBER_SIGN:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "3");
+						else
+							c64b_keyboard_char_psh(&keyboard, "#");
+						break;
+					case HID_USAGE_KB_4_DOLLAR:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "4");
+						else
+							c64b_keyboard_char_psh(&keyboard, "$");
+						break;
+					case HID_USAGE_KB_5_PERCENT:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "5");
+						else
+							c64b_keyboard_char_psh(&keyboard, "%%");
+						break;
+					case HID_USAGE_KB_6_CARET:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "6");
+						else
+							c64b_keyboard_char_psh(&keyboard, "£");
+						break;
+					case HID_USAGE_KB_7_AMPERSAND:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "7");
+						else
+							c64b_keyboard_char_psh(&keyboard, "&");
+						break;
+					case HID_USAGE_KB_8_ASTERISK:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "8");
+						else
+							c64b_keyboard_char_psh(&keyboard, "*");
+						break;
+					case HID_USAGE_KB_9_OPARENTHESIS:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "9");
+						else
+							c64b_keyboard_char_psh(&keyboard, "(");
+						break;
+					case HID_USAGE_KB_0_CPARENTHESIS:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "0");
+						else
+							c64b_keyboard_char_psh(&keyboard, ")");
+						break;
+
 					// other ascii keys
 					case HID_USAGE_KB_SPACEBAR:
 						c64b_keyboard_char_psh(&keyboard, " ");
@@ -301,7 +336,70 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 						c64b_keyboard_char_psh(&keyboard, "~del~");
 						break;
 					case HID_USAGE_KB_DELETE:
-						c64b_keyboard_char_psh(&keyboard, "~rel~");
+						c64b_keyboard_char_psh(&keyboard, "~clr~");
+						break;
+					case HID_USAGE_KB_GRAVE_ACCENT_TILDE:
+						c64b_keyboard_char_psh(&keyboard, "~arll~");
+						break;
+					case HID_USAGE_KB_SINGLE_DOUBLE_QUOTE:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "'");
+						else
+							c64b_keyboard_char_psh(&keyboard, "\"");
+						break;
+					case HID_USAGE_KB_EQUAL_PLUS:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "=");
+						else
+							c64b_keyboard_char_psh(&keyboard, "+");
+						break;
+					case HID_USAGE_KB_MINUS_UNDERSCORE:
+						c64b_keyboard_char_psh(&keyboard, "-");
+						break;
+					case HID_USAGE_KB_HOME:
+						c64b_keyboard_char_psh(&keyboard, "~home~");
+						break;
+					case HID_USAGE_KB_INSERT:
+						c64b_keyboard_char_psh(&keyboard, "~inst~");
+						break;
+					case HID_USAGE_KB_TAB:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "~run~");
+						else
+							c64b_keyboard_char_psh(&keyboard, "~stop~");
+						break;
+					case HID_USAGE_KB_BACKSLASH_VERTICAL_BAR:
+						c64b_keyboard_char_psh(&keyboard, "~arup~");
+						break;
+					case HID_USAGE_KB_SEMICOLON_COLON:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, ";");
+						else
+							c64b_keyboard_char_psh(&keyboard, ":");
+						break;
+					case HID_USAGE_KB_COMMA_LESS:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, ",");
+						else
+							c64b_keyboard_char_psh(&keyboard, "<");
+						break;
+					case HID_USAGE_KB_DOT_GREATER:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, ".");
+						else
+							c64b_keyboard_char_psh(&keyboard, ">");
+						break;
+					case HID_USAGE_KB_SLASH_QUESTION:
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "/");
+						else
+							c64b_keyboard_char_psh(&keyboard, "?");
+						break;
+					case HID_USAGE_KB_OBRACKET_OBRACE:
+						c64b_keyboard_char_psh(&keyboard, "[");
+						break;
+					case HID_USAGE_KB_CBRACKET_CBRACE:
+						c64b_keyboard_char_psh(&keyboard, "]");
 						break;
 
 					// arrows
@@ -318,6 +416,26 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 						c64b_keyboard_char_psh(&keyboard, "~dn~");
 						break;
 
+					// F-keys
+					case HID_USAGE_KB_F1:
+						c64b_keyboard_char_psh(&keyboard, "~f1~");
+						break;
+					case HID_USAGE_KB_F2:
+						c64b_keyboard_char_psh(&keyboard, "~f2~");
+						break;
+					case HID_USAGE_KB_F3:
+						c64b_keyboard_char_psh(&keyboard, "~f3~");
+						break;
+					case HID_USAGE_KB_F4:
+						c64b_keyboard_char_psh(&keyboard, "~f4~");
+						break;
+					case HID_USAGE_KB_F5:
+						c64b_keyboard_char_psh(&keyboard, "~f5~");
+						break;
+					case HID_USAGE_KB_F6:
+						c64b_keyboard_char_psh(&keyboard, "~f6~");
+						break;
+
 					default:
 						kb_nop = true;
 						break;
@@ -330,9 +448,42 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 
 			if(kb_nop)
 			{
-				c64b_keyboard_keys_rel(&keyboard, !shft);
+				c64b_keyboard_keys_rel(&keyboard, true);
+
+				if(rshft)
+				{
+					c64b_keyboard_char_psh(&keyboard, "~rsh~");
+				}
+				else if(lshft)
+				{
+					c64b_keyboard_char_psh(&keyboard, "~lsh~");
+				}
 				kb_owner = KB_OWNER_NONE;
 			}
+
+
+			// key modifiers
+			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
+			{
+				const uint8_t key = kb->pressed_keys[i];
+
+				// restore key
+				if(key == HID_USAGE_KB_ESCAPE)
+					c64b_keyboard_rest_psh(&keyboard);
+				else
+					c64b_keyboard_rest_rel(&keyboard);
+			}
+
+			if((kb->modifiers & KB_LCTRL_MASK) || (kb->modifiers & KB_RCTRL_MASK))
+				c64b_keyboard_ctrl_psh(&keyboard);
+			else
+				c64b_keyboard_ctrl_rel(&keyboard);
+
+			if(kb->modifiers & KB_START_MASK)
+				c64b_keyboard_cmdr_psh(&keyboard);
+			else
+				c64b_keyboard_cmdr_rel(&keyboard);
+
 		}
 		xSemaphoreGive(kbrd_sem_h);
 	}
@@ -430,7 +581,11 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 			{
 				logi("Swapping Ports\n");
 				swap_ports ^= true;
-				c64b_keyboard_reset(&keyboard);
+				if(xSemaphoreTake(kbrd_sem_h, portMAX_DELAY) == pdTRUE)
+				{
+					c64b_keyboard_reset(&keyboard);
+					xSemaphoreGive(kbrd_sem_h);
+				}
 			}
 		}
 	}
@@ -469,7 +624,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 			if(kb_nop)
 			{
 				c64b_keyboard_keys_rel(&keyboard, true);
-				c64b_keyboard_cmdr_rel(&keyboard);
 				kb_owner = KB_OWNER_NONE;
 			}
 		}
@@ -540,6 +694,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 			}
 		}
 
+		// these GPIO accesses are all thread-safe on the ESP32
 		if(rr_pressed)
 			c64b_keyboard_cport_psh(&keyboard, CPORT_RR, cport_idx);
 		else
@@ -579,20 +734,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 //----------------------------------------------------------------------------//
 
-static void c64b_parse_gp_1()
-{
-	c64b_parse_gamepad(&(ctrl_new[1]));
-}
-
-//----------------------------------------------------------------------------//
-
-static void c64b_parse_gp_2()
-{
-	c64b_parse_gamepad(&(ctrl_new[2]));
-}
-
-//----------------------------------------------------------------------------//
-
 static void task_c64b_parse(void *arg)
 {
 	while(1)
@@ -605,9 +746,9 @@ static void task_c64b_parse(void *arg)
 			ctrl_new[2] = ctrl_tmp[2];
 			xSemaphoreGive(prse_sem_h);
 
-			c64b_parse_gp_1();
-			c64b_parse_gp_2();
-			//c64b_parse_keyboard();
+			c64b_parse_keyboard(&(ctrl_new[0]));
+			c64b_parse_gamepad(&(ctrl_new[1]));
+			c64b_parse_gamepad(&(ctrl_new[2]));
 		}
 	}
 }
@@ -646,6 +787,41 @@ void c64b_parse(uni_hid_device_t* d)
 			ctrl_tmp[2] = d->controller;
 		}
 		xSemaphoreGive(prse_sem_h);
+	}
+}
+
+//----------------------------------------------------------------------------//
+
+void c64b_parser_disconnect(uni_hid_device_t* d)
+{
+	if(xSemaphoreTake(prse_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+	{
+		unsigned int idx;
+		if(ctrl_ptr[0] == &(d->controller))
+			idx = 0;
+		else if(ctrl_ptr[1] == &(d->controller))
+			idx = 1;
+		else if(ctrl_ptr[2] == &(d->controller))
+			idx = 2;
+		else
+			return;
+
+		logi("Device Disconnected: %d\n", idx);
+
+		ctrl_ptr[idx] = NULL;
+		memset(&(ctrl_tmp[0]), 0, sizeof(uni_controller_t));
+		if(idx == 0)
+			ctrl_tmp[0].klass = UNI_CONTROLLER_CLASS_KEYBOARD;
+		else
+			ctrl_tmp[0].klass = UNI_CONTROLLER_CLASS_GAMEPAD;
+
+		xSemaphoreGive(prse_sem_h);
+	}
+
+	if(xSemaphoreTake(kbrd_sem_h, portMAX_DELAY) == pdTRUE)
+	{
+		c64b_keyboard_reset(&keyboard);
+		xSemaphoreGive(kbrd_sem_h);
 	}
 }
 

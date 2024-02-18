@@ -71,6 +71,14 @@
 #define BTN_SELECT_MASK  2
 #define BTN_START_MASK   4
 
+#define KB_LSHFT_MASK    0x2
+#define KB_RSHFT_MASK    0x20
+#define KB_LCTRL_MASK    0x1
+#define KB_RCTRL_MASK    0x10
+#define KB_LALT_MASK     0x4
+#define KB_RALT_MASK     0x40
+#define KB_START_MASK    0x8
+
 #define ANL_DEADZONE     256
 
 //----------------------------------------------------------------------------//

@@ -23,9 +23,28 @@ Blue-64 has an internal menu that is visualized by printing text on screen. The 
 | Keyboard "space" | Menu        |
 | Cycle Menu       | View + A/B  |
 | Select/Run Menu  | View + Menu |
+| F1               | Y           |
 
 ## Compatibility
 Blue-64 aims to be compatible with all versions of the C64 motherboard. If and when incompatibilities become known they will be detailed in this README file.
+
+## Device Support
+Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Cupported Controllers" section at the following link:
+https://github.com/ricardoquesada/bluepad32?tab=readme-ov-file
+
+## Keyboard Support
+At the moment Blue-64 supports a handful of Bluetooth keyboards and only supports the English US layout. The key mapping is "functional" and not "positional". As such, the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
+
+| En-US Key         | C64 Key     |
+|:---:              |:---:        |
+| ~                 | Arrow Left  |
+| \                 | Arrow Up    |
+| 6+shift           | £           |
+| tab / shift+tab   | Stop / Run  |
+| esc               | Restore     |
+| delete            | Clear       |
+| start (windows)   | Commodore   |
+
 
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
