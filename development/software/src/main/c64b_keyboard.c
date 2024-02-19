@@ -404,7 +404,7 @@ void c64b_keyboard_rest_psh(t_c64b_keyboard *h)
 	if(h == NULL)
 		return;
 
-	if (h->pin_nrst /= 255)
+	if (h->pin_nrst != 255)
 		gpio_set_level(h->pin_nrst, 1);
 }
 
@@ -415,7 +415,7 @@ void c64b_keyboard_rest_rel(t_c64b_keyboard *h)
 	if(h == NULL)
 		return;
 
-	if (h->pin_nrst /= 255)
+	if (h->pin_nrst != 255)
 		gpio_set_level(h->pin_nrst, 0);
 }
 
@@ -519,7 +519,7 @@ bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s)
 	const char          *head = s;
 	const t_c64b_key_id *key  = NULL;
 	t_c64b_mod_evt mod        = NONE;
-	bool shft                = false;
+	bool shft                 = false;
 	bool error                = false;
 
 	while(*head != 0)
@@ -647,7 +647,7 @@ void c64b_keyboard_init(t_c64b_keyboard *h)
 	}
 
 	logi("Initialising Miscellaneous Pins\n");
-	if (h->pin_nrst /= 255)
+	if (h->pin_nrst != 255)
 	{
 		gpio_reset_pin    (h->pin_nrst);
 		gpio_set_direction(h->pin_nrst , GPIO_MODE_OUTPUT);

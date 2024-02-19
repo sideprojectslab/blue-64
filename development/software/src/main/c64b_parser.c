@@ -134,6 +134,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 	bool            lshft = false;
 	bool            rshft = false;
 	bool            shft  = false;
+	bool            restore = false;
 
 	bool            shft_lock_press = false;
 	static bool     shft_lock       = false;
@@ -468,18 +469,23 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 			}
 
 
-			// key modifiers
+			// restore key
 			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
 				const uint8_t key = kb->pressed_keys[i];
 
 				// restore key
 				if(key == HID_USAGE_KB_ESCAPE)
+				{
 					c64b_keyboard_rest_psh(&keyboard);
-				else
-					c64b_keyboard_rest_rel(&keyboard);
+					restore = true;
+				}
 			}
 
+			if(!restore)
+				c64b_keyboard_rest_rel(&keyboard);
+
+			// key modifiers
 			if((kb->modifiers & KB_LCTRL_MASK) || (kb->modifiers & KB_RCTRL_MASK))
 				c64b_keyboard_ctrl_psh(&keyboard);
 			else

@@ -55,9 +55,9 @@
 #define ROW_PERM (uint8_t[]){2, 1, 0, 5, 4, 6, 7, 3}
 
 #if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
-	#define PIN_nRST 1
-#else
 	#define PIN_nRST 255
+#else
+	#define PIN_nRST 1
 #endif
 
 #endif
