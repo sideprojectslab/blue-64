@@ -329,7 +329,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 					case HID_USAGE_KB_SPACEBAR:
 						c64b_keyboard_char_psh(&keyboard, " ");
 						break;
-					case HID_USAGE_KB_RETURN:
+					case HID_USAGE_KB_ENTER:
 						c64b_keyboard_char_psh(&keyboard, "~ret~");
 						break;
 					case HID_USAGE_KB_BACKSPACE:
@@ -434,6 +434,12 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 						break;
 					case HID_USAGE_KB_F6:
 						c64b_keyboard_char_psh(&keyboard, "~f6~");
+						break;
+					case HID_USAGE_KB_F7:
+						c64b_keyboard_char_psh(&keyboard, "~f7~");
+						break;
+					case HID_USAGE_KB_F8:
+						c64b_keyboard_char_psh(&keyboard, "~f8~");
 						break;
 
 					default:
