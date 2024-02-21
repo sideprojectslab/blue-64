@@ -155,12 +155,13 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 		{
 			kb_owner = KB_OWNER_KBRD;
 
+			//------------------------------------------------------------------------------------//
+			// caps lock
 			shft_lock_press = false;
 			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
 				const uint8_t key = kb->pressed_keys[i];
 
-				// restore key
 				if(key == HID_USAGE_KB_CAPS_LOCK)
 				{
 					if(!shft_lock_old)
@@ -170,97 +171,190 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 			}
 			shft_lock_old = shft_lock_press;
 
+			//------------------------------------------------------------------------------------//
 			// detecting shift
-			lshft = kb->modifiers & KB_LSHFT_MASK;
-			rshft = kb->modifiers & KB_RSHFT_MASK;
-			shft = lshft || rshft || shft_lock;
+			lshft = (kb->modifiers & KB_LSHFT_MASK) || shft_lock;
+			rshft = (kb->modifiers & KB_RSHFT_MASK);
+			shft = lshft || rshft;
 
+			//------------------------------------------------------------------------------------//
+			// key modifiers
+			if((kb->modifiers & KB_LCTRL_MASK) || (kb->modifiers & KB_RCTRL_MASK))
+				c64b_keyboard_ctrl_psh(&keyboard);
+			else
+				c64b_keyboard_ctrl_rel(&keyboard);
+
+			if(kb->modifiers & KB_START_MASK)
+				c64b_keyboard_cmdr_psh(&keyboard);
+			else
+				c64b_keyboard_cmdr_rel(&keyboard);
+
+			//------------------------------------------------------------------------------------//
 			// regular keys
+
+			kb_nop = false;
 			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
 				const uint8_t key = kb->pressed_keys[i];
-				kb_nop = false;
 
 				// regular keys (only one pshed at a time
 				switch(key) {
 					// basic letters
 					case HID_USAGE_KB_A:
-						c64b_keyboard_char_psh(&keyboard, "a");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "a");
+						else
+							c64b_keyboard_char_psh(&keyboard, "A");
 						break;
 					case HID_USAGE_KB_B:
-						c64b_keyboard_char_psh(&keyboard, "b");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "b");
+						else
+							c64b_keyboard_char_psh(&keyboard, "B");
 						break;
 					case HID_USAGE_KB_C:
-						c64b_keyboard_char_psh(&keyboard, "c");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "c");
+						else
+							c64b_keyboard_char_psh(&keyboard, "C");
 						break;
 					case HID_USAGE_KB_D:
-						c64b_keyboard_char_psh(&keyboard, "d");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "d");
+						else
+							c64b_keyboard_char_psh(&keyboard, "D");
 						break;
 					case HID_USAGE_KB_E:
-						c64b_keyboard_char_psh(&keyboard, "e");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "e");
+						else
+							c64b_keyboard_char_psh(&keyboard, "E");
 						break;
 					case HID_USAGE_KB_F:
-						c64b_keyboard_char_psh(&keyboard, "f");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "f");
+						else
+							c64b_keyboard_char_psh(&keyboard, "F");
 						break;
 					case HID_USAGE_KB_G:
-						c64b_keyboard_char_psh(&keyboard, "g");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "g");
+						else
+							c64b_keyboard_char_psh(&keyboard, "G");
 						break;
 					case HID_USAGE_KB_H:
-						c64b_keyboard_char_psh(&keyboard, "h");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "h");
+						else
+							c64b_keyboard_char_psh(&keyboard, "H");
 						break;
 					case HID_USAGE_KB_I:
-						c64b_keyboard_char_psh(&keyboard, "i");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "i");
+						else
+							c64b_keyboard_char_psh(&keyboard, "I");
 						break;
 					case HID_USAGE_KB_J:
-						c64b_keyboard_char_psh(&keyboard, "j");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "j");
+						else
+							c64b_keyboard_char_psh(&keyboard, "J");
 						break;
 					case HID_USAGE_KB_K:
-						c64b_keyboard_char_psh(&keyboard, "k");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "k");
+						else
+							c64b_keyboard_char_psh(&keyboard, "K");
 						break;
 					case HID_USAGE_KB_L:
-						c64b_keyboard_char_psh(&keyboard, "l");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "l");
+						else
+							c64b_keyboard_char_psh(&keyboard, "L");
 						break;
 					case HID_USAGE_KB_M:
-						c64b_keyboard_char_psh(&keyboard, "m");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "m");
+						else
+							c64b_keyboard_char_psh(&keyboard, "M");
 						break;
 					case HID_USAGE_KB_N:
-						c64b_keyboard_char_psh(&keyboard, "n");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "n");
+						else
+							c64b_keyboard_char_psh(&keyboard, "N");
 						break;
 					case HID_USAGE_KB_O:
-						c64b_keyboard_char_psh(&keyboard, "o");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "o");
+						else
+							c64b_keyboard_char_psh(&keyboard, "O");
 						break;
 					case HID_USAGE_KB_P:
-						c64b_keyboard_char_psh(&keyboard, "p");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "p");
+						else
+							c64b_keyboard_char_psh(&keyboard, "P");
 						break;
 					case HID_USAGE_KB_Q:
-						c64b_keyboard_char_psh(&keyboard, "q");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "q");
+						else
+							c64b_keyboard_char_psh(&keyboard, "Q");
 						break;
 					case HID_USAGE_KB_R:
-						c64b_keyboard_char_psh(&keyboard, "r");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "r");
+						else
+							c64b_keyboard_char_psh(&keyboard, "R");
 						break;
 					case HID_USAGE_KB_S:
-						c64b_keyboard_char_psh(&keyboard, "s");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "s");
+						else
+							c64b_keyboard_char_psh(&keyboard, "S");
 						break;
 					case HID_USAGE_KB_T:
-						c64b_keyboard_char_psh(&keyboard, "t");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "t");
+						else
+							c64b_keyboard_char_psh(&keyboard, "T");
 						break;
 					case HID_USAGE_KB_U:
-						c64b_keyboard_char_psh(&keyboard, "u");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "u");
+						else
+							c64b_keyboard_char_psh(&keyboard, "U");
 						break;
 					case HID_USAGE_KB_V:
-						c64b_keyboard_char_psh(&keyboard, "v");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "v");
+						else
+							c64b_keyboard_char_psh(&keyboard, "V");
 						break;
 					case HID_USAGE_KB_W:
-						c64b_keyboard_char_psh(&keyboard, "w");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "w");
+						else
+							c64b_keyboard_char_psh(&keyboard, "W");
 						break;
 					case HID_USAGE_KB_X:
-						c64b_keyboard_char_psh(&keyboard, "x");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "x");
+						else
+							c64b_keyboard_char_psh(&keyboard, "X");
 						break;
 					case HID_USAGE_KB_Y:
-						c64b_keyboard_char_psh(&keyboard, "y");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "y");
+						else
+							c64b_keyboard_char_psh(&keyboard, "Y");
 						break;
 					case HID_USAGE_KB_Z:
-						c64b_keyboard_char_psh(&keyboard, "z");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "z");
+						else
+							c64b_keyboard_char_psh(&keyboard, "Z");
 						break;
 
 					// numbers
@@ -336,6 +430,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 					case HID_USAGE_KB_BACKSPACE:
 						c64b_keyboard_char_psh(&keyboard, "~del~");
 						break;
+					case HID_USAGE_KB_F12:
 					case HID_USAGE_KB_DELETE:
 						c64b_keyboard_char_psh(&keyboard, "~clr~");
 						break;
@@ -357,9 +452,11 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 					case HID_USAGE_KB_MINUS_UNDERSCORE:
 						c64b_keyboard_char_psh(&keyboard, "-");
 						break;
+					case HID_USAGE_KB_F9:
 					case HID_USAGE_KB_HOME:
 						c64b_keyboard_char_psh(&keyboard, "~home~");
 						break;
+					case HID_USAGE_KB_F10:
 					case HID_USAGE_KB_INSERT:
 						c64b_keyboard_char_psh(&keyboard, "~inst~");
 						break;
@@ -453,10 +550,10 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 					break;
 			}
 
+			//------------------------------------------------------------------------------------//
+			// shift-only
 			if(kb_nop)
 			{
-				c64b_keyboard_keys_rel(&keyboard, true);
-
 				if(rshft)
 				{
 					c64b_keyboard_char_psh(&keyboard, "~rsh~");
@@ -465,16 +562,18 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 				{
 					c64b_keyboard_char_psh(&keyboard, "~lsh~");
 				}
-				kb_owner = KB_OWNER_NONE;
+				else
+				{
+					c64b_keyboard_keys_rel(&keyboard, true);
+					kb_owner = KB_OWNER_NONE;
+				}
 			}
 
-
+			//------------------------------------------------------------------------------------//
 			// restore key
 			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 			{
 				const uint8_t key = kb->pressed_keys[i];
-
-				// restore key
 				if(key == HID_USAGE_KB_ESCAPE)
 				{
 					c64b_keyboard_rest_psh(&keyboard);
@@ -484,18 +583,6 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 
 			if(!restore)
 				c64b_keyboard_rest_rel(&keyboard);
-
-			// key modifiers
-			if((kb->modifiers & KB_LCTRL_MASK) || (kb->modifiers & KB_RCTRL_MASK))
-				c64b_keyboard_ctrl_psh(&keyboard);
-			else
-				c64b_keyboard_ctrl_rel(&keyboard);
-
-			if(kb->modifiers & KB_START_MASK)
-				c64b_keyboard_cmdr_psh(&keyboard);
-			else
-				c64b_keyboard_cmdr_rel(&keyboard);
-
 		}
 		xSemaphoreGive(kbrd_sem_h);
 	}
