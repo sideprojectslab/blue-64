@@ -42,7 +42,9 @@ At the moment Blue-64 supports a handful of Bluetooth keyboards and only support
 | 6+shift           | £           |
 | tab / shift+tab   | Stop / Run  |
 | esc               | Restore     |
-| delete            | Clear       |
+| delete, f12       | Clear       |
+| home, f9          | home        |
+| insert, f10       | insert      |
 | start (windows)   | Commodore   |
 
 
