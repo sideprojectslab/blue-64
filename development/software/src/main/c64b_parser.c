@@ -454,7 +454,8 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 						break;
 					case HID_USAGE_KB_F9:
 					case HID_USAGE_KB_HOME:
-						c64b_keyboard_char_psh(&keyboard, "~home~");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "~home~");
 						break;
 					case HID_USAGE_KB_F10:
 					case HID_USAGE_KB_INSERT:
@@ -467,7 +468,10 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 							c64b_keyboard_char_psh(&keyboard, "~stop~");
 						break;
 					case HID_USAGE_KB_BACKSLASH_VERTICAL_BAR:
-						c64b_keyboard_char_psh(&keyboard, "~arup~");
+						if(!shft)
+							c64b_keyboard_char_psh(&keyboard, "~arup~");
+						else
+							c64b_keyboard_char_psh(&keyboard, "~pi~");
 						break;
 					case HID_USAGE_KB_SEMICOLON_COLON:
 						if(!shft)
@@ -500,7 +504,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 						c64b_keyboard_char_psh(&keyboard, "]");
 						break;
 
-					// arrows
+					// cursor arrows
 					case HID_USAGE_KB_LEFT_ARROW:
 						c64b_keyboard_char_psh(&keyboard, "~ll~");
 						break;

@@ -40,7 +40,7 @@ const char device_info[] =
 	"~clr~"
 	"0 device info:~ret~"
 	"0 blue-64 by side-projects-lab~ret~"
-	"0 firmware version: 0.12 (beta)";
+	"0 firmware version: 0.13 (beta)";
 
 /*
 const char color_change[] =

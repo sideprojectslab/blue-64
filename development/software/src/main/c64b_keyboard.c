@@ -57,7 +57,7 @@ const t_c64b_key_id KEY_IDS[] =
 
 	// 8
 	{"/"       , 6, 7, false, false},
-	{"~arup~"  , 6, 6, false, false},
+	{"~arup~"  , 6, 6, false, false}, {"~pi~", 6, 6, true, false},
 	{"="       , 6, 5, false, false},
 	{"~rsh~"   , 6, 4, false, false},
 	{"~home~"  , 6, 3, false, false},
