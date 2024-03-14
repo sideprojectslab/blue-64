@@ -463,9 +463,9 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 						break;
 					case HID_USAGE_KB_TAB:
 						if(!shft)
-							c64b_keyboard_char_psh(&keyboard, "~run~");
-						else
 							c64b_keyboard_char_psh(&keyboard, "~stop~");
+						else
+							c64b_keyboard_char_psh(&keyboard, "~run~");
 						break;
 					case HID_USAGE_KB_BACKSLASH_VERTICAL_BAR:
 						if(!shft)
