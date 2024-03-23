@@ -4,7 +4,7 @@ Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto 
 If you would like to get in touch with the developer, please join the SPL discord server at this link:
 https://discord.gg/gJsCgebkDw
 
-![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/IMG_0158.png)
+![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/Blue-64.png)
 
 ## Button Mapping (xInput)
 
@@ -28,15 +28,24 @@ Blue-64 has an internal menu that is visualized by printing text on screen. The 
 | Select/Run Menu  | View + Menu |
 | F1               | Y           |
 
-## Compatibility
-Blue-64 aims to be compatible with all versions of the C64 motherboard. If and when incompatibilities become known they will be detailed in this README file.
+## C64 Compatibility
+Blue-64 has been verified to be compatible with the following motherboard revisions:
+
+| Motherboard      | Notes   |
+|:---:             |:---:    |
+| 250407  | - |
+| 250425  | - |
+| 250466  | - |
+| 326298  | - |
+| ku14194 | - |
+| 250469  | Must be assembled and mounted "upside down". May<br>require a pin header raiser to ensure clearance with other chips |
 
 ## Device Support
 Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Cupported Controllers" section at the following link:
 https://github.com/ricardoquesada/bluepad32?tab=readme-ov-file
 
 ## Keyboard Support
-At the moment Blue-64 supports a handful of Bluetooth keyboards and only supports the English US layout. The key mapping is "functional" and not "positional". As such, the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
+At the moment Blue-64 only supports Bluetooth-Low-Energy keyboards (BLE) and only supports the English US layout. The key mapping is "functional" and not "positional". As such, the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
 
 | En-US Key         | C64 Key     |
 |:---:              |:---:        |
@@ -50,13 +59,18 @@ At the moment Blue-64 supports a handful of Bluetooth keyboards and only support
 | insert, f10       | insert      |
 | start (windows)   | Commodore   |
 
+Support for positional mapping is planned but not yet implemented.
 
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
-At the moment bluetooth keyboard support is still work in progress.
 
 ## Installation & Precautions
-Instruction manuals on how to install and operate the board are available in PDF format alongside the fabrication data (work in progress). Users shall read these instructions carefully and fully understand the circuit's limitations before installing and/or using it. Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.
+Most notably, particular care shall be used when plugging in the Blue-64 onto the motherboard as the female connector on the Blue-64 has no alignment key, and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard is properly aligned.
+
+A step-by-steb video guide on how to assemble and install the Blue-64 board is available at the following link: (work in progress).
+Users shall follow these instructions carefully and fully understand the circuit's limitations before installing and/or using it.
+
+Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.
 
 ## Firmware Update
 Firmware binaries can be found in the "Releases" section of the GitHub page. The three files in the "binaries.zip" folder are necessary to perform a firmware update:
