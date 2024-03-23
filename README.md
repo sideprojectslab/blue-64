@@ -65,7 +65,7 @@ Support for positional mapping is planned but not yet implemented.
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
 
 ## Installation & Precautions
-Most notably, particular care shall be used when plugging in the Blue-64 onto the motherboard as the female connector on the Blue-64 has no alignment key, and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard is properly aligned.
+Most notably, particular care shall be used when plugging the Blue-64 onto the motherboard, as the female connector on the Blue-64 has no alignment key and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard header is properly aligned.
 
 A step-by-steb video guide on how to assemble and install the Blue-64 board is available at the following link: (work in progress).
 Users shall follow these instructions carefully and fully understand the circuit's limitations before installing and/or using it.
