@@ -113,6 +113,27 @@
     },
 
     {
+      "label": "Flash-Any",
+      "group": "test",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c idf.py flash"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "fileLocation": ["relative", "${workspaceFolder}/build"],
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      }
+    },
+
+    {
       "label": "Erase flash",
       "group": "build",
       "type": "shell",
