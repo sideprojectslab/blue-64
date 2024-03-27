@@ -1,4 +1,5 @@
 "Comment","DNP","Designator","Footprint"
+"10ZLH1000MEFC8X16","","C1","eas_cdb_capacitor:10ZLH1000MEFC8X16-Horiz-L"
 "B5819WS-TP","","D1","eas_cdb_diode:D_SOD-323_HandSoldering"
 "BC817-40,235","","Q1","eas_cdb_bjt:SOT-23"
 "RC0603FR-0710KL","","R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21","eas_cdb_resistor:R_0603_1608Metric"
