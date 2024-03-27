@@ -38,7 +38,7 @@ Blue-64 has been verified to be compatible with the following motherboard revisi
 | 250466  | - |
 | 326298  | - |
 | ku14194 | - |
-| 250469  | Must be assembled and mounted "upside down". May<br>require a pin header raiser to ensure clearance with other chips |
+| 250469  | Needs a special adapter and the female<br>header is mounted upside down |
 
 ## Device Support
 Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Cupported Controllers" section at the following link:
