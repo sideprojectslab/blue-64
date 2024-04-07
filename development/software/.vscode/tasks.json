@@ -134,11 +134,29 @@
     },
 
     {
-      "label": "Erase flash",
+      "label": "Erase Flash",
       "group": "build",
       "type": "shell",
       "windows": {
-        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% erase_flash"
+        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% flash"
+      },
+    },
+
+    {
+      "label": "Erase Flash-Any",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c idf.py erase-flash"
+      },
+    },
+
+    {
+      "label": "Production-Any",
+      "group": "build",
+      "type": "shell",
+      "windows": {
+        "command": "setup.bat && cd src && cmd /c idf.py erase-flash && cmd /c idf.py flash"
       },
     },
 

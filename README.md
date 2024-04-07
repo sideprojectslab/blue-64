@@ -67,7 +67,8 @@ Blue-64 can only interact with the lines present on the keyboard header, thus it
 ## Installation & Precautions
 Most notably, particular care shall be used when plugging the Blue-64 onto the motherboard, as the female connector on the Blue-64 has no alignment key and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard header is properly aligned.
 
-A step-by-steb video guide on how to assemble and install the Blue-64 board is available at the following link: (work in progress).
+A step-by-steb video guide on how to assemble and install the Blue-64 board is available at the following link:
+https://youtu.be/yE2yL8-_jRQ?si=YmAZqs-F023yzRW5
 Users shall follow these instructions carefully and fully understand the circuit's limitations before installing and/or using it.
 
 Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.
