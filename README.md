@@ -40,8 +40,10 @@ Blue-64 has been verified to be compatible with the following motherboard revisi
 | ku14194 | - |
 | 250469  | Needs a special adapter and the female<br>header is mounted upside down |
 
+![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/Blue-64-adpt.JPG)
+
 ## Device Support
-Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Cupported Controllers" section at the following link:
+Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Supported Controllers" section at the following link:
 https://github.com/ricardoquesada/bluepad32?tab=readme-ov-file
 
 ## Keyboard Support
