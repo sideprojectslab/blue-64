@@ -26,7 +26,12 @@
 #include "c64b_parser.h"
 #include "esp_task_wdt.h"
 
-extern bool c64b_parse_keyboard_logical(uni_controller_t* ctl);
+extern bool c64b_parse_keyboard_logical   (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+extern bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+extern bool c64b_parse_gamepad_menu       (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
+extern bool c64b_parse_gamepad_swap       (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
+extern bool c64b_parse_gamepad_kbemu      (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
+extern bool c64b_parse_gamepad_ctrl       (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
 
 //----------------------------------------------------------------------------//
 // Static Variables
@@ -36,18 +41,16 @@ static uni_controller_t  ctrl_tmp[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_new[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_old[3] = {{0}, {0}, {0}};
 
-       t_c64b_keyboard   keyboard     = {0};
-static t_c64b_kb_owner   kb_owner     = KB_OWNER_NONE;
-static t_c64b_macro_id   kb_macro_id  = 0;
-static bool              kb_macro_sel = false;
-static bool              swap_ports   = false;
+       t_c64b_keyboard   keyboard   = {0};
+       t_c64b_kb_owner   kb_owner   = KB_OWNER_NONE;
+static bool              swap_ports = false;
 
 static const uint8_t     col_perm[] = COL_PERM;
 static const uint8_t     row_perm[] = ROW_PERM;
 
 static SemaphoreHandle_t prse_sem_h; // protects access to controller data
-static SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
-static SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
+       SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
+       SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
 
 //----------------------------------------------------------------------------//
 // C64-Blue functions
@@ -132,7 +135,6 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 
 	uni_keyboard_t* kb = &(ctl->keyboard);
 	uni_keyboard_t* kb_old;
-	bool            kb_nop;
 
 	kb_old = &(ctrl_old[0].keyboard);
 
@@ -143,19 +145,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 		uni_controller_dump(ctl);
 	#endif
 
-	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)0) == pdTRUE)
-	{
-		if((kb_owner == KB_OWNER_KBRD) || (kb_owner == KB_OWNER_NONE))
-		{
-			kb_owner = KB_OWNER_KBRD;
-
-			kb_nop = c64b_parse_keyboard_logical(ctl);
-
-			if(kb_nop)
-				kb_owner = KB_OWNER_NONE;
-		}
-		xSemaphoreGive(kbrd_sem_h);
-	}
+	c64b_parse_keyboard_logical(kb, kb_old);
 
 	*kb_old = *kb;
 }
@@ -175,7 +165,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	uni_gamepad_t*   gp = &(ctl->gamepad);
 	uni_gamepad_t*   gp_old;
 	bool             kb_nop = true;
-	bool             cport_inhibit = false;
 
 	if(ctl == &(ctrl_new[1]))
 	{
@@ -204,198 +193,33 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 	if(gp->misc_buttons & BTN_SELECT_MASK)
 	{
-		cport_inhibit = true;
-
-		//--------------------------------------------------------------------//
-		// keyboard macros
-
-		if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
-		{
-			if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
-			{
-				if(kb_macro_sel)
-					kb_macro_id = kb_macro_id == KB_MACRO_COUNT - 1 ? 0 : kb_macro_id + 1;
-				kb_macro_sel = true;
-				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
-			}
-			else if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
-			{
-				if(kb_macro_sel)
-					kb_macro_id = kb_macro_id == 0 ? KB_MACRO_COUNT - 1 : kb_macro_id - 1;
-				kb_macro_sel = true;
-				keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
-			}
-			else if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
-			{
-				if(kb_macro_sel)
-				{
-					kb_macro_sel = false;
-					keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
-				}
-				else
-				{
-					xSemaphoreGive(feed_sem_h);
-				}
-			}
-			else
-			{
-				xSemaphoreGive(feed_sem_h);
-			}
-		}
-
-		// swap ports
-		if((gp->buttons & BTN_Y_MASK) && !(gp_old->buttons & BTN_Y_MASK))
-		{
-			if((cport_idx == CPORT_2) || (ctrl_ptr[1] == NULL) || (ctrl_ptr[2] == NULL))
-			{
-				logi("Swapping Ports\n");
-				swap_ports ^= true;
-				if(xSemaphoreTake(kbrd_sem_h, portMAX_DELAY) == pdTRUE)
-				{
-					c64b_keyboard_reset(&keyboard);
-					xSemaphoreGive(kbrd_sem_h);
-				}
-			}
-		}
-	}
-
-	//---------------------------------------------------------------------//
-	// direct keyboard control
-
-	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)0) == pdTRUE)
-	{
-		if((kb_owner == cport_idx + 1) || (kb_owner == KB_OWNER_NONE))
-		{
-			kb_owner = cport_idx + 1;
-
-			// space
-			if(!cport_inhibit)
-			{
-				if(gp->misc_buttons & BTN_START_MASK)
-				{
-					if(!(gp->misc_buttons & BTN_SELECT_MASK))
-					{
-						kb_nop = false;
-						c64b_keyboard_char_psh(&keyboard, " ");
-					}
-				}
-
-				if(gp->buttons & BTN_Y_MASK)
-				{
-					if(!(gp->misc_buttons & BTN_SELECT_MASK))
-					{
-						kb_nop = false;
-						c64b_keyboard_char_psh(&keyboard, "~f1~");
-					}
-				}
-			}
-
-			if(kb_nop)
-			{
-				c64b_keyboard_keys_rel(&keyboard, true);
-				kb_owner = KB_OWNER_NONE;
-			}
-		}
-		xSemaphoreGive(kbrd_sem_h);
-	}
-
-	//------------------------------------------------------------------------//
-	// controller ports override characters
-
-	if(!cport_inhibit)
-	{
-		bool rr_pressed = false;
-		bool ll_pressed = false;
-		bool up_pressed = false;
-		bool dn_pressed = false;
-		bool ff_pressed = false;
-
-		if((gp->dpad & BTN_DPAD_UP_MASK) || (gp->buttons & BTN_A_MASK))
-			up_pressed = true;
-
-		if((gp->dpad & BTN_DPAD_DN_MASK) || (gp->throttle != 0))
-			dn_pressed = true;
-
-		if(gp->dpad & BTN_DPAD_RR_MASK)
-			rr_pressed = true;
-
-		if(gp->dpad & BTN_DPAD_LL_MASK)
-			ll_pressed = true;
-
-		if(gp->buttons & BTN_B_MASK)
-			ff_pressed = true;
-
-		// if left analog stick is outside the dead zone it overrides the dpad
-		if((abs(gp->axis_x) > ANL_DEADZONE) || (abs(gp->axis_y) > ANL_DEADZONE))
-		{
-			unsigned int quadrant = 0;
-			if((gp->axis_x >= 0) && (gp->axis_y < 0))
-			{
-				quadrant = 0;
-			}
-			else if((gp->axis_x < 0) && (gp->axis_y < 0))
-			{
-				quadrant = 1;
-			}
-			else if((gp->axis_x < 0) && (gp->axis_y >= 0))
-			{
-				quadrant = 2;
-			}
-			else if((gp->axis_x >= 0) && (gp->axis_y >= 0))
-			{
-				quadrant = 3;
-			}
-
-			if(abs(gp->axis_y) < abs(gp->axis_x) * 2)
-			{
-				if(quadrant == 0 || quadrant == 3)
-					rr_pressed = true;
-				else
-					ll_pressed = true;
-			}
-
-			if(abs(gp->axis_x) < abs(gp->axis_y * 2))
-			{
-				if(quadrant == 0 || quadrant == 1)
-					up_pressed = true;
-				else
-					dn_pressed = true;
-			}
-		}
-
-		// these GPIO accesses are all thread-safe on the ESP32
-		if(rr_pressed)
-			c64b_keyboard_cport_psh(&keyboard, CPORT_RR, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_RR, cport_idx);
-
-		if(ll_pressed)
-			c64b_keyboard_cport_psh(&keyboard, CPORT_LL, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_LL, cport_idx);
-
-		if(up_pressed)
-			c64b_keyboard_cport_psh(&keyboard, CPORT_UP, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
-
-		if(dn_pressed)
-			c64b_keyboard_cport_psh(&keyboard, CPORT_DN, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);
-
-		if(ff_pressed)
-			c64b_keyboard_cport_psh(&keyboard, CPORT_FF, cport_idx);
-		else
-			c64b_keyboard_cport_rel(&keyboard, CPORT_FF, cport_idx);
-	}
-	else
-	{
+		// processing special keys, all controller lines are disabled
 		c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
 		c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);
 		c64b_keyboard_cport_rel(&keyboard, CPORT_LL, cport_idx);
 		c64b_keyboard_cport_rel(&keyboard, CPORT_RR, cport_idx);
 		c64b_keyboard_cport_rel(&keyboard, CPORT_FF, cport_idx);
+
+		//--------------------------------------------------------------------//
+		// Manu
+		kb_nop &= c64b_parse_gamepad_menu(gp, gp_old);
+
+		//--------------------------------------------------------------------//
+		// swap ports
+		if((cport_idx == CPORT_2) || (ctrl_ptr[1] == NULL) || (ctrl_ptr[2] == NULL))
+		{
+			swap_ports ^= c64b_parse_gamepad_swap(gp, gp_old);
+		}
+	}
+	else
+	{
+		//--------------------------------------------------------------------//
+		// direct keyboard control
+		kb_nop &= c64b_parse_gamepad_kbemu(gp, gp_old, cport_idx);
+
+		//--------------------------------------------------------------------//
+		// controller ports override characters
+		c64b_parse_gamepad_ctrl(gp, gp_old, cport_idx);
 	}
 
 	*gp_old = *gp;

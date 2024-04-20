@@ -100,4 +100,6 @@ void c64b_parser_disconnect(uni_hid_device_t* d);
 int  c64b_parser_get_idx(uni_hid_device_t* d);
 void c64b_parse(uni_hid_device_t* d);
 
+void keyboard_macro_feed(const char* str);
+
 #endif

@@ -98,6 +98,12 @@ https://espressif.github.io/esptool-js/
 
 Don't worry you can't brick it (as far as I know), if something fails you will always be able to re-try flashing the new firmware.
 
+## TO-DOs
+[] Switch between logical & positional keyboard mapping
+[] BT Controllers show the correct port/player indicator
+[] Custom button mapping (controller only)
+[] Configurable autofire (controller only)
+
 ## License
 License information is included on top of all software source files as well as in all schematics. Files that do not contain explicit licensing information are subject to the licensing terms stated in the LICENSE.txt provided in the main project folder:
 
