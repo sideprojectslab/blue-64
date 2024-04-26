@@ -36,7 +36,7 @@ Controller buttons not mentioned in the table above can be mapped to emulate any
 * In order to map a button nagigate to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
 * Once the desired controller button is highlighted press the desired key on the keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.
 * Confirm the choice with "View + Menu" (controller) or "AltGr + Enter" (keyboard) and the last key pressed will be assigned to the desired control button.
-* Confirming the choice without pressing any key will simply leave the mapping unchanged.
+* Confirming the choice without having pressed any key will simply leave the mapping unchanged.
 
 ## C64 Compatibility
 Blue-64 has been verified to be compatible with the following motherboard revisions:
