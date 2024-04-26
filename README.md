@@ -6,27 +6,32 @@ https://discord.gg/gJsCgebkDw
 
 ![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/Blue-64.png)
 
-## Button Mapping (xInput)
+### Additional functions
+Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc. as well as selecting keyboard mapping and remapping unused controller buttons.
 
+| Function                       | Button(s)   |
+|:---:                           |:---:        |
+| Swap Player 1-2                | View + Y    |
+| Cycle Menu (controller)        | View + A/B  |
+| Select/Run Menu (controller)   | View + Menu |
+| Cycle Menu (keyboard)          | AltGr + Up/Down/Left/Right Arrow  |
+| Select/Run Menu (keyboard)     | AltGr + Enter |
+
+## Button Mapping (xInput)
 | Joystick     | Controller  | Controller Alt. |
 |:---:         |:---:        |:---:            |
-| UP           | D-Pad UP    | Button A        |
-| DOWN         | D-Pad DOWN  | Right Trigger   |
-| LEFT         | D-Pad LEFT  | -               |
-| RIGHT        | D-Pad RIGHT | -               |
-| FIRE         | Button B    | -               |
+| UP           | D-Pad UP    | Button B        |
+| DOWN         | D-Pad DOWN  | Button X        |
+| LEFT         | D-Pad LEFT  | Left Analog     |
+| RIGHT        | D-Pad RIGHT | Left Analog     |
+| FIRE         | Button A    | -               |
 
-### Additional functions
+Controller buttons not mentioned in the table above can be mapped to emulate any keyboard key through the on-screen menu. Default Controller-Keyboard mappings are reported below:
 
-Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc.
-
-| Function         | Button(s)   |
-|:---:             |:---:        |
-| Swap Player 1-2  | View + Y    |
-| Keyboard "space" | Menu        |
-| Cycle Menu       | View + A/B  |
-| Select/Run Menu  | View + Menu |
-| F1               | Y           |
+| Keyboard     | Controller  |
+|:---:         |:---:        |
+| SPACE        | Button Menu |
+| F1           | Button Y    |
 
 ## C64 Compatibility
 Blue-64 has been verified to be compatible with the following motherboard revisions:
@@ -47,21 +52,20 @@ Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it suppo
 https://github.com/ricardoquesada/bluepad32?tab=readme-ov-file
 
 ## Keyboard Support
-At the moment Blue-64 only supports Bluetooth-Low-Energy keyboards (BLE) and only supports the English US layout. The key mapping is "functional" and not "positional". As such, the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
+At the moment Blue-64 only supports Bluetooth-Low-Energy keyboards (BLE) and only supports the English US layout. The key mapping can be switched between "symbolic" and "positional (vice)" through the on-screen menu. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
 
-| En-US Key         | C64 Key     |
-|:---:              |:---:        |
-| ~                 | Arrow Left  |
-| \                 | Arrow Up    |
-| 6+shift           | £           |
-| tab / shift+tab   | Stop / Run  |
-| esc               | Restore     |
-| delete, f12       | Clear       |
-| home, f9          | home        |
-| insert, f10       | insert      |
-| start (windows)   | Commodore   |
+| En-US Key (symbolic) | C64 Key     |
+|:---:                 |:---:        |
+| ~                    | Arrow Left  |
+| \                    | Arrow Up    |
+| 6+shift              | £           |
+| tab / shift+tab      | Stop / Run  |
+| esc                  | Restore     |
+| delete, f12          | Clear       |
+| home, f9             | home        |
+| insert, f10          | insert      |
+| start (windows)      | Commodore   |
 
-Support for positional mapping is planned but not yet implemented.
 
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
@@ -99,9 +103,7 @@ https://espressif.github.io/esptool-js/
 Don't worry you can't brick it (as far as I know), if something fails you will always be able to re-try flashing the new firmware.
 
 ## TO-DOs
-[] Switch between logical & positional keyboard mapping
 [] BT Controllers show the correct port/player indicator
-[] Custom button mapping (controller only)
 [] Configurable autofire (controller only)
 
 ## License
