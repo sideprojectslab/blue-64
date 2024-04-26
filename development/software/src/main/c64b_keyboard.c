@@ -233,7 +233,7 @@ static const t_c64b_key_id * c64b_keyboard_char_to_key(const char* s)
 		return NULL;
 
 	int i = c64b_keyboard_key_to_idx(s);
-	if(i != -1)
+	if(i != C64B_KB_IDX_NONE)
 		return &(KEY_IDS[i]);
 	return NULL;
 }
@@ -328,6 +328,8 @@ bool c64b_keyboard_key_psh(t_c64b_keyboard *h, const t_c64b_key_id *k)
 {
 	if((h == NULL) || (k == NULL))
 		return false;
+
+	h->trace_key = k;
 
 	if(k->shft)
 		c64b_keyboard_shft_psh(h);
@@ -677,6 +679,22 @@ void c64b_keyboard_reset(t_c64b_keyboard *h)
 
 //----------------------------------------------------------------------------//
 
+void c64b_keyboard_trace_reset(t_c64b_keyboard *h)
+{
+	if(h == NULL)
+		return;
+	h->trace_key = NULL;
+}
+
+const t_c64b_key_id* c64b_keyboard_trace_get(t_c64b_keyboard *h)
+{
+	if(h == NULL)
+		return NULL;
+	return h->trace_key;
+}
+
+//----------------------------------------------------------------------------//
+
 void c64b_keyboard_init(t_c64b_keyboard *h)
 {
 	if(h == NULL)
@@ -719,4 +737,6 @@ void c64b_keyboard_init(t_c64b_keyboard *h)
 	gpio_set_direction(h->pin_ctrl, GPIO_MODE_OUTPUT);
 	gpio_set_direction(h->pin_shft, GPIO_MODE_OUTPUT);
 	gpio_set_direction(h->pin_cmdr, GPIO_MODE_OUTPUT);
+
+	c64b_keyboard_trace_reset(h);
 }

@@ -157,12 +157,24 @@ unsigned int menu_ct_plt(int i)
 
 	keyboard_macro_feed(str_buf);
 
+	// here we wait for the macro to be fed and then we reset the trace
+	// as we want to grab new input from the user
+	if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+		c64b_keyboard_trace_reset(&keyboard);
+	xSemaphoreGive(feed_sem_h);
+
 	return i;
 }
 
 unsigned int menu_ct_act(int i)
 {
-	//c64b_property_set_u8(C64B_PROPERTY_KEY_KB_MAP, kb_map);
+	const t_c64b_key_id* key = c64b_keyboard_trace_get(&keyboard);
+	if(key != NULL)
+	{
+		ct_map[i] = c64b_keyboard_key_to_idx(key->str);
+		c64b_property_set_u8(ct_map_key[i], ct_map[i]);
+	}
+
 	menu_current_plt = menu_main_plt;
 	menu_current_act = menu_main_act;
 	menu_lvl--;
@@ -198,7 +210,7 @@ unsigned int menu_main_act(int i)
 		"~clr~"
 		"0 device info:~ret~"
 		"0 blue-64 by side-projects-lab~ret~"
-		"0 firmware version: 0.14 (beta)";
+		"0 firmware version: 0.15 (beta)";
 
 	static const char* entries[] =
 	{

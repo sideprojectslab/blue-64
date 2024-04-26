@@ -37,30 +37,31 @@
 
 typedef struct
 {
-	unsigned int   pin_kca[3];
-	unsigned int   pin_kra[3];
-	unsigned int   pin_col[5];
-	unsigned int   pin_row[5];
-	unsigned int   pin_nrst;
-	unsigned int   pin_ctrl;
-	unsigned int   pin_shft;
-	unsigned int   pin_cmdr;
-	unsigned int   pin_kben;
-	unsigned int   feed_psh_ms;
-	unsigned int   feed_rel_ms;
-	const uint8_t* col_perm;
-	const uint8_t* row_perm;
-} t_c64b_keyboard;
-
-
-typedef struct
-{
 	char*        str;
 	unsigned int col;
 	unsigned int row;
 	bool         shft;
 	bool         ctrl;
 } t_c64b_key_id;
+
+
+typedef struct
+{
+	unsigned int         pin_kca[3];
+	unsigned int         pin_kra[3];
+	unsigned int         pin_col[5];
+	unsigned int         pin_row[5];
+	unsigned int         pin_nrst;
+	unsigned int         pin_ctrl;
+	unsigned int         pin_shft;
+	unsigned int         pin_cmdr;
+	unsigned int         pin_kben;
+	unsigned int         feed_psh_ms;
+	unsigned int         feed_rel_ms;
+	const uint8_t*       col_perm;
+	const uint8_t*       row_perm;
+	const t_c64b_key_id* trace_key;
+} t_c64b_keyboard;
 
 
 typedef enum
@@ -117,5 +118,8 @@ bool c64b_keyboard_feed_prg(t_c64b_keyboard *h, char** s, uint32_t nlines);
 
 unsigned int c64b_keyboard_key_to_idx(const char* s);
 const char*  c64b_keyboard_idx_to_key(unsigned int i);
+
+void                 c64b_keyboard_trace_reset(t_c64b_keyboard *h);
+const t_c64b_key_id* c64b_keyboard_trace_get(t_c64b_keyboard *h);
 
 #endif
