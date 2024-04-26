@@ -25,14 +25,6 @@
 
 #include "c64b_parser.h"
 
-extern t_c64b_keyboard   keyboard;
-extern t_c64b_kb_owner   kb_owner;
-extern SemaphoreHandle_t kbrd_sem_h;
-extern SemaphoreHandle_t feed_sem_h;
-extern bool              swap_ports;
-static t_c64b_macro_id   kb_macro_id  = 0;
-static bool              kb_macro_sel = false; // allows going back to same macro after selection
-
 //----------------------------------------------------------------------------//
 
 bool c64b_parse_gamepad_menu(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
@@ -41,29 +33,15 @@ bool c64b_parse_gamepad_menu(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
 	{
 		if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
 		{
-			if(kb_macro_sel)
-				kb_macro_id = kb_macro_id == KB_MACRO_COUNT - 1 ? 0 : kb_macro_id + 1;
-			kb_macro_sel = true;
-			keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
+			menu_fwd();
 		}
 		else if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
 		{
-			if(kb_macro_sel)
-				kb_macro_id = kb_macro_id == 0 ? KB_MACRO_COUNT - 1 : kb_macro_id - 1;
-			kb_macro_sel = true;
-			keyboard_macro_feed(feed_cmd_gui[kb_macro_id]);
+			menu_bwd();
 		}
-		else if((gp->misc_buttons & BTN_START_MASK) && !(gp_old->misc_buttons & BTN_START_MASK))
+		else if((gp->misc_buttons & BTN_MENU_MASK) && !(gp_old->misc_buttons & BTN_MENU_MASK))
 		{
-			if(kb_macro_sel)
-			{
-				kb_macro_sel = false;
-				keyboard_macro_feed(feed_cmd_str[kb_macro_id]);
-			}
-			else
-			{
-				xSemaphoreGive(feed_sem_h);
-			}
+			menu_act();
 		}
 		else
 		{
@@ -105,25 +83,24 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 		if((kb_owner == cport_idx + 1) || (kb_owner == KB_OWNER_NONE))
 		{
 			kb_owner = cport_idx + 1;
+			kb_nop   = false;
 
-			// space
-			if(gp->misc_buttons & BTN_START_MASK)
-			{
-				if(!(gp->misc_buttons & BTN_SELECT_MASK))
-				{
-					kb_nop = false;
-					c64b_keyboard_char_psh(&keyboard, " ");
-				}
-			}
-
-			if(gp->buttons & BTN_Y_MASK)
-			{
-				if(!(gp->misc_buttons & BTN_SELECT_MASK))
-				{
-					kb_nop = false;
-					c64b_keyboard_char_psh(&keyboard, "~f1~");
-				}
-			}
+			if(gp->misc_buttons & BTN_MENU_MASK)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BM]));
+			else if(gp->misc_buttons & BTN_HOME_MASK)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BH]));
+			else if(gp->buttons & BTN_Y_MASK)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BY]));
+			else if(gp->buttons & BTN_LS_MASK)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
+			else if(gp->buttons & BTN_RS_MASK)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RS]));
+			else if(gp->brake > 20)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LT]));
+			else if(gp->throttle > 20)
+				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RT]));
+			else
+				kb_nop = true;
 
 			if(kb_nop)
 			{
@@ -147,10 +124,10 @@ bool c64b_parse_gamepad_ctrl(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_cp
 	bool dn_pressed = false;
 	bool ff_pressed = false;
 
-	if((gp->dpad & BTN_DPAD_UP_MASK) || (gp->buttons & BTN_A_MASK))
+	if((gp->dpad & BTN_DPAD_UP_MASK) || (gp->buttons & BTN_B_MASK))
 		up_pressed = true;
 
-	if((gp->dpad & BTN_DPAD_DN_MASK) || (gp->throttle != 0))
+	if((gp->dpad & BTN_DPAD_DN_MASK) || (gp->buttons & BTN_X_MASK))
 		dn_pressed = true;
 
 	if(gp->dpad & BTN_DPAD_RR_MASK)
@@ -159,7 +136,7 @@ bool c64b_parse_gamepad_ctrl(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_cp
 	if(gp->dpad & BTN_DPAD_LL_MASK)
 		ll_pressed = true;
 
-	if(gp->buttons & BTN_B_MASK)
+	if(gp->buttons & BTN_A_MASK)
 		ff_pressed = true;
 
 	// if left analog stick is outside the dead zone it overrides the dpad

@@ -23,13 +23,15 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#ifndef KEYBOARD_MACROS_H
-#define KEYBOARD_MACROS_H
+#include "c64b_threadsafe.h"
 
-#include <stddef.h>
+//----------------------------------------------------------------------------//
+SemaphoreHandle_t prse_sem_h;
 
-void menu_fwd();
-void menu_bwd();
-void menu_act();
+//----------------------------------------------------------------------------//
+SemaphoreHandle_t feed_sem_h;
 
-#endif
+//----------------------------------------------------------------------------//
+SemaphoreHandle_t kbrd_sem_h;
+t_c64b_keyboard   keyboard   = {0};
+t_c64b_kb_owner   kb_owner   = KB_OWNER_NONE;

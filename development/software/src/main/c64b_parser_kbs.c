@@ -25,21 +25,17 @@
 
 #include "c64b_parser.h"
 
-extern t_c64b_keyboard keyboard;
-extern t_c64b_kb_owner kb_owner;
-extern SemaphoreHandle_t kbrd_sem_h;
-
-bool c64b_parse_keyboard_logical(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
+bool c64b_parse_keyboard_symbolic(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 {
-	bool            kb_nop  = true;
-	bool            lshft   = false;
-	bool            rshft   = false;
-	bool            shft    = false;
-	bool            restore = false;
+	bool        kb_nop  = true;
+	bool        lshft   = false;
+	bool        rshft   = false;
+	bool        shft    = false;
+	bool        restore = false;
 
-	bool            shft_lock_press = false;
-	static bool     shft_lock       = false;
-	static bool     shft_lock_old   = false;
+	bool        shft_lock_press = false;
+	static bool shft_lock       = false;
+	static bool shft_lock_old   = false;
 
 
 	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)0) == pdTRUE)
@@ -61,6 +57,12 @@ bool c64b_parse_keyboard_logical(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 						shft_lock = !shft_lock;
 					shft_lock_press = true;
 				}
+
+				if(key == HID_USAGE_KB_ESCAPE)
+				{
+					restore = true;
+				}
+
 			}
 			shft_lock_old = shft_lock_press;
 
@@ -81,6 +83,11 @@ bool c64b_parse_keyboard_logical(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 				c64b_keyboard_cmdr_psh(&keyboard);
 			else
 				c64b_keyboard_cmdr_rel(&keyboard);
+
+			if(restore)
+				c64b_keyboard_rest_psh(&keyboard);
+			else
+				c64b_keyboard_rest_rel(&keyboard);
 
 			//------------------------------------------------------------------------------------//
 			// regular keys
@@ -466,21 +473,6 @@ bool c64b_parse_keyboard_logical(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 					c64b_keyboard_keys_rel(&keyboard, true);
 				}
 			}
-
-			//------------------------------------------------------------------------------------//
-			// restore key
-			for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
-			{
-				const uint8_t key = kb->pressed_keys[i];
-				if(key == HID_USAGE_KB_ESCAPE)
-				{
-					c64b_keyboard_rest_psh(&keyboard);
-					restore = true;
-				}
-			}
-
-			if(!restore)
-				c64b_keyboard_rest_rel(&keyboard);
 
 			if(kb_nop)
 				kb_owner = KB_OWNER_NONE;

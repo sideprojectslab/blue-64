@@ -23,13 +23,54 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#ifndef KEYBOARD_MACROS_H
-#define KEYBOARD_MACROS_H
+#include "c64b_parser.h"
 
-#include <stddef.h>
+extern bool c64b_parse_keyboard_symbolic  (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+extern bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old);
 
-void menu_fwd();
-void menu_bwd();
-void menu_act();
+bool c64b_parse_keyboard_menu(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
+{
+	bool kb_nop = true;
 
-#endif
+	if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
+	{
+		for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
+		{
+			const uint8_t key = kb->pressed_keys[i];
+
+			switch(key)
+			{
+				case HID_USAGE_KB_RIGHT_ARROW:
+				case HID_USAGE_KB_DOWN_ARROW:
+					kb_nop = false;
+					menu_fwd();
+					break;
+				case HID_USAGE_KB_LEFT_ARROW:
+				case HID_USAGE_KB_UP_ARROW:
+					kb_nop = false;
+					menu_bwd();
+					break;
+				case HID_USAGE_KB_ENTER:
+					kb_nop = false;
+					menu_act();
+					break;
+				default:
+			}
+		}
+	}
+
+	if(kb_nop)
+	{
+		xSemaphoreGive(feed_sem_h);
+	}
+
+	return kb_nop;
+}
+
+bool c64b_parse_keyboard_keys(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
+{
+	if(kb_map == KB_MAP_SYMBOLIC)
+		return c64b_parse_keyboard_symbolic(kb, kb_old);
+	else
+		return c64b_parse_keyboard_positional(kb, kb_old);
+}

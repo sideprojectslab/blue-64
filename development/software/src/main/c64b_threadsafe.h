@@ -23,13 +23,37 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#ifndef KEYBOARD_MACROS_H
-#define KEYBOARD_MACROS_H
+#ifndef C64B_THREADSAFE_H
+#define C64B_THREADSAFE_H
 
-#include <stddef.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
-void menu_fwd();
-void menu_bwd();
-void menu_act();
+#include "c64b_keyboard.h"
+#include "c64b_properties.h"
+
+typedef enum
+{
+	KB_OWNER_NONE = -1,
+	KB_OWNER_KBRD,
+	KB_OWNER_CTL1,
+	KB_OWNER_CTL2,
+	KB_OWNER_FEED,
+	KB_OWNER_COUNT
+} t_c64b_kb_owner;
+
+//----------------------------------------------------------------------------//
+// unprotected
+
+//----------------------------------------------------------------------------//
+extern SemaphoreHandle_t prse_sem_h; // protects access to controller data
+
+//----------------------------------------------------------------------------//
+extern SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
+extern t_c64b_keyboard   keyboard;
+extern t_c64b_kb_owner   kb_owner;
+//----------------------------------------------------------------------------//
+extern SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
 
 #endif

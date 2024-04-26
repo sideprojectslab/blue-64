@@ -28,7 +28,8 @@
 		"c64b_parser.h": "c",
 		"uni_esp32.h": "c",
 		"uni_property_mem.h": "c",
-		"uni_property_nvs.h": "c"
+		"uni_property_nvs.h": "c",
+		"c64b_macros.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",

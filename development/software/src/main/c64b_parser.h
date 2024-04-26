@@ -45,7 +45,9 @@
 #include "uni_gpio.h"
 
 #include "sdkconfig.h"
+#include "c64b_threadsafe.h"
 #include "c64b_keyboard.h"
+#include "c64b_properties.h"
 #include "c64b_macros.h"
 
 #include "c64b_pinout_0v2.h"
@@ -62,14 +64,14 @@
 #define BTN_B_MASK       2
 #define BTN_X_MASK       4
 #define BTN_Y_MASK       8
-#define BTN_L1_MASK      0x0010
-#define BTN_L3_MASK      0x0100
-#define BTN_R1_MASK      0x0020
-#define BTN_R3_MASK      0x0200
+#define BTN_LT_MASK      0x0001
+#define BTN_LS_MASK      0x0010
+#define BTN_RT_MASK      0x0002
+#define BTN_RS_MASK      0x0020
 
 #define BTN_HOME_MASK    1
 #define BTN_SELECT_MASK  2
-#define BTN_START_MASK   4
+#define BTN_MENU_MASK    4
 
 #define KB_LSHFT_MASK    0x2
 #define KB_RSHFT_MASK    0x20
@@ -83,16 +85,6 @@
 
 //----------------------------------------------------------------------------//
 // keyboard owner must always be protected by a semaphore
-
-typedef enum
-{
-	KB_OWNER_NONE = -1,
-	KB_OWNER_KBRD,
-	KB_OWNER_CTL1,
-	KB_OWNER_CTL2,
-	KB_OWNER_FEED,
-	KB_OWNER_COUNT
-} t_c64b_kb_owner;
 
 void c64b_parser_init();
 void c64b_parser_connect(uni_hid_device_t* d);

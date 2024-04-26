@@ -26,12 +26,12 @@
 #include "c64b_parser.h"
 #include "esp_task_wdt.h"
 
-extern bool c64b_parse_keyboard_logical   (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
-extern bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old);
-extern bool c64b_parse_gamepad_menu       (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
-extern bool c64b_parse_gamepad_swap       (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
-extern bool c64b_parse_gamepad_kbemu      (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
-extern bool c64b_parse_gamepad_ctrl       (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
+extern bool c64b_parse_keyboard_menu (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+extern bool c64b_parse_keyboard_keys (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+extern bool c64b_parse_gamepad_menu  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
+extern bool c64b_parse_gamepad_swap  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
+extern bool c64b_parse_gamepad_kbemu (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
+extern bool c64b_parse_gamepad_ctrl  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
 
 //----------------------------------------------------------------------------//
 // Static Variables
@@ -41,16 +41,9 @@ static uni_controller_t  ctrl_tmp[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_new[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_old[3] = {{0}, {0}, {0}};
 
-       t_c64b_keyboard   keyboard   = {0};
-       t_c64b_kb_owner   kb_owner   = KB_OWNER_NONE;
 static bool              swap_ports = false;
-
 static const uint8_t     col_perm[] = COL_PERM;
 static const uint8_t     row_perm[] = ROW_PERM;
-
-static SemaphoreHandle_t prse_sem_h; // protects access to controller data
-       SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
-       SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
 
 //----------------------------------------------------------------------------//
 // C64-Blue functions
@@ -145,7 +138,10 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 		uni_controller_dump(ctl);
 	#endif
 
-	c64b_parse_keyboard_logical(kb, kb_old);
+	if(kb->modifiers & KB_RALT_MASK)
+		c64b_parse_keyboard_menu(kb, kb_old);
+	else
+		c64b_parse_keyboard_keys(kb, kb_old);
 
 	*kb_old = *kb;
 }
@@ -364,4 +360,5 @@ void c64b_parser_init()
 	keyboard.row_perm  = row_perm;
 
 	c64b_keyboard_init(&keyboard);
+	c64b_property_init();
 }

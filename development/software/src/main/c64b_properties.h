@@ -23,13 +23,44 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#ifndef KEYBOARD_MACROS_H
-#define KEYBOARD_MACROS_H
+#ifndef C64B_PROPERTIES_H
+#define C64B_PROPERTIES_H
 
-#include <stddef.h>
+#include "stdint.h"
+#include "uni_property.h"
+#include "c64b_keyboard.h"
 
-void menu_fwd();
-void menu_bwd();
-void menu_act();
+void     c64b_property_reset(void);
+void     c64b_property_init(void);
+void     c64b_property_set_u8(const char* key, uint8_t value);
+uint8_t  c64b_property_get_u8(const char* key, uint8_t def);
+
+#define KB_MAP_SYMBOLIC   0
+#define KB_MAP_POSITIONAL 1
+
+#define C64B_PROPERTY_KEY_KB_MAP "c64b.kb_map"
+
+typedef enum
+{
+	CT_MAP_IDX_BY = 0,
+	CT_MAP_IDX_BH,
+	CT_MAP_IDX_BM,
+	CT_MAP_IDX_LT,
+	CT_MAP_IDX_RT,
+	CT_MAP_IDX_LS,
+	CT_MAP_IDX_RS,
+	CT_MAP_IDX_NUM
+} t_c64b_ct_map_idx;
+
+#define C64B_PROPERTY_KEY_CT_BY  "c64b.ct_by"
+#define C64B_PROPERTY_KEY_CT_BH  "c64b.ct_bh"
+#define C64B_PROPERTY_KEY_CT_BM  "c64b.ct_bm"
+#define C64B_PROPERTY_KEY_CT_LT  "c64b.ct_lt"
+#define C64B_PROPERTY_KEY_CT_RT  "c64b.ct_rt"
+#define C64B_PROPERTY_KEY_CT_LS  "c64b.ct_ls"
+#define C64B_PROPERTY_KEY_CT_RS  "c64b.ct_rs"
+
+extern unsigned int kb_map;
+extern unsigned int ct_map[CT_MAP_IDX_NUM];
 
 #endif

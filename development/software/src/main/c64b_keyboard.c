@@ -125,7 +125,7 @@ const t_c64b_key_id KEY_IDS[] =
 	{"~ret~"   , 0, 1, false, false},
 	{"~del~"   , 0, 0, false, false},
 
-	// shfted characters
+	// shifted characters
 
 	// 64
 	{"~run~"   , 7, 7, true, false},
@@ -177,6 +177,7 @@ typedef enum
 	CMDR_REL,
 	SHFT_PSH,
 	SHFT_REL,
+	STRIP,
 	MOD_EVT_NUM
 } t_c64b_mod_evt;
 
@@ -188,15 +189,15 @@ static const char* MOD_EVT_IDS[] =
 	"~cmdr-psh~",
 	"~cmdr-rel~",
 	"~shft-psh~",
-	"~shft-rel~"
+	"~shft-rel~",
+	"~strip~"
 };
 
 //----------------------------------------------------------------------------//
-
-static const t_c64b_key_id * c64b_keyboard_char_to_key(const char* s)
+unsigned int c64b_keyboard_key_to_idx(const char* s)
 {
 	if(s == NULL)
-		return NULL;
+		return C64B_KB_IDX_NONE;
 
 	for(unsigned int i = 0; i < sizeof(KEY_IDS) / sizeof(KEY_IDS[0]); ++i)
 	{
@@ -209,8 +210,31 @@ static const t_c64b_key_id * c64b_keyboard_char_to_key(const char* s)
 		}
 
 		if(KEY_IDS[i].str[j] == 0)
-			return &(KEY_IDS[i]);
+			return i;
 	}
+	return C64B_KB_IDX_NONE;
+}
+
+//----------------------------------------------------------------------------//
+const char *c64b_keyboard_idx_to_key(unsigned int i)
+{
+	if(i == C64B_KB_IDX_NONE)
+		return "";
+	if(i < sizeof(KEY_IDS) / sizeof(KEY_IDS[0]))
+		return KEY_IDS[i].str;
+	return NULL;
+}
+
+//----------------------------------------------------------------------------//
+
+static const t_c64b_key_id * c64b_keyboard_char_to_key(const char* s)
+{
+	if(s == NULL)
+		return NULL;
+
+	int i = c64b_keyboard_key_to_idx(s);
+	if(i != -1)
+		return &(KEY_IDS[i]);
 	return NULL;
 }
 
@@ -475,7 +499,7 @@ void c64b_keyboard_cmdr_rel(t_c64b_keyboard *h)
 
 //----------------------------------------------------------------------------//
 
-bool c64b_keyboard_char_psh(t_c64b_keyboard *h, char *s)
+bool c64b_keyboard_char_psh(t_c64b_keyboard *h, const char *s)
 {
 	if((h == NULL) || (s == NULL))
 		return false;
@@ -493,7 +517,7 @@ bool c64b_keyboard_char_psh(t_c64b_keyboard *h, char *s)
 
 //----------------------------------------------------------------------------//
 
-bool c64b_keyboard_char_rel(t_c64b_keyboard *h, char *s)
+bool c64b_keyboard_char_rel(t_c64b_keyboard *h, const char *s)
 {
 	if((h == NULL) || (s == NULL))
 		return false;
@@ -513,13 +537,18 @@ bool c64b_keyboard_char_rel(t_c64b_keyboard *h, char *s)
 
 bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s)
 {
+	static char stripped[] = " ";
+
 	if((h == NULL) || (s == NULL))
 		return false;
 
 	const char          *head = s;
 	const t_c64b_key_id *key  = NULL;
-	t_c64b_mod_evt mod        = NONE;
+	t_c64b_mod_evt       mod  = NONE;
+
 	bool shft                 = false;
+	bool strip                = false;
+	bool strip_first          = false;
 	bool error                = false;
 
 	while(*head != 0)
@@ -554,6 +583,10 @@ bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s)
 					c64b_keyboard_shft_rel(h);
 					shft = false;
 					break;
+				case STRIP:
+					strip       = true;
+					strip_first = true;
+					break;
 				default:
 					break;
 			}
@@ -561,9 +594,33 @@ bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s)
 		}
 		else if(key != NULL)
 		{
-			c64b_keyboard_key_psh(h, key);
-			c64b_keyboard_keys_rel(h, !shft);
-			head += strlen(key->str);
+			if(strip)
+			{
+				if(*head != '~')
+				{
+					stripped[0] = *head;
+					c64b_keyboard_char_psh(h, stripped);
+					c64b_keyboard_keys_rel(h, !shft);
+
+					if(strip_first)
+						strip = false;
+				}
+
+				head        += 1;
+				strip_first = false;
+
+				if(*head == '~')
+				{
+					head  += 1;
+					strip = false;
+				}
+			}
+			else
+			{
+				c64b_keyboard_key_psh(h, key);
+				c64b_keyboard_keys_rel(h, !shft);
+				head += strlen(key->str);
+			}
 		}
 		else
 		{
