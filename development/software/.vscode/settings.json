@@ -29,7 +29,12 @@
 		"uni_esp32.h": "c",
 		"uni_property_mem.h": "c",
 		"uni_property_nvs.h": "c",
-		"c64b_macros.h": "c"
+		"c64b_macros.h": "c",
+		"bootloader_common.h": "c",
+		"esp_heap_caps.h": "c",
+		"esp_system.h": "c",
+		"esp_task.h": "c",
+		"string.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",

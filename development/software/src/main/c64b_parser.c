@@ -189,6 +189,13 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 	if(gp->misc_buttons & BTN_SELECT_MASK)
 	{
+		if(!(gp_old->misc_buttons & BTN_SELECT_MASK))
+			if(xSemaphoreTake(kbrd_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+			{
+				kb_owner = KB_OWNER_NONE;
+				xSemaphoreGive(kbrd_sem_h);
+			}
+
 		// processing special keys, all controller lines are disabled
 		c64b_keyboard_cport_rel(&keyboard, CPORT_UP, cport_idx);
 		c64b_keyboard_cport_rel(&keyboard, CPORT_DN, cport_idx);

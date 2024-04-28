@@ -65,6 +65,7 @@ bool c64b_parse_gamepad_swap(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
 		if(xSemaphoreTake(kbrd_sem_h, portMAX_DELAY) == pdTRUE)
 		{
 			c64b_keyboard_reset(&keyboard);
+			kb_owner = KB_OWNER_NONE;
 			xSemaphoreGive(kbrd_sem_h);
 		}
 	}
@@ -95,9 +96,9 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
 			else if(gp->buttons & BTN_RS_MASK)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RS]));
-			else if(gp->brake > 20)
+			else if(gp->brake > 40)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LT]));
-			else if(gp->throttle > 20)
+			else if(gp->throttle > 40)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RT]));
 			else
 				kb_nop = true;

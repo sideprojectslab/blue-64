@@ -160,8 +160,10 @@ unsigned int menu_ct_plt(int i)
 	// here we wait for the macro to be fed and then we reset the trace
 	// as we want to grab new input from the user
 	if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+	{
 		c64b_keyboard_trace_reset(&keyboard);
-	xSemaphoreGive(feed_sem_h);
+		xSemaphoreGive(feed_sem_h);
+	}
 
 	return i;
 }

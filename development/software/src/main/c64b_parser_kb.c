@@ -56,6 +56,9 @@ bool c64b_parse_keyboard_menu(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 					break;
 				default:
 			}
+
+			if(!kb_nop)
+				break;
 		}
 	}
 
