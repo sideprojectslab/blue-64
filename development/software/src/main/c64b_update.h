@@ -23,15 +23,19 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#ifndef KEYBOARD_MACROS_H
-#define KEYBOARD_MACROS_H
+#ifndef C64B_UPDATE_H
+#define C64B_UPDATE_H
 
-#include <stddef.h>
+typedef enum
+{
+	UPDATE_OK = 0,
+	NO_SDCARD,
+	NO_FIRMWARE,
+	READ_ERROR,
+	WRITE_ERROR,
 
-#define C64B_FW_VERSION "v0.16"
+}t_c64b_update_err;
 
-void menu_fwd();
-void menu_bwd();
-void menu_act();
+t_c64b_update_err c64b_update();
 
 #endif

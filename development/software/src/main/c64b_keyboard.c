@@ -670,7 +670,9 @@ void c64b_keyboard_reset(t_c64b_keyboard *h)
 	gpio_set_level(h->pin_ctrl, 0);
 	gpio_set_level(h->pin_shft, 0);
 	gpio_set_level(h->pin_cmdr, 0);
-	gpio_set_level(h->pin_nrst, 0);
+
+	if (h->pin_nrst != 255)
+		gpio_set_level(h->pin_nrst, 0);
 
 	c64b_keyboard_keys_rel(h, true);
 	c64b_keyboard_mods_rel(h);

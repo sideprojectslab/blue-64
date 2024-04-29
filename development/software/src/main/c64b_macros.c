@@ -212,7 +212,7 @@ unsigned int menu_main_act(int i)
 		"~clr~"
 		"0 device info:~ret~"
 		"0 blue-64 by side-projects-lab~ret~"
-		"0 firmware version: 0.15 (beta)";
+		"0 firmware version: "C64B_FW_VERSION" (beta)";
 
 	static const char* entries[] =
 	{

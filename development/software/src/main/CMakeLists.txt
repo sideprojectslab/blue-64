@@ -9,9 +9,11 @@ set(srcs "main.c"
          "c64b_parser_kbp.c"
          "c64b_parser_kb.c"
          "c64b_parser_gp.c"
-         "c64b_parser.c")
+         "c64b_parser.c"
+         "c64b_update.c"
+         "c64b_threadsafe.c")
 
-set(requires "bluepad32")
+set(requires "bluepad32" "fatfs")
 
 # See: https://gitlab.com/ricardoquesada/bluepad32/-/issues/9
 if(DEFINED ENV{BLUEPAD32_ARDUINO})

@@ -24,6 +24,7 @@
 //----------------------------------------------------------------------------//
 
 #include "c64b_parser.h"
+#include "c64b_update.h"
 #include "esp_task_wdt.h"
 
 extern bool c64b_parse_keyboard_menu (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
@@ -325,6 +326,8 @@ void c64b_parser_disconnect(uni_hid_device_t* d)
 
 void c64b_parser_init()
 {
+	t_c64b_update_err err = c64b_update();
+
 	prse_sem_h = xSemaphoreCreateBinary();
 	kbrd_sem_h = xSemaphoreCreateBinary();
 	feed_sem_h = xSemaphoreCreateBinary();
@@ -368,4 +371,18 @@ void c64b_parser_init()
 
 	c64b_keyboard_init(&keyboard);
 	c64b_property_init();
+
+	if(err == UPDATE_OK)
+	{
+		const char update_successful[] =
+			"~clr~0 successfully updated firmware!~ret~"
+			"~ret~"
+			"0 please switch off the computer and~ret~"
+			"0 remove the sd-card";
+
+		if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
+			keyboard_macro_feed(update_successful);
+
+		while(1){}
+	}
 }

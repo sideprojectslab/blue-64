@@ -34,7 +34,8 @@
 		"esp_heap_caps.h": "c",
 		"esp_system.h": "c",
 		"esp_task.h": "c",
-		"string.h": "c"
+		"string.h": "c",
+		"esp_vfs_fat.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",

@@ -52,14 +52,6 @@ typedef enum
 	CT_MAP_IDX_NUM
 } t_c64b_ct_map_idx;
 
-//#define C64B_PROPERTY_KEY_CT_BY  "c64b.ct_by"
-//#define C64B_PROPERTY_KEY_CT_BH  "c64b.ct_bh"
-//#define C64B_PROPERTY_KEY_CT_BM  "c64b.ct_bm"
-//#define C64B_PROPERTY_KEY_CT_LT  "c64b.ct_lt"
-//#define C64B_PROPERTY_KEY_CT_RT  "c64b.ct_rt"
-//#define C64B_PROPERTY_KEY_CT_LS  "c64b.ct_ls"
-//#define C64B_PROPERTY_KEY_CT_RS  "c64b.ct_rs"
-
 extern unsigned int kb_map;
 extern const char*  ct_map_key[CT_MAP_IDX_NUM];
 extern unsigned int ct_map[CT_MAP_IDX_NUM];
