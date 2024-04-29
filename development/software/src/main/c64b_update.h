@@ -36,6 +36,7 @@ typedef enum
 
 }t_c64b_update_err;
 
+t_c64b_update_err c64b_update_init(bool check_only);
 t_c64b_update_err c64b_update();
 
 #endif

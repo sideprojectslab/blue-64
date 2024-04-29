@@ -326,7 +326,6 @@ void c64b_parser_disconnect(uni_hid_device_t* d)
 
 void c64b_parser_init()
 {
-	t_c64b_update_err err = c64b_update();
 
 	prse_sem_h = xSemaphoreCreateBinary();
 	kbrd_sem_h = xSemaphoreCreateBinary();
@@ -369,20 +368,43 @@ void c64b_parser_init()
 	keyboard.col_perm  = col_perm;
 	keyboard.row_perm  = row_perm;
 
-	c64b_keyboard_init(&keyboard);
 	c64b_property_init();
 
-	if(err == UPDATE_OK)
+	if(c64b_update_init(true) == UPDATE_OK)
 	{
+		const char update_started[] =
+			"~clr~0 firmware update started!";
+
 		const char update_successful[] =
 			"~clr~0 successfully updated firmware!~ret~"
 			"~ret~"
 			"0 please switch off the computer and~ret~"
 			"0 remove the sd-card";
 
-		if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == pdTRUE)
-			keyboard_macro_feed(update_successful);
+		const char update_failed[] =
+			"~clr~0 firmware updated failed!~ret~"
+			"~ret~"
+			"0 please switch off the computer and~ret~"
+			"0 remove the sd-card";
+
+		vTaskDelay(3000 / portTICK_PERIOD_MS);
+
+		c64b_keyboard_init(&keyboard);
+		c64b_keyboard_feed_str(&keyboard, update_started);
+
+		if(c64b_update() == UPDATE_OK)
+		{
+			c64b_keyboard_init(&keyboard);
+			c64b_keyboard_feed_str(&keyboard, update_successful);
+		}
+		else
+		{
+			c64b_keyboard_init(&keyboard);
+			c64b_keyboard_feed_str(&keyboard, update_failed);
+		}
 
 		while(1){}
 	}
+
+	c64b_keyboard_init(&keyboard);
 }

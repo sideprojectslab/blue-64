@@ -49,9 +49,11 @@
 #define OTA_BUF_SIZE 1024
 static char ota_buf[OTA_BUF_SIZE + 1] = {0};
 
-t_c64b_update_err c64b_update()
-{
+FILE *f;
+sdmmc_card_t *card;
 
+t_c64b_update_err c64b_update_init(bool check_only)
+{
 	logi("Checking Updates\n");
 
 	gpio_set_pull_mode( 2, GPIO_PULLUP_ONLY);
@@ -69,9 +71,6 @@ t_c64b_update_err c64b_update()
 		.allocation_unit_size = 16 * 1024
 	};
 
-	sdmmc_card_t *card;
-	const char mount_point[] = MOUNT_POINT;
-
 	sdmmc_host_t host = SDMMC_HOST_DEFAULT();
 	host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
 
@@ -80,7 +79,7 @@ t_c64b_update_err c64b_update()
 	slot_config.width = 4;
 	slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
-	if(esp_vfs_fat_sdmmc_mount(mount_point, &host, &slot_config, &mount_config, &card) != ESP_OK)
+	if(esp_vfs_fat_sdmmc_mount(MOUNT_POINT, &host, &slot_config, &mount_config, &card) != ESP_OK)
 		return NO_SDCARD;
 
 	logi("Checking New Firmware\n");
@@ -88,19 +87,37 @@ t_c64b_update_err c64b_update()
 	// Open update file
 	const char fw_path[] = MOUNT_POINT"/application.bin";
 
-	FILE *f = fopen(fw_path, "rb");
+	f = fopen(fw_path, "rb");
 	if (f == NULL)
 	{
-		esp_vfs_fat_sdcard_unmount(mount_point, card);
+		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
 		return NO_FIRMWARE;
 	}
 
+	if(check_only)
+	{
+		fclose(f);
+		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
+	}
+
+	return UPDATE_OK;
+}
+
+t_c64b_update_err c64b_update()
+{
 	logi("Starting Update\n");
+
+	if(c64b_update_init(false) != ESP_OK)
+	{
+		fclose(f);
+		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
+		return READ_ERROR;
+	}
 
 	if(nvs_flash_init() != ESP_OK)
 	{
 		fclose(f);
-		esp_vfs_fat_sdcard_unmount(mount_point, card);
+		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
 		return WRITE_ERROR;
 	}
 
@@ -114,7 +131,7 @@ t_c64b_update_err c64b_update()
 	{
 		esp_ota_abort(update_handle);
 		fclose(f);
-		esp_vfs_fat_sdcard_unmount(mount_point, card);
+		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
 		return WRITE_ERROR;
 	}
 
@@ -128,7 +145,7 @@ t_c64b_update_err c64b_update()
 		{
 			esp_ota_abort(update_handle);
 			fclose(f);
-			esp_vfs_fat_sdcard_unmount(mount_point, card);
+			esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
 			return READ_ERROR;
 		}
 
@@ -136,7 +153,7 @@ t_c64b_update_err c64b_update()
 		{
 			esp_ota_abort(update_handle);
 			fclose(f);
-			esp_vfs_fat_sdcard_unmount(mount_point, card);
+			esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
 			return WRITE_ERROR;
 		}
 
@@ -146,7 +163,7 @@ t_c64b_update_err c64b_update()
 	}
 
 	fclose(f);
-	esp_vfs_fat_sdcard_unmount(mount_point, card);
+	esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
 
 	// commit OTA
 	if(esp_ota_end(update_handle) != ESP_OK)
