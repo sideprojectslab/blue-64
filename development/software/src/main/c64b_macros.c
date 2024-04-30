@@ -100,6 +100,51 @@ unsigned int menu_restore_act(int i)
 }
 
 //----------------------------------------------------------------------------//
+//                               AUTOFIRE MENU                                //
+//----------------------------------------------------------------------------//
+
+unsigned int menu_af_plt(int i)
+{
+	static const char* entries[] =
+	{
+		"~home~~ret~0 disabled",
+		"~home~~ret~1 1hz  ",
+		"~home~~ret~2 2hz  ",
+		"~home~~ret~3 3hz  ",
+		"~home~~ret~4 4hz  ",
+		"~home~~ret~5 5hz  ",
+		"~home~~ret~6 6hz  ",
+		"~home~~ret~7 3hz  ",
+		"~home~~ret~8 3hz  ",
+		"~home~~ret~9 3hz  ",
+		"~home~~ret~10 10hz",
+	};
+
+	WRAP(i)
+	keyboard_macro_feed(entries[i]);
+	return i;
+}
+
+unsigned int menu_af_act(int i)
+{
+	if (af_rate != i)
+	{
+		af_rate = i;
+		c64b_property_set_u8(C64B_PROPERTY_KEY_AF_RATE, i);
+
+		af_prd = (TickType_t)portMAX_DELAY;
+		if (af_rate != 0)
+			af_prd = (500 / (TickType_t)af_rate) / portTICK_PERIOD_MS; // already divided by two
+	}
+
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+//----------------------------------------------------------------------------//
 //                             KEYBOARD MAP MENU                              //
 //----------------------------------------------------------------------------//
 
@@ -139,7 +184,6 @@ unsigned int menu_ct_plt(int i)
 	static char str_buf[128] = {0};
 	static const char* entries[] =
 	{
-		"~home~~ret~1 y button      : \"",
 		"~home~~ret~2 home button   : \"",
 		"~home~~ret~3 menu button   : \"",
 		"~home~~ret~4 left trigger  : \"",
@@ -198,7 +242,8 @@ unsigned int menu_main_plt(int i)
 		"~clr~3 device info",
 		"~clr~4 keyboard mapping",
 		"~clr~5 controller mapping (xbox)",
-		"~clr~6 restore defaults"
+		"~clr~6 autofire rate",
+		"~clr~7 restore defaults"
 	};
 
 	WRAP(i);
@@ -220,6 +265,7 @@ unsigned int menu_main_act(int i)
 		"~clr~load \"$\",8~ret~",
 		"~clr~load \"*\",8~ret~",
 		device_info,
+		":",
 		":",
 		":",
 		"?"
@@ -250,6 +296,16 @@ unsigned int menu_main_act(int i)
 			break;
 
 		case 6:
+			menu_current_plt = menu_af_plt;
+			menu_current_act = menu_af_act;
+			menu_lvl++;
+			menu_idx[menu_lvl] = af_rate;
+
+			if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+				menu_current_plt(menu_idx[menu_lvl]);
+			break;
+
+		case 7:
 			menu_current_plt = menu_restore_plt;
 			menu_current_act = menu_restore_act;
 			menu_lvl++;

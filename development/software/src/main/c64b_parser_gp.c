@@ -27,6 +27,107 @@
 
 //----------------------------------------------------------------------------//
 
+SemaphoreHandle_t autofire_sem_h[2];
+SemaphoreHandle_t afsleep_sem_h[2];
+bool              autofire[2] = {0};
+
+//----------------------------------------------------------------------------//
+
+static void c64b_gamepad_autofire(t_c64b_cport_idx i)
+{
+	while(1)
+	{
+		if(xSemaphoreTake(autofire_sem_h[i], (TickType_t)portMAX_DELAY) == pdTRUE)
+		{
+			bool active = autofire[i];
+			xSemaphoreGive(autofire_sem_h[i]);
+
+			if (active)
+			{
+				// make sure this tpress is smaller than the smallest autofire
+				// interval (currently 100ms)
+				const TickType_t tpress = 50 / portTICK_PERIOD_MS;
+				c64b_keyboard_cport_psh(&keyboard, CPORT_FF, i);
+				vTaskDelay(tpress);
+				c64b_keyboard_cport_rel(&keyboard, CPORT_FF, i);
+				xSemaphoreTake(afsleep_sem_h[i], af_prd - tpress);
+			}
+		}
+	}
+}
+
+//----------------------------------------------------------------------------//
+
+static void task_c64b_gamepad_autofire_2(void *arg)
+{
+	c64b_gamepad_autofire(CPORT_2);
+}
+
+static void task_c64b_gamepad_autofire_1(void *arg)
+{
+	c64b_gamepad_autofire(CPORT_1);
+}
+
+//----------------------------------------------------------------------------//
+
+static void c64b_gamepad_autofire_start(unsigned int i)
+{
+	logi("starting autofire on port %i\n", i);
+	if(xSemaphoreTake(autofire_sem_h[i], (TickType_t)portMAX_DELAY) == pdTRUE)
+	{
+		if (!autofire[i])
+		{
+			autofire[i] = true;
+			xSemaphoreGive(afsleep_sem_h[i]); // for instant restart
+		}
+		xSemaphoreGive(autofire_sem_h[i]);
+	}
+}
+
+//----------------------------------------------------------------------------//
+
+static void c64b_gamepad_autofire_stop(unsigned int i)
+{
+	logi("stopping autofire on port %i\n", i);
+	if(xSemaphoreTake(autofire_sem_h[i], (TickType_t)portMAX_DELAY) == pdTRUE)
+	{
+		autofire[i] = false;
+		xSemaphoreGive(autofire_sem_h[i]);
+	}
+}
+
+//----------------------------------------------------------------------------//
+
+void c64b_parse_gamepad_init()
+{
+	autofire_sem_h[0] = xSemaphoreCreateBinary();
+	autofire_sem_h[1] = xSemaphoreCreateBinary();
+	afsleep_sem_h[0] = xSemaphoreCreateBinary();
+	afsleep_sem_h[1] = xSemaphoreCreateBinary();
+	xSemaphoreGive(autofire_sem_h[0]);
+	xSemaphoreGive(autofire_sem_h[1]);
+	xSemaphoreGive(afsleep_sem_h[0]);
+	xSemaphoreGive(afsleep_sem_h[1]);
+
+	xTaskCreatePinnedToCore(task_c64b_gamepad_autofire_2,
+	                        "autofire 2",
+	                        4096,
+	                        NULL,
+	                        1,
+	                        NULL,
+	                        tskNO_AFFINITY);
+
+	xTaskCreatePinnedToCore(task_c64b_gamepad_autofire_1,
+	                        "autofire 1",
+	                        4096,
+	                        NULL,
+	                        1,
+	                        NULL,
+	                        tskNO_AFFINITY);
+}
+
+//----------------------------------------------------------------------------//
+
 bool c64b_parse_gamepad_menu(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
 {
 	if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
@@ -90,8 +191,6 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BM]));
 			else if(gp->misc_buttons & BTN_HOME_MASK)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BH]));
-			else if(gp->buttons & BTN_Y_MASK)
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BY]));
 			else if(gp->buttons & BTN_LS_MASK)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
 			else if(gp->buttons & BTN_RS_MASK)
@@ -124,6 +223,7 @@ bool c64b_parse_gamepad_ctrl(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_cp
 	bool up_pressed = false;
 	bool dn_pressed = false;
 	bool ff_pressed = false;
+	bool af_pressed = false;
 
 	if((gp->dpad & BTN_DPAD_UP_MASK) || (gp->buttons & BTN_B_MASK))
 		up_pressed = true;
@@ -139,6 +239,9 @@ bool c64b_parse_gamepad_ctrl(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_cp
 
 	if(gp->buttons & BTN_A_MASK)
 		ff_pressed = true;
+
+	if(gp->buttons & BTN_Y_MASK)
+		af_pressed = true;
 
 	// if left analog stick is outside the dead zone it overrides the dpad
 	if((abs(gp->axis_x) > ANL_DEADZONE) || (abs(gp->axis_y) > ANL_DEADZONE))
@@ -203,6 +306,11 @@ bool c64b_parse_gamepad_ctrl(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_cp
 		c64b_keyboard_cport_psh(&keyboard, CPORT_FF, cport_idx);
 	else
 		c64b_keyboard_cport_rel(&keyboard, CPORT_FF, cport_idx);
+
+	if(af_pressed)
+		c64b_gamepad_autofire_start(cport_idx);
+	else
+		c64b_gamepad_autofire_stop(cport_idx);
 
 	return true;
 }

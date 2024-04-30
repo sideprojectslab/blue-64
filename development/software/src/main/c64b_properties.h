@@ -38,12 +38,12 @@ uint8_t  c64b_property_get_u8(const char* key, uint8_t def);
 #define KB_MAP_SYMBOLIC   0
 #define KB_MAP_POSITIONAL 1
 
-#define C64B_PROPERTY_KEY_KB_MAP "c64b.kb_map"
+#define C64B_PROPERTY_KEY_KB_MAP  "c64b.kb_map"
+#define C64B_PROPERTY_KEY_AF_RATE "c64b.af_dly"
 
 typedef enum
 {
-	CT_MAP_IDX_BY = 0,
-	CT_MAP_IDX_BH,
+	CT_MAP_IDX_BH = 0,
 	CT_MAP_IDX_BM,
 	CT_MAP_IDX_LT,
 	CT_MAP_IDX_RT,
@@ -53,6 +53,8 @@ typedef enum
 } t_c64b_ct_map_idx;
 
 extern unsigned int kb_map;
+extern unsigned int af_rate;
+extern TickType_t   af_prd;
 extern const char*  ct_map_key[CT_MAP_IDX_NUM];
 extern unsigned int ct_map[CT_MAP_IDX_NUM];
 

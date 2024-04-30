@@ -33,6 +33,7 @@ extern bool c64b_parse_gamepad_menu  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old
 extern bool c64b_parse_gamepad_swap  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old);
 extern bool c64b_parse_gamepad_kbemu (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
 extern bool c64b_parse_gamepad_ctrl  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
+extern void c64b_parse_gamepad_init  ();
 
 //----------------------------------------------------------------------------//
 // Static Variables
@@ -326,7 +327,6 @@ void c64b_parser_disconnect(uni_hid_device_t* d)
 
 void c64b_parser_init()
 {
-
 	prse_sem_h = xSemaphoreCreateBinary();
 	kbrd_sem_h = xSemaphoreCreateBinary();
 	feed_sem_h = xSemaphoreCreateBinary();
@@ -369,6 +369,7 @@ void c64b_parser_init()
 	keyboard.row_perm  = row_perm;
 
 	c64b_property_init();
+	c64b_parse_gamepad_init();
 
 	if(c64b_update_init(true) == UPDATE_OK)
 	{

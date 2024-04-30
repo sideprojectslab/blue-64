@@ -18,20 +18,22 @@ Blue-64 has an internal menu that is visualized by printing text on screen. The 
 | Select/Run Menu (keyboard)     | AltGr + Enter |
 
 ## Button Mapping (xInput)
-| Joystick     | Controller  | Controller Alt. |
-|:---:         |:---:        |:---:            |
-| UP           | D-Pad UP    | Button B        |
-| DOWN         | D-Pad DOWN  | Button X        |
-| LEFT         | D-Pad LEFT  | Left Analog     |
-| RIGHT        | D-Pad RIGHT | Left Analog     |
-| FIRE         | Button A    | -               |
+| Joystick     | Controller  | Controller Alt.     |
+|:---:         |:---:        |:---:                |
+| UP           | D-Pad UP    | Button B            |
+| DOWN         | D-Pad DOWN  | Button X            |
+| LEFT         | D-Pad LEFT  | Left Analog         |
+| RIGHT        | D-Pad RIGHT | Left Analog         |
+| FIRE         | Button A    | Button Y (Autofire) |
+
+The "Y Button" is dedicated to autofire, which can be configured from inactive to 10Hz (100ms) fire-rate through the on-screen menu
 
 Controller buttons not mentioned in the table above can be mapped to emulate any keyboard key through the on-screen menu. Default Controller-Keyboard mappings are reported below:
 
-| Keyboard     | Controller  |
-|:---:         |:---:        |
-| SPACE        | Button Menu |
-| F1           | Button Y    |
+| Keyboard     | Controller     |
+|:---:         |:---:           |
+| SPACE        | Menu Button    |
+| F1           | Right Shoulder |
 
 * In order to map a button nagigate to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
 * Once the desired controller button is highlighted press the desired key on the keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.

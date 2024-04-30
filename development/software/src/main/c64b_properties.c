@@ -23,6 +23,10 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
+
 #include <nvs.h>
 #include <nvs_flash.h>
 
@@ -32,6 +36,8 @@
 // properties
 
 unsigned int kb_map = KB_MAP_SYMBOLIC;
+unsigned int af_rate = 0;
+TickType_t   af_prd = (TickType_t)portMAX_DELAY;
 unsigned int ct_map[CT_MAP_IDX_NUM] = {0};
 
 const char* ct_map_key[CT_MAP_IDX_NUM] =
@@ -75,12 +81,14 @@ void c64b_property_init(void)
 {
 //	uni_property_init();
 	kb_map = c64b_property_get_u8(C64B_PROPERTY_KEY_KB_MAP, KB_MAP_SYMBOLIC);
+	af_rate = c64b_property_get_u8(C64B_PROPERTY_KEY_AF_RATE, 0);
+	if (af_rate != 0)
+		af_prd = (500 / (TickType_t)af_rate) / portTICK_PERIOD_MS; // already divided by two
 
-	ct_map[CT_MAP_IDX_BY] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_BY], c64b_keyboard_key_to_idx("~f1~"));
 	ct_map[CT_MAP_IDX_BH] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_BH], C64B_KB_IDX_NONE);
 	ct_map[CT_MAP_IDX_BM] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_BM], c64b_keyboard_key_to_idx(" "));
 	ct_map[CT_MAP_IDX_LT] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_LT], C64B_KB_IDX_NONE);
 	ct_map[CT_MAP_IDX_RT] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_RT], C64B_KB_IDX_NONE);
 	ct_map[CT_MAP_IDX_LS] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_LS], C64B_KB_IDX_NONE);
-	ct_map[CT_MAP_IDX_RS] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_RS], C64B_KB_IDX_NONE);
+	ct_map[CT_MAP_IDX_RS] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_RS], c64b_keyboard_key_to_idx("~f1~"));
 }

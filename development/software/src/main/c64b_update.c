@@ -114,12 +114,12 @@ t_c64b_update_err c64b_update()
 		return READ_ERROR;
 	}
 
-	if(nvs_flash_init() != ESP_OK)
-	{
-		fclose(f);
-		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
-		return WRITE_ERROR;
-	}
+//	if(nvs_flash_init() != ESP_OK)
+//	{
+//		fclose(f);
+//		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
+//		return WRITE_ERROR;
+//	}
 
 	esp_ota_handle_t update_handle = 0 ;
 	const esp_partition_t *update_partition = NULL;
