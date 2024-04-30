@@ -77,6 +77,8 @@ At the moment Blue-64 only supports Bluetooth-Low-Energy keyboards (BLE) and onl
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.
 
+Luckily though, most games supporting additional fire buttons also map them to keyboard keys, which can be mapped to controller buttons through the on-screen menu.
+
 ## Installation & Precautions
 Most notably, particular care shall be used when plugging the Blue-64 onto the motherboard, as the female connector on the Blue-64 has no alignment key and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard header is properly aligned.
 
@@ -90,8 +92,9 @@ Incorrect installation of the board supply or failure to comply with the recomme
 Firmware binaries can be found in the "Releases" section of the GitHub page. The three files in the "binaries.zip" folder are necessary to perform a firmware update:
 - bootloader.bin
 - partition-table.bin
-- blue-64-app.bin
+- application.bin
 
+### "Developer Boards" (up to v0.3)
 Download and install the CP210X Universal Windows Drivers for the on-board programmer at this website:
 https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
@@ -109,9 +112,18 @@ https://espressif.github.io/esptool-js/
 
 Don't worry you can't brick it (as far as I know), if something fails you will always be able to re-try flashing the new firmware.
 
+### "Regular Boards" (v1.0 and above)
+- Format an SD card to FAT32.
+- Copy application.bin to the root of the SD card.
+- Switch off the C64 and insert the SD card into the dedicated slot on the Blue-64 board.
+- Switch on the C64, after a few seconds an on-screen prompt will state that the update has started. If the prompt does not appear within 10 seconds it means that the ESP cannot mount the SD card or cannot find the application.bin file in its root.
+- After about a minute an on-screen prompt will communicate the result of the update procedure.
+- Switch off the C64, remove the SD-Card and switch on again.
+- Navigate to the Device-Info entry on the on-screen menu and verify that the latest version is currently running on the device.
+
 ## TO-DOs
 [] BT Controllers show the correct port/player indicator
-[] Configurable autofire (controller only)
+[] Upgrade to latest Bluepad32 version
 
 ## License
 License information is included on top of all software source files as well as in all schematics. Files that do not contain explicit licensing information are subject to the licensing terms stated in the LICENSE.txt provided in the main project folder:

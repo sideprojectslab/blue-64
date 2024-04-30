@@ -107,7 +107,7 @@ unsigned int menu_af_plt(int i)
 {
 	static const char* entries[] =
 	{
-		"~home~~ret~0 disabled",
+		"~home~~ret~0 none ",
 		"~home~~ret~1 1hz  ",
 		"~home~~ret~2 2hz  ",
 		"~home~~ret~3 3hz  ",
