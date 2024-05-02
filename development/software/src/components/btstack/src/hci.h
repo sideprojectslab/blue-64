@@ -45,6 +45,7 @@
 
 #include "btstack_config.h"
 
+#include "btstack_bool.h"
 #include "btstack_chipset.h"
 #include "btstack_control.h"
 #include "btstack_linked_list.h"
@@ -446,8 +447,8 @@ typedef struct sm_connection {
     hci_con_handle_t         sm_handle;
     uint16_t                 sm_cid;
     uint8_t                  sm_role;   // 0 - IamMaster, 1 = IamSlave
-    uint8_t                  sm_security_request_received;
-    uint8_t                  sm_pairing_requested;
+    bool                     sm_security_request_received;
+    bool                     sm_pairing_requested;
     uint8_t                  sm_peer_addr_type;
     bd_addr_t                sm_peer_address;
     uint8_t                  sm_own_addr_type;
@@ -455,9 +456,9 @@ typedef struct sm_connection {
     security_manager_state_t sm_engine_state;
     irk_lookup_state_t       sm_irk_lookup_state;
     uint8_t                  sm_pairing_failed_reason;
-    uint8_t                  sm_connection_encrypted;
+    uint8_t                  sm_connection_encrypted;       // [0..2]
     uint8_t                  sm_connection_authenticated;   // [0..1]
-    uint8_t                  sm_connection_sc;
+    bool                     sm_connection_sc;
     uint8_t                  sm_actual_encryption_key_size;
     sm_pairing_packet_t      sm_m_preq;  // only used during c1
     authorization_state_t    sm_connection_authorization_state;
@@ -494,8 +495,8 @@ typedef struct {
     att_bearer_type_t       bearer_type;
 
     int                     ir_le_device_db_index;
-    uint8_t                 ir_lookup_active;
-    uint8_t                 pairing_active;
+    bool                    ir_lookup_active;
+    bool                    pairing_active;
 
     uint16_t                value_indication_handle;    
     btstack_timer_source_t  value_indication_timer;
@@ -720,6 +721,8 @@ typedef enum{
     HCI_ISO_STREAM_STATE_W4_ISO_SETUP_INPUT,
     HCI_ISO_STREAM_STATE_W2_SETUP_ISO_OUTPUT,
     HCI_ISO_STREAM_STATE_W4_ISO_SETUP_OUTPUT,
+    HCI_ISO_STREAM_STATE_W2_CLOSE,
+    HCI_ISO_STREAM_STATE_W4_DISCONNECTED,
 } hci_iso_stream_state_t;
 
 typedef struct {
@@ -937,6 +940,7 @@ enum {
     LE_ADVERTISEMENT_TASKS_REMOVE_SET           = 1 << 5,
     LE_ADVERTISEMENT_TASKS_SET_ADDRESS          = 1 << 6,
     LE_ADVERTISEMENT_TASKS_SET_ADDRESS_SET_0    = 1 << 7,
+    LE_ADVERTISEMENT_TASKS_PRIVACY_NOTIFY       = 1 << 8,
 };
 
 enum {
@@ -946,6 +950,7 @@ enum {
     LE_ADVERTISEMENT_STATE_ENABLED          = 1 << 2,
     LE_ADVERTISEMENT_STATE_PERIODIC_ACTIVE  = 1 << 3,
     LE_ADVERTISEMENT_STATE_PERIODIC_ENABLED = 1 << 4,
+    LE_ADVERTISEMENT_STATE_PRIVACY_PENDING  = 1 << 5,
 };
 
 enum {
@@ -980,6 +985,7 @@ typedef enum {
     LE_RESOLVING_LIST_SEND_ENABLE_ADDRESS_RESOLUTION,
     LE_RESOLVING_LIST_READ_SIZE,
     LE_RESOLVING_LIST_SEND_CLEAR,
+    LE_RESOLVING_LIST_SET_IRK,
 	LE_RESOLVING_LIST_UPDATES_ENTRIES,
     LE_RESOLVING_LIST_DONE
 } le_resolving_list_state_t;
@@ -1136,6 +1142,9 @@ typedef struct {
     // usable ACL packet types given HCI_ACL_BUFFER_SIZE and local supported features
     uint16_t usable_packet_types_acl;
 
+    // enabled ACL packet types
+    uint16_t enabled_packet_types_acl;
+
     // usable SCO packet types given local supported features
     uint16_t usable_packet_types_sco;
 
@@ -1204,6 +1213,13 @@ typedef struct {
     uint16_t le_supervision_timeout;
     uint16_t le_minimum_ce_length;
     uint16_t le_maximum_ce_length;
+
+    // GAP Privacy
+    btstack_linked_list_t gap_privacy_clients;
+
+#ifdef ENABLE_HCI_COMMAND_STATUS_DISCARDED_FOR_FAILED_CONNECTIONS_WORKAROUND
+    hci_con_handle_t hci_command_con_handle;
+#endif
 #endif
 
 #ifdef ENABLE_LE_CENTRAL
@@ -1253,7 +1269,7 @@ typedef struct {
 
     // TODO: move LE_ADVERTISEMENT_TASKS_SET_ADDRESS flag which is used for both roles into
     //  some generic gap_le variable
-    uint8_t  le_advertisements_todo;
+    uint16_t  le_advertisements_todo;
 
 #ifdef ENABLE_LE_PERIPHERAL
     uint8_t  * le_advertisements_data;
@@ -1518,9 +1534,10 @@ uint8_t hci_send_iso_packet_buffer(uint16_t size);
 
 /**
  * Reserves outgoing packet buffer.
- * @return true on success
+ * @note Must only be called after a 'can send now' check or event
+ * @note Asserts if packet buffer is already reserved
  */
-bool hci_reserve_packet_buffer(void);
+void hci_reserve_packet_buffer(void);
 
 /**
  * Get pointer for outgoing packet buffer
@@ -1529,7 +1546,7 @@ uint8_t* hci_get_outgoing_packet_buffer(void);
 
 /**
  * Release outgoing packet buffer\
- * @note only called instead of hci_send_preparared
+ * @note only called instead of hci_send_prepared
  */
 void hci_release_packet_buffer(void);
 
@@ -1538,6 +1555,38 @@ void hci_release_packet_buffer(void);
 * @param policy (0: attempt to become master, 1: let connecting device decide)
 */
 void hci_set_master_slave_policy(uint8_t policy);
+
+/**
+ * @brief Check if Controller supports BR/EDR (Bluetooth Classic)
+ * @return true if supported
+ * @note only valid in working state
+ */
+bool hci_classic_supported(void);
+
+/**
+ * @brief Check if Controller supports LE (Bluetooth Low Energy)
+ * @return true if supported
+ * @note only valid in working state
+ */
+bool hci_le_supported(void);
+
+/**
+ * @brief Check if LE Extended Advertising is supported
+ * @return true if supported
+ */
+bool hci_le_extended_advertising_supported(void);
+
+/** @brief Check if address type corresponds to LE connection
+ *  @bparam address_type
+ *  @erturn true if LE connection
+ */
+bool hci_is_le_connection_type(bd_addr_type_t address_type);
+
+/** @brief Check if address type corresponds to Identity Address
+ *  @bparam address_type
+ *  @erturn true if LE connection
+ */
+bool hci_is_le_identity_address_type(bd_addr_type_t address_type);
 
 /* API_END */
 
@@ -1614,6 +1663,12 @@ uint16_t hci_max_acl_data_packet_length(void);
  * Get supported ACL packet types. Already flipped for create connection. Called by L2CAP
  */
 uint16_t hci_usable_acl_packet_types(void);
+
+/**
+ * Set filter for set of ACL packet types returned by hci_usable_acl_packet_types
+ * @param packet_types see CL_PACKET_TYPES_* in bluetooth.h, default: ACL_PACKET_TYPES_ALL
+ */
+void hci_enable_acl_packet_types(uint16_t packet_types);
 
 /**
  * Get supported SCO packet types. Not flipped. Called by HFP

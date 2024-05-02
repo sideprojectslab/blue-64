@@ -217,7 +217,7 @@ static int transport_open(void){
 
     // http://esp-idf.readthedocs.io/en/latest/api-reference/bluetooth/controller_vhci.html (2017104)
     // - "esp_bt_controller_init: ... This function should be called only once, before any other BT functions are called."
-    // - "esp_bt_controller_deinit" .. This function should be called only once, after any other BT functions are called.
+    // - "esp_bt_controller_deinit" .. This function should be called only once, after any other BT functions are called. 
     //    This function is not whole completed, esp_bt_controller_init cannot called after this function."
     // -> esp_bt_controller_init can only be called once after boot
     if (!bt_controller_initialized){
