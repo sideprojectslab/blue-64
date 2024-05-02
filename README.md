@@ -121,10 +121,6 @@ Don't worry you can't brick it (as far as I know), if something fails you will a
 - Switch off the C64, remove the SD-Card and switch on again.
 - Navigate to the Device-Info entry on the on-screen menu and verify that the latest version is currently running on the device.
 
-## TO-DOs
-[] BT Controllers show the correct port/player indicator
-[] Upgrade to latest Bluepad32 version
-
 ## License
 License information is included on top of all software source files as well as in all schematics. Files that do not contain explicit licensing information are subject to the licensing terms stated in the LICENSE.txt provided in the main project folder:
 

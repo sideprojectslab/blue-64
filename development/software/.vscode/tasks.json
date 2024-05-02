@@ -138,7 +138,7 @@
       "group": "build",
       "type": "shell",
       "windows": {
-        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% flash"
+        "command": "setup.bat && cd src && cmd /c idf.py -p %ESP32_COM_PORT% erase-flash"
       },
     },
 

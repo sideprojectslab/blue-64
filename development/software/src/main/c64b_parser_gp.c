@@ -46,11 +46,14 @@ static void c64b_gamepad_autofire(t_c64b_cport_idx i)
 			{
 				// make sure this tpress is smaller than the smallest autofire
 				// interval (currently 100ms)
-				const TickType_t tpress = 50 / portTICK_PERIOD_MS;
+				const TickType_t tpress = 30 / portTICK_PERIOD_MS;
+
 				c64b_keyboard_cport_psh(&keyboard, CPORT_FF, i);
 				vTaskDelay(tpress);
 				c64b_keyboard_cport_rel(&keyboard, CPORT_FF, i);
-				xSemaphoreTake(afsleep_sem_h[i], af_prd - tpress);
+				vTaskDelay(tpress);
+
+				xSemaphoreTake(afsleep_sem_h[i], af_prd - tpress * 2);
 			}
 		}
 	}
@@ -72,11 +75,11 @@ static void task_c64b_gamepad_autofire_1(void *arg)
 
 static void c64b_gamepad_autofire_start(unsigned int i)
 {
-	logi("starting autofire on port %i\n", i);
 	if(xSemaphoreTake(autofire_sem_h[i], (TickType_t)portMAX_DELAY) == pdTRUE)
 	{
 		if (!autofire[i])
 		{
+			logi("starting autofire on port %i\n", i + 1);
 			autofire[i] = true;
 			xSemaphoreGive(afsleep_sem_h[i]); // for instant restart
 		}
@@ -88,10 +91,13 @@ static void c64b_gamepad_autofire_start(unsigned int i)
 
 static void c64b_gamepad_autofire_stop(unsigned int i)
 {
-	logi("stopping autofire on port %i\n", i);
 	if(xSemaphoreTake(autofire_sem_h[i], (TickType_t)portMAX_DELAY) == pdTRUE)
 	{
-		autofire[i] = false;
+		if (autofire[i])
+		{
+			logi("stopping autofire on port %i\n", i + 1);
+			autofire[i] = false;
+		}
 		xSemaphoreGive(autofire_sem_h[i]);
 	}
 }
