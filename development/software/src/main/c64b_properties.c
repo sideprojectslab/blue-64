@@ -42,7 +42,6 @@ unsigned int ct_map[CT_MAP_IDX_NUM] = {0};
 
 const char* ct_map_key[CT_MAP_IDX_NUM] =
 {
-	"c64b.ct_by",
 	"c64b.ct_bh",
 	"c64b.ct_bm",
 	"c64b.ct_lt",
@@ -66,14 +65,14 @@ void c64b_property_set_u8(const char* key, uint8_t value)
 {
 	uni_property_value_t prop;
 	prop.u8 = value;
-	uni_property_set(key, UNI_PROPERTY_TYPE_U8, prop);
+	//uni_property_set(key, UNI_PROPERTY_TYPE_U8, prop);
 }
 
 uint8_t c64b_property_get_u8(const char* key, uint8_t def)
 {
 	uni_property_value_t prop;
 	prop.u8 = def;
-	prop = uni_property_get(key, UNI_PROPERTY_TYPE_U8, prop);
+	//prop = uni_property_get(key, UNI_PROPERTY_TYPE_U8, prop);
 	return prop.u8;
 }
 

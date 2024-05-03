@@ -26,8 +26,8 @@
 #ifndef C64B_PROPERTIES_H
 #define C64B_PROPERTIES_H
 
+#include <uni.h>
 #include "stdint.h"
-#include "uni_property.h"
 #include "c64b_keyboard.h"
 
 void     c64b_property_reset(void);

@@ -23,16 +23,13 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
+#include <uni.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 #include "c64b_keyboard.h"
-
-#include "uni_config.h"
-#include "uni_log.h"
-#include "uni_platform.h"
-#include "uni_gpio.h"
-
+#include "driver/gpio.h"
 
 #define ESC_LEN_MAX 6
 #define SHIFT_COL   1
@@ -726,6 +723,7 @@ void c64b_keyboard_init(t_c64b_keyboard *h)
 	logi("Initialising Miscellaneous Pins\n");
 	if (h->pin_nrst != 255)
 	{
+		logi("Restore pin enabled: GPIO%d\n", h->pin_nrst);
 		gpio_reset_pin    (h->pin_nrst);
 		gpio_set_direction(h->pin_nrst , GPIO_MODE_OUTPUT);
 	}

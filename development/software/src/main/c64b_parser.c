@@ -87,9 +87,9 @@ void c64b_parser_set_gp_seat(uni_controller_t* ctl, unsigned int seat)
 
 	uni_hid_device_t* d = dev_ptr[i];
 
-	if(d->report_parser.set_rumble != NULL)
+	if(d->report_parser.play_dual_rumble != NULL)
 	{
-		d->report_parser.set_rumble(d, 0x80, seat == 2 ? 8 : 4);
+		d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 200 : 50, 128, 128);
 		logi("parser: setting rumble for seat %d\n", seat);
 	}
 

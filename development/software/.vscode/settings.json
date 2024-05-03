@@ -36,7 +36,10 @@
 		"esp_task.h": "c",
 		"string.h": "c",
 		"esp_vfs_fat.h": "c",
-		"stdio.h": "c"
+		"stdio.h": "c",
+		"uni.h": "c",
+		"c64b_properties.h": "c",
+		"uni_property.h": "c"
 	},
 "cmake.configureOnOpen": false,
 "C_Cpp.errorSquiggles": "disabled",

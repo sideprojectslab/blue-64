@@ -28,21 +28,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <uni.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
 #include "hid_usage.h"
-
-#include "uni_config.h"
-#include "uni_bt.h"
-#include "uni_gamepad.h"
-#include "uni_keyboard.h"
-#include "uni_hid_device.h"
-#include "uni_log.h"
-#include "uni_platform.h"
-#include "uni_gpio.h"
 
 #include "sdkconfig.h"
 #include "c64b_threadsafe.h"
