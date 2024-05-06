@@ -56,7 +56,7 @@ bool c64b_parse_keyboard_symbolic(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 					if(!shft_lock_old)
 					{
 						shft_lock = !shft_lock;
-						c64b_parser_set_kb_leds(shft_lock ? 0xff : 0);
+						c64b_parser_set_kb_leds(shft_lock ? 0x2 : 0);
 					}
 					shft_lock_press = true;
 				}
