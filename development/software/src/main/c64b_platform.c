@@ -53,6 +53,11 @@ static void c64b_init(int argc, const char** argv) {
 }
 
 static void c64b_on_init_complete(void) {
+	uni_bt_enable_new_connections_unsafe(true);
+
+//	uni_bt_del_keys_unsafe();
+//	uni_bt_list_keys_unsafe();
+
 	logi("c64b: on_init_complete()\n");
 }
 
@@ -76,8 +81,8 @@ static void c64b_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) 
 }
 
 static const uni_property_t* c64b_get_property(uni_property_idx_t idx) {
-    ARG_UNUSED(idx);
-    return NULL;
+	ARG_UNUSED(idx);
+	return NULL;
 }
 
 static void c64b_on_oob_event(uni_platform_oob_event_t event, void* data) {

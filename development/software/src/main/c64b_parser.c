@@ -75,6 +75,15 @@ int c64b_parser_get_ctl_idx(uni_controller_t* ctl)
 }
 
 
+void c64b_parser_set_kb_leds(uint8_t mask)
+{
+	if(dev_ptr[0] == NULL)
+		return;
+	uni_hid_parser_keyboard_set_leds(dev_ptr[0], mask);
+	logi("parser: setting keyboard leds: %x\n", mask);
+}
+
+
 void c64b_parser_set_gp_seat(uni_controller_t* ctl, unsigned int seat)
 {
 	if(ctl == NULL)
@@ -194,7 +203,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 	if (memcmp(kb_old, kb, sizeof(uni_keyboard_t)) == 0)
 		return;
 
-	#if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
+	#if (CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE == 1)
 		uni_controller_dump(ctl);
 	#endif
 
@@ -241,7 +250,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	if (memcmp(gp_old, gp, sizeof(uni_gamepad_t)) == 0)
 		return;
 
-	#if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
+	#if (CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE == 1)
 		uni_controller_dump(ctl);
 	#endif
 
@@ -318,37 +327,41 @@ static void task_c64b_parse(void *arg)
 
 void c64b_parse(uni_hid_device_t* d)
 {
-	static bool first_parse = true;
-	if(first_parse)
-	{
-		// this task always runs in the background so it needs to have
-		// very low priority
-		xTaskCreatePinnedToCore(task_c64b_parse,
-		                        "parse task",
-		                        4096 * 2,
-		                        NULL,
-		                        1,
-		                        NULL,
-		                        tskNO_AFFINITY);
-	}
-	first_parse = false;
+//	static bool first_parse = true;
+//	if(first_parse)
+//	{
+//		// this task always runs in the background so it needs to have
+//		// very low priority
+//		xTaskCreatePinnedToCore(task_c64b_parse,
+//		                        "parse task",
+//		                        4096 * 2,
+//		                        NULL,
+//		                        1,
+//		                        NULL,
+//		                        tskNO_AFFINITY);
+//	}
+//	first_parse = false;
 
-	if(xSemaphoreTake(prse_sem_h, portMAX_DELAY) == pdTRUE)
+//	if(xSemaphoreTake(prse_sem_h, portMAX_DELAY) == pdTRUE)
 	{
 		if(ctrl_ptr[0] == &(d->controller))
 		{
-			ctrl_tmp[0] = d->controller;
+			ctrl_new[0] = d->controller;
+			c64b_parse_keyboard(&(ctrl_new[0]));
 		}
 		else if(ctrl_ptr[1] == &(d->controller))
 		{
-			ctrl_tmp[1] = d->controller;
+			ctrl_new[1] = d->controller;
+			c64b_parse_gamepad (&(ctrl_new[1]));
 		}
 		else if(ctrl_ptr[2] == &(d->controller))
 		{
-			ctrl_tmp[2] = d->controller;
+			ctrl_new[2] = d->controller;
+			c64b_parse_gamepad (&(ctrl_new[2]));
 		}
-		xSemaphoreGive(prse_sem_h);
+//		xSemaphoreGive(prse_sem_h);
 	}
+
 }
 
 //----------------------------------------------------------------------------//
