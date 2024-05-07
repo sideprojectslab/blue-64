@@ -82,7 +82,7 @@ void c64b_parser_set_gp_seat(unsigned int idx, unsigned int seat)
 
 	if(d->report_parser.play_dual_rumble != NULL)
 	{
-		d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 400 : 100, 128, 128);
+		d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 400 : 100, 255, 0);
 		logi("parser: setting rumble for seat %d\n", seat);
 	}
 
@@ -397,7 +397,9 @@ void c64b_parser_init()
 	if(c64b_update_init(true) == UPDATE_OK)
 	{
 		const char update_started[] =
-			"~clr~0 firmware update started!";
+			"~clr~0 firmware update started!"
+			"~ret~0 should take about a minute"
+			"~ret~0 text might change color and/or size";
 
 		const char update_successful[] =
 			"~clr~0 successfully updated firmware!~ret~"
