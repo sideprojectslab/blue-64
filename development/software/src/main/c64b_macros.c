@@ -200,21 +200,17 @@ unsigned int menu_ct_plt(int i)
 	strcat(str_buf, "~del~~del~~del~~del~");
 
 	keyboard_macro_feed(str_buf);
-
-	// here we wait for the macro to be fed and then we reset the trace
-	// as we want to grab new input from the user
-	if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
-	{
-		c64b_keyboard_trace_reset(&keyboard);
-		xSemaphoreGive(mcro_sem_h);
-	}
-
 	return i;
 }
 
 unsigned int menu_ct_act(int i)
 {
-	const t_c64b_key_id* key = c64b_keyboard_trace_get(&keyboard);
+	const t_c64b_key_id* key = NULL;
+
+	// here we wait for the previous macro to be fed and then we reset the trace
+	// as we want to grab new input from the user
+	key = c64b_keyboard_trace_get(&keyboard);
+
 	if(key != NULL)
 	{
 		ct_map[i] = c64b_keyboard_key_to_idx(key->str);
