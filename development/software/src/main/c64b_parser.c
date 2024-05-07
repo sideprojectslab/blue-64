@@ -39,8 +39,6 @@ extern void c64b_parse_gamepad_init  ();
 // Static Variables
 
 static uni_hid_device_t* dev_ptr[3]  = {NULL, NULL, NULL};
-static uni_controller_t* ctrl_ptr[3] = {NULL, NULL, NULL};
-static uni_controller_t  ctrl_tmp[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_new[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_old[3] = {{0}, {0}, {0}};
 
@@ -48,8 +46,16 @@ static bool              swap_ports = false;
 static const uint8_t     col_perm[] = COL_PERM;
 static const uint8_t     row_perm[] = ROW_PERM;
 
+static uint8_t           dev_fbak_old[3] = {{0}, {2}, {1}}; // [0] is used for caps lock
+
 //----------------------------------------------------------------------------//
 // C64-Blue functions
+//----------------------------------------------------------------------------//
+
+uni_controller_t* get_ctl(uni_hid_device_t* d)
+{
+	return &(d->controller);
+}
 
 //----------------------------------------------------------------------------//
 
@@ -57,99 +63,123 @@ int c64b_parser_get_dev_idx(uni_hid_device_t* d)
 {
 	for(unsigned int i = 0; i < 3; ++i)
 	{
-		if(ctrl_ptr[i] == &(d->controller))
+		if(get_ctl(dev_ptr[i]) == &(d->controller))
 			return (i);
 	}
 	return -1;
 }
 
+//----------------------------------------------------------------------------//
 
 int c64b_parser_get_ctl_idx(uni_controller_t* ctl)
 {
 	for(unsigned int i = 0; i < 3; ++i)
 	{
-		if(ctrl_ptr[i] == ctl)
+		if(get_ctl(dev_ptr[i]) == ctl)
 			return (i);
 	}
 	return -1;
 }
 
+//----------------------------------------------------------------------------//
 
 void c64b_parser_set_kb_leds(uint8_t mask)
 {
+	if(xSemaphoreTake(fbak_sem_h, portMAX_DELAY) == pdTRUE)
+	{
+		dev_fbak[0] = mask;
+		xSemaphoreGive(fbak_sem_h);
+	}
+}
+
+//----------------------------------------------------------------------------//
+
+void c64b_parser_update_kb_leds(void)
+{
 	if(dev_ptr[0] == NULL)
 		return;
-	uni_hid_parser_keyboard_set_leds(dev_ptr[0], mask);
-	logi("parser: setting keyboard leds: %x\n", mask);
-}
 
-
-void c64b_parser_set_gp_seat(uni_controller_t* ctl, unsigned int seat)
-{
-	if(ctl == NULL)
-		return;
-
-	unsigned int i = c64b_parser_get_ctl_idx(ctl);
-
-	if(i < 0)
-		return;
-
-	uni_hid_device_t* d = dev_ptr[i];
-
-	if(d->report_parser.play_dual_rumble != NULL)
+	bool go = false;
+	if(xSemaphoreTake(fbak_sem_h, portMAX_DELAY))
 	{
-		d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 200 : 50, 128, 128);
-		logi("parser: setting rumble for seat %d\n", seat);
-	}
+		if (dev_fbak_old[0] != dev_fbak[0])
+		{
+			go = true;
+			dev_fbak_old[0] = dev_fbak[0];
+		}
+		xSemaphoreGive(fbak_sem_h);
 
-	if(d->report_parser.set_player_leds != NULL)
-	{
-		d->report_parser.set_player_leds(d, 1 << (seat - 1));
-		logi("parser: setting leds for seat %d\n", seat);
-	}
-
-	if(d->report_parser.set_lightbar_color != NULL)
-	{
-		uint8_t r = seat == 2 ? 255 : 0;
-		uint8_t g = seat == 2 ? 0   : 255;
-		d->report_parser.set_lightbar_color(d, r, g, 0);
-		logi("parser: setting lightbar for seat %d\n", seat);
+		if (go)
+		{
+			uint8_t mask = dev_fbak_old[0];
+			uni_hid_parser_keyboard_set_leds(dev_ptr[0], mask);
+			logi("parser: setting keyboard leds: %x\n", mask);
+		}
 	}
 }
 
+//----------------------------------------------------------------------------//
 
-void c64b_parser_connect(uni_hid_device_t* d)
+void c64b_parser_set_gp_seat(unsigned int idx, unsigned int seat)
 {
-	// keyboard ID always sits on index 0
-	if(uni_hid_device_is_keyboard(d))
+	if((idx != CPORT_1) && (idx != CPORT_2))
+		return;
+
+	if((seat != CPORT_1) && (seat != CPORT_2))
+		return;
+
+	if(xSemaphoreTake(fbak_sem_h, portMAX_DELAY) == pdTRUE)
 	{
-		logi("parser: keyboard connected: %p\n", d);
-		if(ctrl_ptr[0] == NULL)
-		{
-			ctrl_ptr[0] = &(d->controller);
-			dev_ptr[0]  = d;
-		}
+		dev_fbak[idx] = seat;
+		xSemaphoreGive(fbak_sem_h);
 	}
-	// inserting controller ID in the first free location after 0
-	else if(uni_hid_device_is_gamepad(d))
+}
+
+//----------------------------------------------------------------------------//
+
+void c64b_parser_update_gp_seat(bool force)
+{
+	for (unsigned int i = 1; i <= 2; ++i)
 	{
-		logi("parser: gamepad connected: %p\n", d);
-		if(ctrl_ptr[2] == NULL)
+		uni_hid_device_t* d = dev_ptr[i];
+
+		if(d == NULL)
+			continue;
+
+		bool go = false;
+		if(xSemaphoreTake(fbak_sem_h, portMAX_DELAY))
 		{
-			ctrl_ptr[2] = &(d->controller);
-			dev_ptr[2]  = d;
-			c64b_parser_set_gp_seat(ctrl_ptr[2], 2);
+			if ((dev_fbak_old[i] != dev_fbak[i]) || force)
+			{
+				go = true;
+				dev_fbak_old[i] = dev_fbak[i];
+			}
+			xSemaphoreGive(fbak_sem_h);
 		}
-		else if(ctrl_ptr[1] == NULL)
+
+		if (go)
 		{
-			ctrl_ptr[1] = &(d->controller);
-			dev_ptr[1]  = d;
-			c64b_parser_set_gp_seat(ctrl_ptr[1], 1);
+			unsigned int seat = dev_fbak_old[i];
+			if(d->report_parser.play_dual_rumble != NULL)
+			{
+				d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 400 : 100, 128, 128);
+				logi("parser: setting rumble for seat %d\n", seat);
+			}
+
+			if(d->report_parser.set_player_leds != NULL)
+			{
+				d->report_parser.set_player_leds(d, 1 << (seat - 1));
+				logi("parser: setting leds for seat %d\n", seat);
+			}
+
+			if(d->report_parser.set_lightbar_color != NULL)
+			{
+				uint8_t r = seat == 2 ? 255 : 0;
+				uint8_t g = seat == 2 ? 0   : 255;
+				d->report_parser.set_lightbar_color(d, r, g, 0);
+				logi("parser: setting lightbar for seat %d\n", seat);
+			}
 		}
-	}
-	else
-	{
-		logi("parser: device class not supported: %d\n", d->controller.klass);
 	}
 }
 
@@ -157,31 +187,91 @@ void c64b_parser_connect(uni_hid_device_t* d)
 
 static void task_keyboard_macro_feed(void *arg)
 {
-	logi("Starting Keyboard Feed\n");
-	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)10) == pdTRUE)
+	while(1)
 	{
-		if((kb_owner == KB_OWNER_FEED) || (kb_owner == KB_OWNER_NONE))
+		if(xSemaphoreTake(feed_sem_h, portMAX_DELAY) == pdTRUE)
 		{
-			kb_owner = KB_OWNER_FEED;
-			c64b_keyboard_feed_str(&keyboard, (char *)arg);
-			kb_owner = KB_OWNER_NONE;
+			const char * str = *(char **)arg;
+			logi("Starting Keyboard Feed\n");
+			if(xSemaphoreTake(kbrd_sem_h, (TickType_t)10) == pdTRUE)
+			{
+				if((kb_owner == KB_OWNER_FEED) || (kb_owner == KB_OWNER_NONE))
+				{
+					kb_owner = KB_OWNER_FEED;
+					c64b_keyboard_feed_str(&keyboard, str);
+					kb_owner = KB_OWNER_NONE;
+				}
+				xSemaphoreGive(kbrd_sem_h);
+			}
+			xSemaphoreGive(mcro_sem_h);
+			logi("Completed Keyboard Feed\n");
 		}
-		xSemaphoreGive(kbrd_sem_h);
 	}
-	xSemaphoreGive(feed_sem_h);
-	vTaskDelete(NULL);
 }
 
 //----------------------------------------------------------------------------//
+
 void keyboard_macro_feed(const char* str)
 {
-	xTaskCreatePinnedToCore(task_keyboard_macro_feed,
-	                        "keyboard-macro-feed",
-	                        2048,
-	                        (void * const)str,
-	                        3,
-	                        NULL,
-	                        tskNO_AFFINITY);
+	static bool first_feed = true;
+	static char* str_h;
+
+	str_h = str;
+
+	if (first_feed)
+	{
+		logi("parser: Creating macro feed thread\n");
+		xTaskCreatePinnedToCore(task_keyboard_macro_feed,
+		                        "keyboard-macro-feed",
+		                        4096,
+		                        (void * const)&str_h,
+		                        3,
+		                        NULL,
+		                        tskNO_AFFINITY);
+
+		first_feed = false;
+	}
+	else
+	{
+		xSemaphoreGive(feed_sem_h);
+	}
+
+
+}
+
+//----------------------------------------------------------------------------//
+
+void c64b_parser_connect(uni_hid_device_t* d)
+{
+	// keyboard ID always sits on index 0
+	if(uni_hid_device_is_keyboard(d))
+	{
+		logi("parser: keyboard connected: %p\n", d);
+		if(dev_ptr[0] == NULL)
+		{
+			dev_ptr[0]  = d;
+		}
+	}
+	// inserting controller ID in the first free location after 0
+	else if(uni_hid_device_is_gamepad(d))
+	{
+		logi("parser: gamepad connected: %p\n", d);
+		if(dev_ptr[2] == NULL)
+		{
+			dev_ptr[2] = d;
+			c64b_parser_set_gp_seat(2, swap_ports ? 1 : 2);
+		}
+		else if(dev_ptr[1] == NULL)
+		{
+			dev_ptr[1] = d;
+			c64b_parser_set_gp_seat(1, swap_ports ? 2 : 1);
+		}
+		c64b_parser_update_gp_seat(true);
+	}
+	else
+	{
+		logi("parser: device class not supported: %d\n", d->controller.klass);
+	}
 }
 
 //----------------------------------------------------------------------------//
@@ -278,13 +368,13 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 		//--------------------------------------------------------------------//
 		// swap ports
-		if((cport_idx == CPORT_2) || (ctrl_ptr[1] == NULL) || (ctrl_ptr[2] == NULL))
+		if((cport_idx == CPORT_2) || (dev_ptr[1] == NULL) || (dev_ptr[2] == NULL))
 		{
 			if(c64b_parse_gamepad_swap(gp, gp_old))
 			{
 				swap_ports = !swap_ports;
-				c64b_parser_set_gp_seat(ctrl_ptr[1], swap_ports ? 2 : 1);
-				c64b_parser_set_gp_seat(ctrl_ptr[2], swap_ports ? 1 : 2);
+				c64b_parser_set_gp_seat(CPORT_1, swap_ports ? 2 : 1);
+				c64b_parser_set_gp_seat(CPORT_2, swap_ports ? 1 : 2);
 			}
 		}
 	}
@@ -344,24 +434,26 @@ void c64b_parse(uni_hid_device_t* d)
 
 //	if(xSemaphoreTake(prse_sem_h, portMAX_DELAY) == pdTRUE)
 	{
-		if(ctrl_ptr[0] == &(d->controller))
+		if(dev_ptr[0] == d)
 		{
 			ctrl_new[0] = d->controller;
 			c64b_parse_keyboard(&(ctrl_new[0]));
 		}
-		else if(ctrl_ptr[1] == &(d->controller))
+		else if(dev_ptr[1] == d)
 		{
 			ctrl_new[1] = d->controller;
-			c64b_parse_gamepad (&(ctrl_new[1]));
+			c64b_parse_gamepad(&(ctrl_new[1]));
 		}
-		else if(ctrl_ptr[2] == &(d->controller))
+		else if(dev_ptr[2] == d)
 		{
 			ctrl_new[2] = d->controller;
-			c64b_parse_gamepad (&(ctrl_new[2]));
+			c64b_parse_gamepad(&(ctrl_new[2]));
 		}
 //		xSemaphoreGive(prse_sem_h);
 	}
 
+	c64b_parser_update_kb_leds();
+	c64b_parser_update_gp_seat(false);
 }
 
 //----------------------------------------------------------------------------//
@@ -371,18 +463,17 @@ void c64b_parser_disconnect(uni_hid_device_t* d)
 	if(xSemaphoreTake(prse_sem_h, portMAX_DELAY) == pdTRUE)
 	{
 		unsigned int idx;
-		if(ctrl_ptr[0] == &(d->controller))
+		if(dev_ptr[0] == d)
 			idx = 0;
-		else if(ctrl_ptr[1] == &(d->controller))
+		else if(dev_ptr[1] == d)
 			idx = 1;
-		else if(ctrl_ptr[2] == &(d->controller))
+		else if(dev_ptr[2] == d)
 			idx = 2;
 		else
 			return;
 
 		logi("Device Disconnected: %d\n", idx);
 
-		ctrl_ptr[idx] = NULL;
 		dev_ptr[idx] = NULL;
 		memset(&(ctrl_tmp[0]), 0, sizeof(uni_controller_t));
 		if(idx == 0)
@@ -406,10 +497,15 @@ void c64b_parser_init()
 {
 	prse_sem_h = xSemaphoreCreateBinary();
 	kbrd_sem_h = xSemaphoreCreateBinary();
+	mcro_sem_h = xSemaphoreCreateBinary();
 	feed_sem_h = xSemaphoreCreateBinary();
+	fbak_sem_h = xSemaphoreCreateBinary();
+
 	xSemaphoreGive(prse_sem_h);
 	xSemaphoreGive(kbrd_sem_h);
+	xSemaphoreGive(mcro_sem_h);
 	xSemaphoreGive(feed_sem_h);
+	xSemaphoreGive(fbak_sem_h);
 
 	kb_owner = KB_OWNER_NONE;
 

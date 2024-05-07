@@ -203,10 +203,10 @@ unsigned int menu_ct_plt(int i)
 
 	// here we wait for the macro to be fed and then we reset the trace
 	// as we want to grab new input from the user
-	if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+	if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
 	{
 		c64b_keyboard_trace_reset(&keyboard);
-		xSemaphoreGive(feed_sem_h);
+		xSemaphoreGive(mcro_sem_h);
 	}
 
 	return i;
@@ -281,7 +281,7 @@ unsigned int menu_main_act(int i)
 			menu_lvl++;
 			menu_idx[menu_lvl] = kb_map;
 
-			if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
 				menu_current_plt(menu_idx[menu_lvl]);
 			break;
 
@@ -291,7 +291,7 @@ unsigned int menu_main_act(int i)
 			menu_lvl++;
 			menu_idx[menu_lvl] = 0;
 
-			if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
 				menu_current_plt(menu_idx[menu_lvl]);
 			break;
 
@@ -301,7 +301,7 @@ unsigned int menu_main_act(int i)
 			menu_lvl++;
 			menu_idx[menu_lvl] = af_rate;
 
-			if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
 				menu_current_plt(menu_idx[menu_lvl]);
 			break;
 
@@ -311,7 +311,7 @@ unsigned int menu_main_act(int i)
 			menu_lvl++;
 			menu_idx[menu_lvl] = 0;
 
-			if(xSemaphoreTake(feed_sem_h, (TickType_t)portMAX_DELAY) == true)
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
 				menu_current_plt(menu_idx[menu_lvl]);
 			break;
 		default:

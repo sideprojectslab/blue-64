@@ -6,4 +6,7 @@
 	},
 	"cmake.configureOnOpen": false,
 	"C_Cpp.errorSquiggles": "disabled",
+	"files.associations": {
+		"c64b_threadsafe.h": "c"
+	},
 }

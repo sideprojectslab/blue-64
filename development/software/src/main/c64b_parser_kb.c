@@ -32,39 +32,34 @@ bool c64b_parse_keyboard_menu(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 {
 	bool kb_nop = true;
 
-	if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
+	for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
 	{
-		for (int i = 0; i < UNI_KEYBOARD_PRESSED_KEYS_MAX; i++)
+		const uint8_t key = kb->pressed_keys[i];
+
+		switch(key)
 		{
-			const uint8_t key = kb->pressed_keys[i];
-
-			switch(key)
-			{
-				case HID_USAGE_KB_RIGHT_ARROW:
-				case HID_USAGE_KB_DOWN_ARROW:
-					kb_nop = false;
+			case HID_USAGE_KB_RIGHT_ARROW:
+			case HID_USAGE_KB_DOWN_ARROW:
+				kb_nop = false;
+				if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
 					menu_fwd();
-					break;
-				case HID_USAGE_KB_LEFT_ARROW:
-				case HID_USAGE_KB_UP_ARROW:
-					kb_nop = false;
-					menu_bwd();
-					break;
-				case HID_USAGE_KB_ENTER:
-					kb_nop = false;
-					menu_act();
-					break;
-				default:
-			}
-
-			if(!kb_nop)
 				break;
+			case HID_USAGE_KB_LEFT_ARROW:
+			case HID_USAGE_KB_UP_ARROW:
+				kb_nop = false;
+				if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
+					menu_bwd();
+				break;
+			case HID_USAGE_KB_ENTER:
+				kb_nop = false;
+				if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
+					menu_act();
+				break;
+			default:
 		}
-	}
 
-	if(kb_nop)
-	{
-		xSemaphoreGive(feed_sem_h);
+		if(!kb_nop)
+			break;
 	}
 
 	return kb_nop;

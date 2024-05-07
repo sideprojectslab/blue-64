@@ -48,12 +48,19 @@ typedef enum
 
 //----------------------------------------------------------------------------//
 extern SemaphoreHandle_t prse_sem_h; // protects access to controller data
+extern uni_controller_t  ctrl_tmp[3];
 
 //----------------------------------------------------------------------------//
 extern SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
 extern t_c64b_keyboard   keyboard;
 extern t_c64b_kb_owner   kb_owner;
+
 //----------------------------------------------------------------------------//
-extern SemaphoreHandle_t feed_sem_h; // protects access to keyboard macro
+extern SemaphoreHandle_t mcro_sem_h; // protects access to keyboard macro
+extern SemaphoreHandle_t feed_sem_h; // starts keyboaard feed thread
+
+//----------------------------------------------------------------------------//
+extern SemaphoreHandle_t fbak_sem_h; // protects access to feedback values
+extern uint8_t           dev_fbak[3];
 
 #endif

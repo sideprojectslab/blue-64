@@ -74,12 +74,10 @@ typedef enum
 }t_c64b_cport_key;
 
 
-typedef enum
-{
-	CPORT_1,
-	CPORT_2
-}t_c64b_cport_idx;
-
+typedef unsigned int t_c64b_cport_idx;
+#define CPORT_NONE 0
+#define CPORT_1    1
+#define CPORT_2    2
 
 extern const t_c64b_key_id KEY_IDS[];
 
