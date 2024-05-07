@@ -4,7 +4,6 @@ cmake_minimum_required(VERSION 3.16)
 
 set(EXTRA_COMPONENT_DIRS "components/btstack"
                          "../../../resources/bluepad32/src/components/bluepad32"
-                         "../../../resources/bluepad32/src/components/bluepad32_arduino"
                          "../../../resources/bluepad32/src/components/cmd_nvs"
                          "../../../resources/bluepad32/src/components/cmd_nvs_4.4"
                          "../../../resources/bluepad32/src/components/cmd_system"

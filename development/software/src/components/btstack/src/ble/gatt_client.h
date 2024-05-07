@@ -236,8 +236,8 @@ typedef struct gatt_client{
     uint16_t client_characteristic_configuration_handle;
     uint8_t  client_characteristic_configuration_value[2];
     
-    uint8_t  filter_with_uuid;
-    uint8_t  send_confirmation;
+    bool     filter_with_uuid;
+    bool     send_confirmation;
 
     int      le_device_index;
     uint8_t  cmac[8];
@@ -245,7 +245,7 @@ typedef struct gatt_client{
     btstack_timer_source_t gc_timeout;
 
     uint8_t  security_counter;
-    uint8_t  wait_for_authentication_complete;
+    bool     wait_for_authentication_complete;
     uint8_t  pending_error_code;
 
     bool     reencryption_active;

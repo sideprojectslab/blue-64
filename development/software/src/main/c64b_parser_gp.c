@@ -27,9 +27,9 @@
 
 //----------------------------------------------------------------------------//
 
-SemaphoreHandle_t autofire_sem_h[2];
-SemaphoreHandle_t afsleep_sem_h[2];
-bool              autofire[2] = {0};
+SemaphoreHandle_t autofire_sem_h[3];
+SemaphoreHandle_t afsleep_sem_h[3];
+bool              autofire[3] = {0};
 
 //----------------------------------------------------------------------------//
 
@@ -106,14 +106,14 @@ static void c64b_gamepad_autofire_stop(unsigned int i)
 
 void c64b_parse_gamepad_init()
 {
-	autofire_sem_h[0] = xSemaphoreCreateBinary();
 	autofire_sem_h[1] = xSemaphoreCreateBinary();
-	afsleep_sem_h[0] = xSemaphoreCreateBinary();
+	autofire_sem_h[2] = xSemaphoreCreateBinary();
 	afsleep_sem_h[1] = xSemaphoreCreateBinary();
-	xSemaphoreGive(autofire_sem_h[0]);
+	afsleep_sem_h[2] = xSemaphoreCreateBinary();
 	xSemaphoreGive(autofire_sem_h[1]);
-	xSemaphoreGive(afsleep_sem_h[0]);
+	xSemaphoreGive(autofire_sem_h[2]);
 	xSemaphoreGive(afsleep_sem_h[1]);
+	xSemaphoreGive(afsleep_sem_h[2]);
 
 	xTaskCreatePinnedToCore(task_c64b_gamepad_autofire_2,
 	                        "autofire 2",
@@ -136,24 +136,20 @@ void c64b_parse_gamepad_init()
 
 bool c64b_parse_gamepad_menu(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
 {
-	if(xSemaphoreTake(feed_sem_h, (TickType_t)0) == pdTRUE)
+	if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
 	{
-		if((gp->buttons & BTN_B_MASK) && !(gp_old->buttons & BTN_B_MASK))
-		{
+		if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
 			menu_fwd();
-		}
-		else if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
-		{
+	}
+	else if((gp->buttons & BTN_A_MASK) && !(gp_old->buttons & BTN_A_MASK))
+	{
+		if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
 			menu_bwd();
-		}
-		else if((gp->misc_buttons & BTN_MENU_MASK) && !(gp_old->misc_buttons & BTN_MENU_MASK))
-		{
+	}
+	else if((gp->misc_buttons & BTN_MENU_MASK) && !(gp_old->misc_buttons & BTN_MENU_MASK))
+	{
+		if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
 			menu_act();
-		}
-		else
-		{
-			xSemaphoreGive(feed_sem_h);
-		}
 	}
 
 	return true; // placeholder for now
@@ -188,9 +184,9 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 
 	if(xSemaphoreTake(kbrd_sem_h, (TickType_t)0) == pdTRUE)
 	{
-		if((kb_owner == cport_idx + 1) || (kb_owner == KB_OWNER_NONE))
+		if((kb_owner == cport_idx) || (kb_owner == KB_OWNER_NONE))
 		{
-			kb_owner = cport_idx + 1;
+			kb_owner = cport_idx;
 			kb_nop   = false;
 
 			if(gp->misc_buttons & BTN_MENU_MASK)

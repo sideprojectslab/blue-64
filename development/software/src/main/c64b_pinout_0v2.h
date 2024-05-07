@@ -54,7 +54,7 @@
 #define COL_PERM (uint8_t[]){3, 7, 6, 4, 2, 1, 0, 5}
 #define ROW_PERM (uint8_t[]){5, 7, 4, 1, 2, 0, 3, 6}
 
-#if (CONFIG_BLUEPAD32_UART_OUTPUT_ENABLE == 1)
+#ifndef CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE
 	#define PIN_nRST 255
 #else
 	#define PIN_nRST 1

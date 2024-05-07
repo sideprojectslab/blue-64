@@ -24,8 +24,8 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
+#include <uni.h>
 #include "sdkconfig.h"
-#include "uni_platform.h"
 
 extern struct uni_platform* c64b_platform_create(void);
 

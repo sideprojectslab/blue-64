@@ -13,7 +13,7 @@ set(srcs "main.c"
          "c64b_update.c"
          "c64b_threadsafe.c")
 
-set(requires "bluepad32" "fatfs")
+set(requires "bluepad32" "btstack" "fatfs")
 
 idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS "."

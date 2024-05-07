@@ -28,21 +28,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <uni.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
 #include "hid_usage.h"
-
-#include "uni_config.h"
-#include "uni_bt.h"
-#include "uni_gamepad.h"
-#include "uni_keyboard.h"
-#include "uni_hid_device.h"
-#include "uni_log.h"
-#include "uni_platform.h"
-#include "uni_gpio.h"
 
 #include "sdkconfig.h"
 #include "c64b_threadsafe.h"
@@ -89,7 +81,7 @@
 void c64b_parser_init();
 void c64b_parser_connect(uni_hid_device_t* d);
 void c64b_parser_disconnect(uni_hid_device_t* d);
-int  c64b_parser_get_idx(uni_hid_device_t* d);
+void c64b_parser_set_kb_leds(uint8_t mask);
 void c64b_parse(uni_hid_device_t* d);
 
 void keyboard_macro_feed(const char* str);

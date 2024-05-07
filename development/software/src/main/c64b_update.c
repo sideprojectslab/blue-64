@@ -27,6 +27,7 @@
 #include <sys/unistd.h>
 #include <sys/stat.h>
 #include "driver/gpio.h"
+#include <uni.h>
 
 #include "c64b_update.h"
 
@@ -40,8 +41,6 @@
 #include "nvs_flash.h"
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
-
-#include "uni_log.h"
 
 
 #define MOUNT_POINT "/s"

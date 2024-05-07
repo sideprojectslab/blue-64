@@ -26,22 +26,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <uni.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 
 #include "hid_usage.h"
-
-#include "uni_config.h"
-#include "uni_bt.h"
-#include "uni_gamepad.h"
-#include "uni_keyboard.h"
-#include "uni_hid_device.h"
-#include "uni_log.h"
-#include "uni_platform.h"
-#include "uni_gpio.h"
-
 #include "c64b_parser.h"
 
 //----------------------------------------------------------------------------//
@@ -62,6 +53,11 @@ static void c64b_init(int argc, const char** argv) {
 }
 
 static void c64b_on_init_complete(void) {
+	uni_bt_enable_new_connections_unsafe(true);
+
+//	uni_bt_del_keys_unsafe();
+//	uni_bt_list_keys_unsafe();
+
 	logi("c64b: on_init_complete()\n");
 }
 
@@ -84,11 +80,9 @@ static void c64b_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) 
 	c64b_parse(d);
 }
 
-static int32_t c64b_get_property(uni_platform_property_t key) {
-	logi("c64b: get_property(): %d\n", key);
-	if (key != UNI_PLATFORM_PROPERTY_DELETE_STORED_KEYS)
-		return -1;
-	return g_delete_keys;
+static const uni_property_t* c64b_get_property(uni_property_idx_t idx) {
+	ARG_UNUSED(idx);
+	return NULL;
 }
 
 static void c64b_on_oob_event(uni_platform_oob_event_t event, void* data) {
