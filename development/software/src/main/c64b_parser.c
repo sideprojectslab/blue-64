@@ -141,7 +141,7 @@ void keyboard_macro_feed(const char* str)
 		logi("parser: Creating macro feed thread\n");
 		xTaskCreatePinnedToCore(task_keyboard_macro_feed,
 		                        "keyboard-macro-feed",
-		                        4096,
+		                        1024*6,
 		                        (void * const)&str_h,
 		                        3,
 		                        NULL,
