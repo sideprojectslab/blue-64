@@ -34,6 +34,7 @@ extern bool c64b_parse_gamepad_swap  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old
 extern bool c64b_parse_gamepad_kbemu (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
 extern bool c64b_parse_gamepad_ctrl  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old, t_c64b_cport_idx cport_idx);
 extern void c64b_parse_gamepad_init  ();
+extern bool c64b_gamepad_interesting (uni_gamepad_t* gp, uni_gamepad_t* gp_old);
 
 //----------------------------------------------------------------------------//
 // Static Variables
@@ -80,24 +81,22 @@ void c64b_parser_set_gp_seat(unsigned int idx, unsigned int seat)
 	if(d == NULL)
 		return;
 
-	if(d->report_parser.play_dual_rumble != NULL)
-	{
-		d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 400 : 100, 255, 0);
-		logi("parser: setting rumble for seat %d\n", seat);
-	}
-
 	if(d->report_parser.set_player_leds != NULL)
 	{
 		d->report_parser.set_player_leds(d, 1 << (seat - 1));
 		logi("parser: setting leds for seat %d\n", seat);
 	}
-
-	if(d->report_parser.set_lightbar_color != NULL)
+	else if(d->report_parser.set_lightbar_color != NULL)
 	{
 		uint8_t r = seat == 2 ? 255 : 0;
 		uint8_t g = seat == 2 ? 0   : 255;
 		d->report_parser.set_lightbar_color(d, r, g, 0);
 		logi("parser: setting lightbar for seat %d\n", seat);
+	}
+	else if(d->report_parser.play_dual_rumble != NULL)
+	{
+		d->report_parser.play_dual_rumble(d, 0, seat == 2 ? 400 : 150, 255, 0);
+		logi("parser: setting rumble for seat %d\n", seat);
 	}
 }
 
@@ -253,7 +252,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 		return;
 	}
 
-	if (memcmp(gp_old, gp, sizeof(uni_gamepad_t)) == 0)
+	if (!c64b_gamepad_interesting(gp, gp_old))
 		return;
 
 	#if (CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE == 1)

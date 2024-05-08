@@ -74,6 +74,11 @@
 #define KB_START_MASK    0x8
 
 #define ANL_DEADZONE     256
+#define TRG_DEADZONE     40
+#define ANL_RRMASK       (1 << 3)
+#define ANL_LLMASK       (1 << 2)
+#define ANL_UPMASK       (1 << 1)
+#define ANL_DNMASK       (1 << 0)
 
 //----------------------------------------------------------------------------//
 // keyboard owner must always be protected by a semaphore

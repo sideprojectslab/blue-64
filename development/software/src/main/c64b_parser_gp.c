@@ -32,6 +32,85 @@ SemaphoreHandle_t afsleep_sem_h[3];
 bool              autofire[3] = {0};
 
 //----------------------------------------------------------------------------//
+bool c64b_gamepad_trigger_active(int32_t trig)
+{
+	return (trig > 40);
+}
+
+//----------------------------------------------------------------------------//
+uint8_t c64b_gamepad_analog_active(int32_t x, int32_t y)
+{
+	uint8_t ret = 0;
+
+	if((abs(x) > ANL_DEADZONE) || (abs(y) > ANL_DEADZONE))
+	{
+		unsigned int quadrant = 0;
+		if((x >= 0) && (y < 0))
+		{
+			quadrant = 0;
+		}
+		else if((x < 0) && (y < 0))
+		{
+			quadrant = 1;
+		}
+		else if((x < 0) && (y >= 0))
+		{
+			quadrant = 2;
+		}
+		else if((x >= 0) && (y >= 0))
+		{
+			quadrant = 3;
+		}
+
+		if(abs(y) < abs(x) * 2)
+		{
+			if(quadrant == 0 || quadrant == 3)
+				ret |= ANL_RRMASK;
+			else
+				ret |= ANL_LLMASK;
+		}
+
+		if(abs(x) < abs(y * 2))
+		{
+			if(quadrant == 0 || quadrant == 1)
+				ret |= ANL_UPMASK;
+			else
+				ret |= ANL_DNMASK;
+		}
+	}
+
+	return ret;
+}
+
+//----------------------------------------------------------------------------//
+
+bool c64b_gamepad_interesting(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
+{
+	if(gp->dpad != gp_old->dpad)
+		return true;
+
+	if(gp->buttons != gp_old->buttons)
+		return true;
+
+	if(gp->misc_buttons != gp_old->misc_buttons)
+		return true;
+
+	if(c64b_gamepad_trigger_active(gp->brake) !=
+	   c64b_gamepad_trigger_active(gp_old->brake))
+		return true;
+
+	if(c64b_gamepad_trigger_active(gp->throttle) !=
+	   c64b_gamepad_trigger_active(gp_old->throttle))
+		return true;
+
+	if(c64b_gamepad_analog_active(gp->axis_x, gp->axis_y) !=
+	   c64b_gamepad_analog_active(gp_old->axis_x, gp_old->axis_y))
+		return true;
+
+	return false;
+}
+
+//----------------------------------------------------------------------------//
 
 static void c64b_gamepad_autofire(t_c64b_cport_idx i)
 {
@@ -197,9 +276,9 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
 			else if(gp->buttons & BTN_RS_MASK)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RS]));
-			else if(gp->brake > 40)
+			else if(c64b_gamepad_trigger_active(gp->brake))
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LT]));
-			else if(gp->throttle > 40)
+			else if(c64b_gamepad_trigger_active(gp->throttle))
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RT]));
 			else
 				kb_nop = true;
@@ -245,43 +324,15 @@ bool c64b_parse_gamepad_ctrl(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_cp
 	if(gp->buttons & BTN_Y_MASK)
 		af_pressed = true;
 
-	// if left analog stick is outside the dead zone it overrides the dpad
-	if((abs(gp->axis_x) > ANL_DEADZONE) || (abs(gp->axis_y) > ANL_DEADZONE))
-	{
-		unsigned int quadrant = 0;
-		if((gp->axis_x >= 0) && (gp->axis_y < 0))
-		{
-			quadrant = 0;
-		}
-		else if((gp->axis_x < 0) && (gp->axis_y < 0))
-		{
-			quadrant = 1;
-		}
-		else if((gp->axis_x < 0) && (gp->axis_y >= 0))
-		{
-			quadrant = 2;
-		}
-		else if((gp->axis_x >= 0) && (gp->axis_y >= 0))
-		{
-			quadrant = 3;
-		}
-
-		if(abs(gp->axis_y) < abs(gp->axis_x) * 2)
-		{
-			if(quadrant == 0 || quadrant == 3)
-				rr_pressed = true;
-			else
-				ll_pressed = true;
-		}
-
-		if(abs(gp->axis_x) < abs(gp->axis_y * 2))
-		{
-			if(quadrant == 0 || quadrant == 1)
-				up_pressed = true;
-			else
-				dn_pressed = true;
-		}
-	}
+	uint8_t analog = c64b_gamepad_analog_active(gp->axis_x, gp->axis_y);
+	if(analog & ANL_RRMASK)
+		rr_pressed = true;
+	if(analog & ANL_LLMASK)
+		ll_pressed = true;
+	if(analog & ANL_UPMASK)
+		up_pressed = true;
+	if(analog & ANL_DNMASK)
+		dn_pressed = true;
 
 	// these GPIO accesses are all thread-safe on the ESP32
 	if(rr_pressed)
