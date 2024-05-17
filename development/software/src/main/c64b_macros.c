@@ -36,10 +36,14 @@ typedef unsigned int (*menu)(int);
 
 static menu menu_current_plt;
 static menu menu_current_act;
+static menu menu_current_ext;
 
 static unsigned int step     = 0;
 static unsigned int menu_lvl = 0;
 static unsigned int menu_idx[MENU_LVL_MAX] = {0, KB_MAP_SYMBOLIC, 0};
+static unsigned int last_len = 0;
+
+static char str_buf[128] = {0};
 
 //----------------------------------------------------------------------------//
 //                       FORWARD FUNCTION DECLARATIONS                        //
@@ -47,8 +51,15 @@ static unsigned int menu_idx[MENU_LVL_MAX] = {0, KB_MAP_SYMBOLIC, 0};
 
 unsigned int menu_main_plt(int i);
 unsigned int menu_main_act(int i);
+unsigned int menu_main_ext(int i);
+
 unsigned int menu_kb_plt(int i);
 unsigned int menu_kb_act(int i);
+unsigned int menu_kb_ext(int i);
+
+unsigned int menu_key_plt(int i);
+unsigned int menu_key_act(int i);
+unsigned int menu_key_ext(int i);
 
 //----------------------------------------------------------------------------//
 //                              UTILITY MACROS                                //
@@ -63,9 +74,9 @@ unsigned int wrap(int i, unsigned int num_entries)
 	return i;
 }
 
-#define WRAP(i) \
-	const unsigned int num_entries = sizeof(entries) / sizeof(entries[0]); \
-	i = wrap(i, num_entries);
+#define WRAP(i, e) \
+	const unsigned int num_entries = sizeof(e) / sizeof(e[0]); \
+	i = wrap(i, num_entries)
 
 //----------------------------------------------------------------------------//
 //                                RESTORE MENU                                //
@@ -79,7 +90,7 @@ unsigned int menu_restore_plt(int i)
 		"~home~~ret~1 yes"
 	};
 
-	WRAP(i)
+	WRAP(i, entries);
 	keyboard_macro_feed(entries[i]);
 	return i;
 }
@@ -94,6 +105,17 @@ unsigned int menu_restore_act(int i)
 
 	menu_current_plt = menu_main_plt;
 	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+unsigned int menu_restore_ext(int i)
+{
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
 	menu_lvl--;
 	menu_current_plt(menu_idx[menu_lvl]);
 	return 0;
@@ -120,7 +142,7 @@ unsigned int menu_af_plt(int i)
 		"~home~~ret~10 10hz",
 	};
 
-	WRAP(i)
+	WRAP(i, entries);
 	keyboard_macro_feed(entries[i]);
 	return i;
 }
@@ -139,6 +161,17 @@ unsigned int menu_af_act(int i)
 
 	menu_current_plt = menu_main_plt;
 	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+unsigned int menu_af_ext(int i)
+{
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
 	menu_lvl--;
 	menu_current_plt(menu_idx[menu_lvl]);
 	return 0;
@@ -156,7 +189,7 @@ unsigned int menu_kb_plt(int i)
 		"~home~~ret~1 positional (vice)"
 	};
 
-	WRAP(i)
+	WRAP(i, entries);
 	keyboard_macro_feed(entries[i]);
 	return i;
 }
@@ -170,6 +203,17 @@ unsigned int menu_kb_act(int i)
 	}
 	menu_current_plt = menu_main_plt;
 	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+unsigned int menu_kb_ext(int i)
+{
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
 	menu_lvl--;
 	menu_current_plt(menu_idx[menu_lvl]);
 	return 0;
@@ -181,23 +225,33 @@ unsigned int menu_kb_act(int i)
 
 unsigned int menu_ct_plt(int i)
 {
-	static char str_buf[128] = {0};
 	static const char* entries[] =
 	{
-		"~home~~ret~2 home button   : \"",
-		"~home~~ret~3 menu button   : \"",
-		"~home~~ret~4 left trigger  : \"",
-		"~home~~ret~5 right trigger : \"",
-		"~home~~ret~6 left shoulder : \"",
-		"~home~~ret~7 right shoulder: \""
+		"~home~~ret~2 home button   : ",
+		"~home~~ret~3 menu button   : ",
+		"~home~~ret~4 left trigger  : ",
+		"~home~~ret~5 right trigger : ",
+		"~home~~ret~6 left shoulder : ",
+		"~home~~ret~7 right shoulder: "
 	};
 
-	WRAP(i)
-	strcpy(str_buf, entries[i]);
-	strcat(str_buf, "~strip~");
+	WRAP(i, entries);
+
+	strcpy(str_buf, "");
+	for (unsigned int j = 0; j < last_len; ++j)
+		strcat(str_buf, "~del~");
+
+	strcat(str_buf, entries[i]);
+	strcat(str_buf, "\"~strip~");
+	last_len = strlen(str_buf);
 	strcat(str_buf, c64b_keyboard_idx_to_key(ct_map[i]));
-	strcat(str_buf, "\" ->     ");
-	strcat(str_buf, "~del~~del~~del~~del~");
+	strcat(str_buf, "\"");
+
+	for (unsigned int j = last_len; str_buf[j] != 0; ++j)
+		if(str_buf[j] == '~')
+			last_len++;
+
+	last_len = strlen(str_buf) - last_len + 1;
 
 	keyboard_macro_feed(str_buf);
 	return i;
@@ -205,20 +259,113 @@ unsigned int menu_ct_plt(int i)
 
 unsigned int menu_ct_act(int i)
 {
-	const t_c64b_key_id* key = NULL;
+	strcpy(str_buf, " -> ");
 
-	// here we wait for the previous macro to be fed and then we reset the trace
-	// as we want to grab new input from the user
-	key = c64b_keyboard_trace_get(&keyboard);
+	menu_current_plt = menu_key_plt;
+	menu_current_act = menu_key_act;
+	menu_current_ext = menu_key_ext;
+	last_len         = 0;
+	menu_lvl++;
+	menu_idx[menu_lvl] = C64B_KB_IDX_NONE;
 
-	if(key != NULL)
-	{
-		ct_map[i] = c64b_keyboard_key_to_idx(key->str);
-		c64b_property_set_u8(ct_map_key[i], ct_map[i]);
-	}
+	keyboard_macro_feed(str_buf);
 
+	if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
+		menu_current_plt(menu_idx[menu_lvl]);
+
+	return i;
+}
+
+unsigned int menu_ct_ext(int i)
+{
 	menu_current_plt = menu_main_plt;
 	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	last_len         = 0;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+//----------------------------------------------------------------------------//
+//                            CONTROLLER MAP MENU                             //
+//----------------------------------------------------------------------------//
+
+unsigned int menu_key_plt(int i)
+{
+	static const t_c64b_key_id* entries = KEY_IDS;
+
+	i = wrap(i, NUM_KEYS + 1);
+
+	strcpy(str_buf, "");
+	for (unsigned int j = 0; j < last_len; ++j)
+		strcat(str_buf, "~del~");
+
+	if(i == C64B_KB_IDX_NONE)
+	{
+		strcat(str_buf, "\"\"");
+		last_len = 2;
+	}
+	else
+	{
+		strcat(str_buf, "\"~strip~");
+		last_len = strlen(str_buf);
+		strcat(str_buf, c64b_keyboard_idx_to_key(i));
+		strcat(str_buf, "\"");
+
+		for (unsigned int j = last_len; str_buf[j] != 0; ++j)
+			if(str_buf[j] == '~')
+				last_len++;
+
+		last_len = strlen(str_buf) - last_len + 1; // including extra quotes
+
+	}
+
+	logi("printing string: %s\n", str_buf);
+
+	keyboard_macro_feed(str_buf);
+	return i;
+}
+
+unsigned int menu_key_act(int i)
+{
+	unsigned int j = menu_idx[menu_lvl-1];
+	const t_c64b_key_id* key = NULL;
+	key = c64b_keyboard_trace_get(&keyboard);
+
+	if(i == C64B_KB_IDX_NONE)
+	{
+		if(key != NULL)
+		{
+			ct_map[j] = c64b_keyboard_key_to_idx(key->str);
+		}
+		else
+		{
+			ct_map[j] = C64B_KB_IDX_NONE;
+		}
+	}
+	else
+	{
+		ct_map[j] = c64b_keyboard_key_to_idx(KEY_IDS[i].str);
+	}
+
+	c64b_property_set_u8(ct_map_key[j], ct_map[j]);
+
+	menu_current_plt = menu_ct_plt;
+	menu_current_act = menu_ct_act;
+	menu_current_ext = menu_ct_ext;
+	last_len         = last_len + 10; // deleting the arrow character and the original character
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+unsigned int menu_key_ext(int i)
+{
+	menu_current_plt = menu_ct_plt;
+	menu_current_act = menu_ct_act;
+	menu_current_ext = menu_ct_ext;
+	last_len         = 0;
 	menu_lvl--;
 	menu_current_plt(menu_idx[menu_lvl]);
 	return 0;
@@ -242,7 +389,7 @@ unsigned int menu_main_plt(int i)
 		"~clr~7 restore defaults"
 	};
 
-	WRAP(i);
+	WRAP(i, entries);
 	keyboard_macro_feed(entries[i]);
 	return i;
 }
@@ -274,6 +421,7 @@ unsigned int menu_main_act(int i)
 		case 4:
 			menu_current_plt = menu_kb_plt;
 			menu_current_act = menu_kb_act;
+			menu_current_ext = menu_kb_ext;
 			menu_lvl++;
 			menu_idx[menu_lvl] = kb_map;
 
@@ -284,6 +432,8 @@ unsigned int menu_main_act(int i)
 		case 5:
 			menu_current_plt = menu_ct_plt;
 			menu_current_act = menu_ct_act;
+			menu_current_ext = menu_ct_ext;
+			last_len         = 0;
 			menu_lvl++;
 			menu_idx[menu_lvl] = 0;
 
@@ -294,6 +444,7 @@ unsigned int menu_main_act(int i)
 		case 6:
 			menu_current_plt = menu_af_plt;
 			menu_current_act = menu_af_act;
+			menu_current_ext = menu_af_ext;
 			menu_lvl++;
 			menu_idx[menu_lvl] = af_rate;
 
@@ -304,6 +455,7 @@ unsigned int menu_main_act(int i)
 		case 7:
 			menu_current_plt = menu_restore_plt;
 			menu_current_act = menu_restore_act;
+			menu_current_ext = menu_restore_ext;
 			menu_lvl++;
 			menu_idx[menu_lvl] = 0;
 
@@ -315,12 +467,18 @@ unsigned int menu_main_act(int i)
 	return 0;
 }
 
+unsigned int menu_main_ext(int i)
+{
+	return i;
+}
+
 //----------------------------------------------------------------------------//
 //                                  MENU LOGIC                                //
 //----------------------------------------------------------------------------//
 
 static menu menu_current_plt = menu_main_plt;
 static menu menu_current_act = menu_main_act;
+static menu menu_current_ext = menu_main_ext;
 
 
 void menu_fwd()
@@ -336,6 +494,10 @@ void menu_bwd()
 	step = 1;
 }
 
+void menu_ext()
+{
+	menu_current_ext(menu_idx[menu_lvl]);
+}
 
 void menu_act()
 {

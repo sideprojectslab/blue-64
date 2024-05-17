@@ -50,6 +50,11 @@ bool c64b_parse_keyboard_menu(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 				if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
 					menu_bwd();
 				break;
+			case HID_USAGE_KB_BACKSPACE:
+				kb_nop = false;
+				if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
+					menu_ext();
+				break;
 			case HID_USAGE_KB_ENTER:
 				kb_nop = false;
 				if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)

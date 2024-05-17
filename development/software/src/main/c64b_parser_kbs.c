@@ -290,13 +290,13 @@ bool c64b_parse_keyboard_symbolic(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 						if(!shft)
 							c64b_keyboard_char_psh(&keyboard, "5");
 						else
-							c64b_keyboard_char_psh(&keyboard, "%%");
+							c64b_keyboard_char_psh(&keyboard, "%");
 						break;
 					case HID_USAGE_KB_6_CARET:
 						if(!shft)
 							c64b_keyboard_char_psh(&keyboard, "6");
 						else
-							c64b_keyboard_char_psh(&keyboard, "£");
+							c64b_keyboard_char_psh(&keyboard, "^"); // replaced the pound symbol
 						break;
 					case HID_USAGE_KB_7_AMPERSAND:
 						if(!shft)

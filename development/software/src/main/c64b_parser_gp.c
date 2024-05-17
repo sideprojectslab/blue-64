@@ -225,6 +225,11 @@ bool c64b_parse_gamepad_menu(uni_gamepad_t* gp, uni_gamepad_t* gp_old)
 		if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
 			menu_bwd();
 	}
+	else if((gp->buttons & BTN_X_MASK) && !(gp_old->buttons & BTN_X_MASK))
+	{
+		if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)
+			menu_ext();
+	}
 	else if((gp->misc_buttons & BTN_MENU_MASK) && !(gp_old->misc_buttons & BTN_MENU_MASK))
 	{
 		if(xSemaphoreTake(mcro_sem_h, (TickType_t)0) == pdTRUE)

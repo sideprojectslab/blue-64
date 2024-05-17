@@ -60,7 +60,7 @@ const t_c64b_key_id KEY_IDS[] =
 	{"~home~"  , 6, 3, false, false},
 	{";"       , 6, 2, false, false},
 	{"*"       , 6, 1, false, false},
-	{"£"       , 6, 0, false, false},
+	{"^"       , 6, 0, false, false}, // this replaced the pound symbol
 
 	// 16
 	{","       , 5, 7, false, false},
@@ -148,7 +148,7 @@ const t_c64b_key_id KEY_IDS[] =
 
 	// 77
 	{"&"       , 2, 3, true, false},
-	{"%%"      , 2, 0, true, false},
+	{"%"      , 2, 0, true, false},
 
 	// 79
 	{"$"       , 1, 3, true, false},
@@ -164,6 +164,7 @@ const t_c64b_key_id KEY_IDS[] =
 	{"~inst~"  , 0, 0, true, false}
 };
 
+const unsigned int NUM_KEYS = sizeof(KEY_IDS) / sizeof(KEY_IDS[0]);
 
 typedef enum
 {

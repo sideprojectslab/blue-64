@@ -292,7 +292,7 @@ bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 						if(!shft)
 							c64b_keyboard_char_psh(&keyboard, "5");
 						else
-							c64b_keyboard_char_psh(&keyboard, "%%");
+							c64b_keyboard_char_psh(&keyboard, "%");
 						break;
 					case HID_USAGE_KB_6_CARET:
 						if(!shft)
@@ -374,7 +374,7 @@ bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 						c64b_keyboard_char_psh(&keyboard, "~inst~");
 						break;
 					case HID_USAGE_KB_END:
-						c64b_keyboard_char_psh(&keyboard, "£");
+						c64b_keyboard_char_psh(&keyboard, "^"); // replaced the pound symbol
 						break;
 					case HID_USAGE_KB_PAGE_DOWN:
 						c64b_keyboard_char_psh(&keyboard, "=");

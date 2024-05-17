@@ -28,10 +28,11 @@
 
 #include <stddef.h>
 
-#define C64B_FW_VERSION "v1.0"
+#define C64B_FW_VERSION "v1.1"
 
 void menu_fwd();
 void menu_bwd();
+void menu_ext();
 void menu_act();
 
 #endif

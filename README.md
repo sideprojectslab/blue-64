@@ -14,8 +14,10 @@ Blue-64 has an internal menu that is visualized by printing text on screen. The 
 | Swap Player 1-2                | View + Y    |
 | Cycle Menu (controller)        | View + A/B  |
 | Select/Run Menu (controller)   | View + Menu |
+| Exit Menu (controller)         | View + X    |
 | Cycle Menu (keyboard)          | AltGr + Up/Down/Left/Right Arrow  |
 | Select/Run Menu (keyboard)     | AltGr + Enter |
+| Exit Menu (keyboard)           | AltGr + Backspace |
 
 ## Button Mapping (xInput)
 | Joystick     | Controller  | Controller Alt.     |
@@ -35,10 +37,13 @@ Controller buttons not mentioned in the table above can be mapped to emulate any
 | SPACE        | Menu Button    |
 | F1           | Right Shoulder |
 
-* In order to map a button nagigate to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
-* Once the desired controller button is highlighted press the desired key on the keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.
-* Confirm the choice with "View + Menu" (controller) or "AltGr + Enter" (keyboard) and the last key pressed will be assigned to the desired control button.
-* Confirming the choice without having pressed any key will simply leave the mapping unchanged.
+* In order to map a button navigate to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
+* Once the desired controller button is highlighted confirm your choice with "View + Menu" (controller) or "AltGr + Enter" on(bluetooth keyboard)
+* If you immediately confirm again, the binding will be removed
+* You can now press the desired key on the bluetooth keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.
+* Alternatively (if you don't have a bluetooth keyboard) you can cycle through all available keys manually.
+* Confirm the choice with "View + Menu" (controller) or "AltGr + Enter" (bluetooth keyboard) and the last key pressed (or the manually selected key, if any) will be assigned to the desired control button.
+* Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
 
 ## C64 Compatibility
 Blue-64 has been verified to be compatible with the following motherboard revisions:
