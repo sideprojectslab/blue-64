@@ -40,128 +40,100 @@
 
 const t_c64b_key_id KEY_IDS[] =
 {
-	// unshfted keys
+	{" "       , 7, 4, false, false, true },
 
-	// 0
-	{"~stop~"  , 7, 7, false, false},
-	{"q"       , 7, 6, false, false}, {"Q", 7, 6, true, false},
-	{"~cmdr~"  , 7, 5, false, false},
-	{" "       , 7, 4, false, false},
-	{"2"       , 7, 3, false, false},
-	{"~ctrl~"  , 7, 2, false, false},
-	{"~arll~"  , 7, 1, false, false},
-	{"1"       , 7, 0, false, false},
+	{"~f1~"    , 0, 4, false, false, false},
+	{"~f2~"    , 0, 4, true , false, false},
+	{"~f3~"    , 0, 5, false, false, false},
+	{"~f4~"    , 0, 5, true , false, false},
+	{"~f5~"    , 0, 6, false, false, false},
+	{"~f6~"    , 0, 6, true , false, false},
+	{"~f7~"    , 0, 3, false, false, false},
+	{"~f8~"    , 0, 3, true , false, false},
 
-	// 8
-	{"/"       , 6, 7, false, false},
-	{"~arup~"  , 6, 6, false, false}, {"~pi~", 6, 6, true, false},
-	{"="       , 6, 5, false, false},
-	{"~rsh~"   , 6, 4, false, false},
-	{"~home~"  , 6, 3, false, false},
-	{";"       , 6, 2, false, false},
-	{"*"       , 6, 1, false, false},
-	{"^"       , 6, 0, false, false}, // this replaced the pound symbol
+	{"~up~"    , 0, 7, true , false, false},
+	{"~dn~"    , 0, 7, false, false, false},
+	{"~rr~"    , 0, 2, false, false, false},
+	{"~ll~"    , 0, 2, true , false, false},
 
-	// 16
-	{","       , 5, 7, false, false},
-	{"@"       , 5, 6, false, false},
-	{":"       , 5, 5, false, false},
-	{"."       , 5, 4, false, false},
-	{"-"       , 5, 3, false, false},
-	{"l"       , 5, 2, false, false}, {"L", 5, 2, true, false},
-	{"p"       , 5, 1, false, false}, {"P", 5, 1, true, false},
-	{"+"       , 5, 0, false, false},
+	{"~lsh~"   , 1, 7, false, false, false},
+	{"~rsh~"   , 6, 4, false, false, false},
+	{"~cmdr~"  , 7, 5, false, false, false},
+	{"~ctrl~"  , 7, 2, false, false, false},
+	{"~run~"   , 7, 7, true , false, false},
+	{"~stop~"  , 7, 7, false, false, false},
+	{"~ret~"   , 0, 1, false, false, false},
+	{"~del~"   , 0, 0, false, false, false},
+	{"~clr~"   , 6, 3, true , false, false},
+	{"~inst~"  , 0, 0, true , false, false},
+	{"~home~"  , 6, 3, false, false, false},
 
-	// 24
-	{"n"       , 4, 7, false, false}, {"N", 4, 7, true, false},
-	{"o"       , 4, 6, false, false}, {"O", 4, 6, true, false},
-	{"k"       , 4, 5, false, false}, {"K", 4, 5, true, false},
-	{"m"       , 4, 4, false, false}, {"M", 4, 4, true, false},
-	{"0"       , 4, 3, false, false},
-	{"j"       , 4, 2, false, false}, {"J", 4, 2, true, false},
-	{"i"       , 4, 1, false, false}, {"I", 4, 1, true, false},
-	{"9"       , 4, 0, false, false},
+	{"0"       , 4, 3, false, false, true },
+	{"1"       , 7, 0, false, false, true },
+	{"2"       , 7, 3, false, false, true },
+	{"3"       , 1, 0, false, false, true },
+	{"4"       , 1, 3, false, false, true },
+	{"5"       , 2, 0, false, false, true },
+	{"6"       , 2, 3, false, false, true },
+	{"7"       , 3, 0, false, false, true },
+	{"8"       , 3, 3, false, false, true },
+	{"9"       , 4, 0, false, false, true },
 
-	// 32
-	{"v"       , 3, 7, false, false}, {"V", 3, 7, true, false},
-	{"u"       , 3, 6, false, false}, {"U", 3, 6, true, false},
-	{"h"       , 3, 5, false, false}, {"H", 3, 5, true, false},
-	{"b"       , 3, 4, false, false}, {"B", 3, 4, true, false},
-	{"8"       , 3, 3, false, false},
-	{"g"       , 3, 2, false, false}, {"G", 3, 2, true, false},
-	{"y"       , 3, 1, false, false}, {"Y", 3, 1, true, false},
-	{"7"       , 3, 0, false, false},
+	{"/"       , 6, 7, false, false, true },
+	{"="       , 6, 5, false, false, true },
+	{";"       , 6, 2, false, false, true },
+	{"*"       , 6, 1, false, false, true },
+	{"^"       , 6, 0, false, false, true }, // this replaced the pound symbol
+	{","       , 5, 7, false, false, true },
+	{"@"       , 5, 6, false, false, true },
+	{":"       , 5, 5, false, false, true },
+	{"."       , 5, 4, false, false, true },
+	{"-"       , 5, 3, false, false, true },
+	{"+"       , 5, 0, false, false, true },
+	{"~pi~"    , 6, 6, true , false, true },
+	{"\""      , 7, 3, true , false, true },
+	{"!"       , 7, 0, true , false, true },
+	{"?"       , 6, 7, true , false, true },
+	{"]"       , 6, 2, true , false, true },
+	{"["       , 5, 5, true , false, true },
+	{"<"       , 5, 7, true , false, true },
+	{">"       , 5, 4, true , false, true },
+	{")"       , 4, 0, true , false, true },
+	{"("       , 3, 3, true , false, true },
+	{"'"       , 3, 0, true , false, true },
+	{"&"       , 2, 3, true , false, true },
+	{"%"       , 2, 0, true , false, true },
+	{"$"       , 1, 3, true , false, true },
+	{"#"       , 1, 0, true , false, true },
+	{"~arll~"  , 7, 1, false, false, true },
+	{"~arup~"  , 6, 6, false, false, true },
 
-	// 40
-	{"x"       , 2, 7, false, false}, {"X", 2, 7, true, false},
-	{"t"       , 2, 6, false, false}, {"T", 2, 6, true, false},
-	{"f"       , 2, 5, false, false}, {"F", 2, 5, true, false},
-	{"c"       , 2, 4, false, false}, {"C", 2, 4, true, false},
-	{"6"       , 2, 3, false, false},
-	{"d"       , 2, 2, false, false}, {"D", 2, 2, true, false},
-	{"r"       , 2, 1, false, false}, {"R", 2, 1, true, false},
-	{"5"       , 2, 0, false, false},
-
-	// 48
-	{"~lsh~"   , 1, 7, false, false},
-	{"e"       , 1, 6, false, false}, {"E", 1, 6, true, false},
-	{"s"       , 1, 5, false, false}, {"S", 1, 5, true, false},
-	{"z"       , 1, 4, false, false}, {"Z", 1, 4, true, false},
-	{"4"       , 1, 3, false, false},
-	{"a"       , 1, 2, false, false}, {"A", 1, 2, true, false},
-	{"w"       , 1, 1, false, false}, {"W", 1, 1, true, false},
-	{"3"       , 1, 0, false, false},
-
-	// 56
-	{"~dn~"    , 0, 7, false, false},
-	{"~f5~"    , 0, 6, false, false},
-	{"~f3~"    , 0, 5, false, false},
-	{"~f1~"    , 0, 4, false, false},
-	{"~f7~"    , 0, 3, false, false},
-	{"~rr~"    , 0, 2, false, false},
-	{"~ret~"   , 0, 1, false, false},
-	{"~del~"   , 0, 0, false, false},
-
-	// shifted characters
-
-	// 64
-	{"~run~"   , 7, 7, true, false},
-	{"\""      , 7, 3, true, false},
-	{"!"       , 7, 0, true, false},
-
-	// 67
-	{"?"       , 6, 7, true, false},
-	{"~clr~"   , 6, 3, true, false},
-	{"]"       , 6, 2, true, false},
-
-	// 70
-	{"<"       , 5, 7, true, false},
-	{"["       , 5, 5, true, false},
-	{">"       , 5, 4, true, false},
-
-	// 73
-	{")"       , 4, 0, true, false},
-
-	// 75
-	{"("       , 3, 3, true, false},
-	{"'"       , 3, 0, true, false},
-
-	// 77
-	{"&"       , 2, 3, true, false},
-	{"%"      , 2, 0, true, false},
-
-	// 79
-	{"$"       , 1, 3, true, false},
-	{"#"       , 1, 0, true, false},
-
-	// 81
-	{"~up~"    , 0, 7, true, false},
-	{"~f6~"    , 0, 6, true, false},
-	{"~f4~"    , 0, 5, true, false},
-	{"~f2~"    , 0, 4, true, false},
-	{"~f8~"    , 0, 3, true, false},
-	{"~ll~"    , 0, 2, true, false},
-	{"~inst~"  , 0, 0, true, false}
+	{"a"       , 1, 2, false, false, true }, {"A", 1, 2, true, false, true},
+	{"b"       , 3, 4, false, false, true }, {"B", 3, 4, true, false, true},
+	{"c"       , 2, 4, false, false, true }, {"C", 2, 4, true, false, true},
+	{"d"       , 2, 2, false, false, true }, {"D", 2, 2, true, false, true},
+	{"e"       , 1, 6, false, false, true }, {"E", 1, 6, true, false, true},
+	{"f"       , 2, 5, false, false, true }, {"F", 2, 5, true, false, true},
+	{"g"       , 3, 2, false, false, true }, {"G", 3, 2, true, false, true},
+	{"h"       , 3, 5, false, false, true }, {"H", 3, 5, true, false, true},
+	{"i"       , 4, 1, false, false, true }, {"I", 4, 1, true, false, true},
+	{"j"       , 4, 2, false, false, true }, {"J", 4, 2, true, false, true},
+	{"k"       , 4, 5, false, false, true }, {"K", 4, 5, true, false, true},
+	{"l"       , 5, 2, false, false, true }, {"L", 5, 2, true, false, true},
+	{"m"       , 4, 4, false, false, true }, {"M", 4, 4, true, false, true},
+	{"n"       , 4, 7, false, false, true }, {"N", 4, 7, true, false, true},
+	{"o"       , 4, 6, false, false, true }, {"O", 4, 6, true, false, true},
+	{"p"       , 5, 1, false, false, true }, {"P", 5, 1, true, false, true},
+	{"q"       , 7, 6, false, false, true }, {"Q", 7, 6, true, false, true},
+	{"r"       , 2, 1, false, false, true }, {"R", 2, 1, true, false, true},
+	{"s"       , 1, 5, false, false, true }, {"S", 1, 5, true, false, true},
+	{"t"       , 2, 6, false, false, true }, {"T", 2, 6, true, false, true},
+	{"u"       , 3, 6, false, false, true }, {"U", 3, 6, true, false, true},
+	{"v"       , 3, 7, false, false, true }, {"V", 3, 7, true, false, true},
+	{"w"       , 1, 1, false, false, true }, {"W", 1, 1, true, false, true},
+	{"x"       , 2, 7, false, false, true }, {"X", 2, 7, true, false, true},
+	{"y"       , 3, 1, false, false, true }, {"Y", 3, 1, true, false, true},
+	{"z"       , 1, 4, false, false, true }, {"Z", 1, 4, true, false, true}
 };
 
 const unsigned int NUM_KEYS = sizeof(KEY_IDS) / sizeof(KEY_IDS[0]);
@@ -594,6 +566,13 @@ bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s)
 		}
 		else if(key != NULL)
 		{
+			// strip is ignored on printable characters
+			if(key->prnt && strip_first)
+			{
+				strip       = false;
+				strip_first = false;
+			}
+
 			if(strip)
 			{
 				if(*head != '~')

@@ -6,7 +6,45 @@ https://discord.gg/gJsCgebkDw
 
 ![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/Blue-64.png)
 
-### Additional functions
+## C64 Compatibility
+Blue-64 has been verified to be compatible with the following C64 motherboard revisions:
+
+| Motherboard | Notes   |
+|:---:        |:---:    |
+| 250407  | - |
+| 250425  | - |
+| 250466  | - |
+| 326298  | - |
+| ku14194 | - |
+| 250469  | Needs a special adapter and the female<br>header is mounted upside down |
+
+![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/Blue-64-adpt.JPG)
+
+Blue-64 is also expected to be compatible with C16 and VIC20 computers, though has not been thoroughly tested yet.
+
+## Device Support
+Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Supported Controllers" section at the following link:
+https://github.com/ricardoquesada/bluepad32?tab=readme-ov-file
+
+## Keyboard Support
+At the moment Blue-64 only supports Bluetooth-Low-Energy keyboards (BLE) and only supports the English US layout. The key mapping can be switched between "symbolic" and "positional (vice)" through the on-screen menu. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
+
+| En-US Key (symbolic) | C64 Key     |
+|:---:                 |:---:        |
+| ~                    | Arrow Left  |
+| \                    | Arrow Up    |
+| 6+shift              | £           |
+| tab / shift+tab      | Stop / Run  |
+| esc                  | Restore     |
+| delete, f12          | Clear       |
+| home, f9             | home        |
+| insert, f10          | insert      |
+| start (windows)      | Commodore   |
+
+## Pairing a Bluetooth Device
+The Blue-64 is always listening to incoming pairing requests up to a maximum of three devices paired simultaneously. This means that all you need to do is set your Bluetooth controller or keyboard in pairing mode and it will automatically pair with the Blue-64 without the need to set the Blue-64 itself in pairing mode.
+
+## Additional functions
 Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc. as well as selecting keyboard mapping and remapping unused controller buttons.
 
 | Function                       | Button(s)   |
@@ -44,40 +82,6 @@ Controller buttons not mentioned in the table above can be mapped to emulate any
 * Alternatively (if you don't have a bluetooth keyboard) you can cycle through all available keys manually.
 * Confirm the choice with "View + Menu" (controller) or "AltGr + Enter" (bluetooth keyboard) and the last key pressed (or the manually selected key, if any) will be assigned to the desired control button.
 * Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
-
-## C64 Compatibility
-Blue-64 has been verified to be compatible with the following motherboard revisions:
-
-| Motherboard      | Notes   |
-|:---:             |:---:    |
-| 250407  | - |
-| 250425  | - |
-| 250466  | - |
-| 326298  | - |
-| ku14194 | - |
-| 250469  | Needs a special adapter and the female<br>header is mounted upside down |
-
-![](https://github.com/sideprojectslab/blue-64/blob/main/doc/pictures/Blue-64-adpt.JPG)
-
-## Device Support
-Blue-64 is based on the bluepad32 library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32. A list of supported devices can be found in the "Supported Controllers" section at the following link:
-https://github.com/ricardoquesada/bluepad32?tab=readme-ov-file
-
-## Keyboard Support
-At the moment Blue-64 only supports Bluetooth-Low-Energy keyboards (BLE) and only supports the English US layout. The key mapping can be switched between "symbolic" and "positional (vice)" through the on-screen menu. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say, including their "shift" function (if applicable) with a few exceptions:
-
-| En-US Key (symbolic) | C64 Key     |
-|:---:                 |:---:        |
-| ~                    | Arrow Left  |
-| \                    | Arrow Up    |
-| 6+shift              | £           |
-| tab / shift+tab      | Stop / Run  |
-| esc                  | Restore     |
-| delete, f12          | Clear       |
-| home, f9             | home        |
-| insert, f10          | insert      |
-| start (windows)      | Commodore   |
-
 
 ## Limitations
 Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does not support additional joystick fire buttons (other than the primary one) that are based on paddle control.

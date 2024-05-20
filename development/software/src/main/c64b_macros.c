@@ -247,11 +247,18 @@ unsigned int menu_ct_plt(int i)
 	strcat(str_buf, c64b_keyboard_idx_to_key(ct_map[i]));
 	strcat(str_buf, "\"");
 
-	for (unsigned int j = last_len; str_buf[j] != 0; ++j)
-		if(str_buf[j] == '~')
-			last_len++;
+	if(KEY_IDS[i].prnt)
+	{
+		last_len = 2;
+	}
+	else
+	{
+		for (unsigned int j = last_len; str_buf[j] != 0; ++j)
+			if(str_buf[j] == '~')
+				last_len++;
 
-	last_len = strlen(str_buf) - last_len + 1;
+		last_len = strlen(str_buf) - last_len + 1; // including the extra quotes
+	}
 
 	keyboard_macro_feed(str_buf);
 	return i;
@@ -293,8 +300,6 @@ unsigned int menu_ct_ext(int i)
 
 unsigned int menu_key_plt(int i)
 {
-	static const t_c64b_key_id* entries = KEY_IDS;
-
 	i = wrap(i, NUM_KEYS + 1);
 
 	strcpy(str_buf, "");
@@ -303,8 +308,7 @@ unsigned int menu_key_plt(int i)
 
 	if(i == C64B_KB_IDX_NONE)
 	{
-		strcat(str_buf, "\"\"");
-		last_len = 2;
+		last_len = 0;
 	}
 	else
 	{
@@ -313,12 +317,18 @@ unsigned int menu_key_plt(int i)
 		strcat(str_buf, c64b_keyboard_idx_to_key(i));
 		strcat(str_buf, "\"");
 
-		for (unsigned int j = last_len; str_buf[j] != 0; ++j)
-			if(str_buf[j] == '~')
-				last_len++;
+		if(KEY_IDS[i].prnt)
+		{
+			last_len = 3;
+		}
+		else
+		{
+			for (unsigned int j = last_len; str_buf[j] != 0; ++j)
+				if(str_buf[j] == '~')
+					last_len++;
 
-		last_len = strlen(str_buf) - last_len + 1; // including extra quotes
-
+			last_len = strlen(str_buf) - last_len + 1; // including extra quotes
+		}
 	}
 
 	logi("printing string: %s\n", str_buf);
@@ -365,7 +375,7 @@ unsigned int menu_key_ext(int i)
 	menu_current_plt = menu_ct_plt;
 	menu_current_act = menu_ct_act;
 	menu_current_ext = menu_ct_ext;
-	last_len         = 0;
+	last_len         = last_len + 10; // deleting the arrow character and the original character
 	menu_lvl--;
 	menu_current_plt(menu_idx[menu_lvl]);
 	return 0;

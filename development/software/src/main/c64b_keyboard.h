@@ -42,6 +42,7 @@ typedef struct
 	unsigned int row;
 	bool         shft;
 	bool         ctrl;
+	bool         prnt;
 } t_c64b_key_id;
 
 
