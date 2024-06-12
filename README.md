@@ -12,26 +12,29 @@ Blue-64 can be purchased pre-assembled or as a DIY-Kit from these authorized sho
 - [Retro-Updates](https://www.retro-updates.com/product/13541624/blue-64-plug-play-bluetooth-for-the-c64)
 - [Restore-Store](https://restore-store.de/home/682-blue-64-v03.html?search_query=blue-64&results=7)
 
-Any other shop selling Blue-64 violates the terms of the projects [license](#110-License) and shall be reported to the developer
+Sales of Blue-64 by any shop other than the ones mentioned above may be in violation of the [license](#10-license) terms and conditions and and be reported to the developer
 
 # Table of Contents <!-- omit in toc -->
 
 
-* [1. C64 Compatibility](#11-c64-compatibility)
-* [2. Device Support](#12-device-support)
-* [3. Keyboard Support](#13-keyboard-support)
-* [4. Pairing a Bluetooth Device](#14-pairing-a-bluetooth-device)
-* [5. Additional functions](#15-additional-functions)
-* [6. Button Mapping (xInput)](#16-button-mapping-xinput)
-* [7. Limitations](#17-limitations)
-* [8. Installation \& Precautions](#18-installation--precautions)
-* [9. Firmware Update](#19-firmware-update)
-	* [9.1. "Developer Boards" (up to v0.3)](#191-developer-boards-up-to-v03)
-	* [9.2. "Regular Boards" (v1.0 and above)](#192-regular-boards-v10-and-above)
-* [10. License](#110-license)
-* [11. Disclaimer](#111-disclaimer)
+* [1. C64 Compatibility](#1-c64-compatibility)
+* [2. Device Support](#2-device-support)
+* [3. Keyboard Support](#3-keyboard-support)
+* [4. Pairing a Bluetooth Device](#4-pairing-a-bluetooth-device)
+* [5. Additional functions](#5-additional-functions)
+* [6. Button Mapping (xInput)](#6-button-mapping-xinput)
+* [7. Limitations](#7-limitations)
+* [8. Installation \& Precautions](#8-installation--precautions)
+* [9. Firmware Update](#9-firmware-update)
+	* [9.1. "Developer Boards" (up to v0.3)](#91-developer-boards-up-to-v03)
+	* [9.2. "Regular Boards" (v1.0 and above)](#92-regular-boards-v10-and-above)
+* [10. License](#10-license)
+* [11. Disclaimer](#11-disclaimer)
 
-<img src="doc/pictures/Blue-64.png" width="800"/>
+<figure align="center">
+	<img src="doc/pictures/Blue-64.png" width="600"/>
+	<figcaption>Blue-64 v0.3</figcaption>
+</figure>
 
 # 1. C64 Compatibility
 Blue-64 has been verified to be compatible with the following C64 motherboard revisions:
@@ -45,7 +48,10 @@ Blue-64 has been verified to be compatible with the following C64 motherboard re
 | ku14194 | - |
 | 250469  | Needs a special adapter and the female<br>header is mounted upside down |
 
-<img src="doc/pictures/Blue-64-adpt.JPG" width="800"/>
+<figure align="center">
+	<img src="doc/pictures/Blue-64-adpt.JPG" width="800"/>
+	<figcaption>Shortboard Adapter</figcaption>
+</figure>
 
 Blue-64 is also expected to be compatible with C16 and VIC20 computers, though has not been thoroughly tested yet.
 
