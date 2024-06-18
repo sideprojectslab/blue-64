@@ -1,5 +1,5 @@
-
 include::resources/styles.adoc[]
+
 ifndef::root[:root: ../]
 ifndef::mapping[:mapping: mapping.adoc]
 
