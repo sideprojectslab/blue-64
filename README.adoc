@@ -1,7 +1,11 @@
 = Blue-64
-include::doc/resources/header.adoc[]
-
+:toc-placement!:
+ifndef::toc[:toc:]
+:sectnums:
+:stem: latexmath
+:table-caption: Table
 ifndef::env-github[]
+include::doc/resources/header.adoc[]
 include::doc/resources/styles.adoc[]
 endif::[]
 
