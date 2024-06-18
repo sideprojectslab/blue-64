@@ -3,9 +3,9 @@ include::resources/styles.adoc[]
 ifndef::root[:root: ../]
 ifndef::mapping[:mapping: mapping.adoc]
 
-:keyboard-mapping-profile: xref:{mapping}#_keyboard-mapping[keyboard mapping profile]
-:mapping-unused-controller-buttons: xref:{mapping}#button_map[Mapping unused controller buttons]
-:autofire: xref:{mapping}#utofire[Autofire]
+:keyboard-mapping-profile: xref:{mapping}#_keyboard_mapping[keyboard mapping profile]
+:mapping-unused-controller-buttons: xref:{mapping}#butto-map[Mapping unused controller buttons]
+:autofire: xref:{mapping}#autofire[Autofire]
 
 [[menu]]
 == On-Screen Menu & Additional Functions

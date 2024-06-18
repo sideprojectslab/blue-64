@@ -14,6 +14,7 @@ ifndef::menu[:menu:]
 //- include::doc/resources/styles.adoc[]
 
 ifndef::env-pdf[]
+
 ++++
 <style>
   .imageblock > .title {
@@ -21,6 +22,7 @@ ifndef::env-pdf[]
   }
 </style>
 ++++
+
 endif::[]
 
 If you would like to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
@@ -121,9 +123,9 @@ At the moment Blue-64 **only supports the English US layout**. The key mapping c
 ifndef::root[:root: ../]
 ifndef::mapping[:mapping: mapping.adoc]
 
-:keyboard-mapping-profile: xref:{mapping}#_keyboard-mapping[keyboard mapping profile]
-:mapping-unused-controller-buttons: xref:{mapping}#button_map[Mapping unused controller buttons]
-:autofire: xref:{mapping}#utofire[Autofire]
+:keyboard-mapping-profile: xref:{mapping}#_keyboard_mapping[keyboard mapping profile]
+:mapping-unused-controller-buttons: xref:{mapping}#button-map[Mapping unused controller buttons]
+:autofire: xref:{mapping}#autofire[Autofire]
 
 [[menu]]
 == On-Screen Menu & Additional Functions
