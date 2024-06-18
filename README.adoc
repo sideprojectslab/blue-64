@@ -1,6 +1,6 @@
 = Blue-64
 :toc: macro
-include::doc/resources/styles.ad[]
+include::doc/resources/styles.adoc[]
 ifndef::root[:root:]
 ifndef::firmware_update[:firmware_update:]
 ifndef::misc[:misc:]
@@ -28,8 +28,8 @@ toc::[]
 == Pairing a Bluetooth Device
 The Blue-64 is **always listening to incoming pairing requests** up to a maximum of three devices paired simultaneously. This means that all you need to do is set your Bluetooth controller or keyboard in pairing mode and it will automatically pair with the Blue-64 without the need to set the Blue-64 itself in pairing mode.
 
-include::doc/mapping.ad[]
-include::doc/menu.ad[]
-include::doc/compatibility.ad[]
-include::doc/firmware_update.ad[]
-include::doc/misc.ad[]
+include::doc/mapping.adoc[]
+include::doc/menu.adoc[]
+include::doc/compatibility.adoc[]
+include::doc/firmware_update.adoc[]
+include::doc/misc.adoc[]

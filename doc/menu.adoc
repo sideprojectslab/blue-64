@@ -1,6 +1,6 @@
-include::resources/styles.ad[]
+include::resources/styles.adoc[]
 ifndef::root[:root: ../]
-ifndef::mapping[:mapping: mapping.ad]
+ifndef::mapping[:mapping: mapping.adoc]
 
 :keyboard-mapping-profile: xref:{mapping}#_keyboard-mapping[keyboard mapping profile]
 :mapping-unused-controller-buttons: xref:{mapping}#button_map[Mapping unused controller buttons]
