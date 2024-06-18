@@ -7,7 +7,7 @@ ifndef::misc[:misc:]
 ifndef::mapping[:mapping:]
 ifndef::menu[:menu:]
 
-If you would like to get in touch with the developer, please join the SPL xref:https://discord.gg/gJsCgebkDw[Discord] server.
+If you would like to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
 
 Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto the keyboard header inside the computer and can control the keyboard lines and emulate keystrokes and joystick inputs. The goal of the project is to support two bluetooth controllers and a bluetooth keyboard simultaneously, in order to be able to controll the C64 completely wirelessly.
 
@@ -17,9 +17,9 @@ image::{root}doc/pictures/Blue-64.png[width=60%]
 
 Blue-64 can be purchased pre-assembled or as a DIY-Kit from these authorized shops:
 
-- xref:https://retro8bitshop.com/product/spl-blue-64/[Retro8BitShop]
-- xref:https://www.retro-updates.com/product/13541624/blue-64-plug-play-bluetooth-for-the-c64[Retro-Updates]
-- xref:https://restore-store.de/home/682-blue-64-v03.html?search_query=blue-64&results=7[Restore-Store]
+- link:https://retro8bitshop.com/product/spl-blue-64/[Retro8BitShop]
+- link:https://www.retro-updates.com/product/13541624/blue-64-plug-play-bluetooth-for-the-c64[Retro-Updates]
+- link:https://restore-store.de/home/682-blue-64-v03.html?search_query=blue-64&results=7[Restore-Store]
 
 Sales of Blue-64 by any shop other than the ones mentioned above may be in violation of the xref:#_license[License] terms and conditions and and be reported to the developer
 
