@@ -1,10 +1,27 @@
 = Blue-64
-include::doc/resources/styles.adoc[]
+:sectnums:
+ifndef::toc[:toc:]
+:toc-placement!:
+:stem: latexmath
+:table-caption: Table
+
 ifndef::root[:root:]
 ifndef::firmware_update[:firmware_update:]
 ifndef::misc[:misc:]
 ifndef::mapping[:mapping:]
 ifndef::menu[:menu:]
+
+//- include::doc/resources/styles.adoc[]
+
+ifndef::env-pdf[]
+++++
+<style>
+  .imageblock > .title {
+    text-align: inherit;
+  }
+</style>
+++++
+endif::[]
 
 If you would like to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
 
@@ -27,12 +44,215 @@ toc::[]
 == Pairing a Bluetooth Device
 The Blue-64 is **always listening to incoming pairing requests** up to a maximum of three devices paired simultaneously. This means that all you need to do is set your Bluetooth controller or keyboard in pairing mode and it will automatically pair with the Blue-64 without the need to set the Blue-64 itself in pairing mode.
 
-include::doc/mapping.adoc[]
+//include::doc/mapping.adoc[]
+ifndef::root[:root: ../]
+ifndef::menu[:menu: menu.adoc]
 
-include::doc/menu.adoc[]
+:on-screen-menu: xref:{menu}#menu[on-screen menu]
+:vice: xref:https://vice-emu.sourceforge.io/vice_1.html#SEC11[Vice]
 
-include::doc/compatibility.adoc[]
+== Controller Mapping (xInput)
 
-include::doc/firmware_update.adoc[]
+The following key mappings directly apply to xInput devices, such as the Xbox-One controller. Different controllers such as the Switch controller and the Playstation 4/5 controller have nearly identical mapping, where buttons in similar positions perform the same function as their xInput counterparts
 
-include::doc/misc.adoc[]
+[%header, cols="^.^, ^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| Joystick | Controller  | Controller Alt.
+| UP       | D-Pad UP    | Button B
+| DOWN     | D-Pad DOWN  | Button X
+| LEFT     | D-Pad LEFT  | Left Analog
+| RIGHT    | D-Pad RIGHT | Left Analog
+| FIRE     | Button A    | Button Y (Autofire)
+|===
+
+[[autofire]]
+The "Y Button" is dedicated to autofire, which can be configured from inactive to 10Hz (100ms) fire-rate through the {on-screen-menu}
+
+[[button-map]]
+Controller buttons not mentioned in the table above can be mapped to emulate any keyboard key through the {on-screen-menu}. Default Controller-Keyboard mappings are reported below:
+
+[%header, cols="^.^, ^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| Keyboard | Controller
+| SPACE    | Menu Button
+| F1       | Right Shoulder
+|===
+
+=== Mapping Controller Buttons to Keyboard Keys
+
+[width=80%]
+[align=center]
+video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
+
+. Navigate the {on-screen-menu} to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
+. Once the desired controller button is highlighted confirm your choice with "View + Menu" (controller) or "Alt/AltGr + Enter" on(bluetooth keyboard)
+. If you immediately confirm again, the binding will be removed
+. You can now press the desired key on the bluetooth keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.
+. Alternatively (if you don't have a bluetooth keyboard) you can cycle through all available keys manually.
+. Confirm the choice with "View + Menu" (controller) or "Alt/AltGr + Enter" (bluetooth keyboard) and the last key pressed (or the manually selected key, if any) will be assigned to the desired control button.
+. Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
+
+
+== Keyboard Mapping
+At the moment Blue-64 **only supports the English US layout**. The key mapping can be switched between "symbolic" and "positional ({vice})" through the {on-screen-menu}. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say on the label, including their "shift" function (if applicable) with a few exceptions:
+
+[%header, cols="^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| En-US Key (symbolic) | C64 Key
+| '~'             | Arrow Left
+| '\'             | Arrow Up
+| 6+Shift         | £
+| Tab / Shift+Tab | Stop / Run
+| Esc             | Restore
+| Delete, F12     | Clear
+| Home, F9        | Home
+| Insert, F10     | Insert
+| Start (Windows) | Commodore
+| Shift+'\'       | Pi
+|===
+
+//include::doc/menu.adoc[]
+ifndef::root[:root: ../]
+ifndef::mapping[:mapping: mapping.adoc]
+
+:keyboard-mapping-profile: xref:{mapping}#_keyboard-mapping[keyboard mapping profile]
+:mapping-unused-controller-buttons: xref:{mapping}#button_map[Mapping unused controller buttons]
+:autofire: xref:{mapping}#utofire[Autofire]
+
+[[menu]]
+== On-Screen Menu & Additional Functions
+Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc. as well as configuring additional preferences such as:
+
+- Selecting {keyboard-mapping-profile}
+- {mapping-unused-controller-buttons}
+- Enabling/configuring {autofire}
+
+[%header, cols="^.^, ^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| Function                     | Button(s)
+| Swap Player 1-2              | View + Y
+| Cycle Menu (controller)      | View + A/B
+| Select/Run Menu (controller) | View + Menu
+| Exit Menu (controller)       | View + X
+| Cycle Menu (keyboard)        | Alt/AltGr + Up/Down/Left/Right Arrow
+| Select/Run Menu (keyboard)   | Alt/AltGr + Enter
+| Exit Menu (keyboard)         | Alt/AltGr + Backspace
+|===
+
+NOTE: Please beware that the "view" and "menu" buttons may be called differently on non xInput devices but are generally in similar positions
+
+NOTE: Please beware that some controllers, such as 8bitDo or Switch controllers have X-Y and A-B button labels swapped compared to a regular Xbox controllers. What matters in this case is the buttons' position, not the label, so for instance the A button will always be the one of the bottom regardless of the label
+
+//include::doc/compatibility.adoc[]
+ifndef::root[:root: ../]
+
+== Compatibility
+
+=== C64 Motherboard Compatibility
+Blue-64 has been verified to be compatible with the following C64 motherboard revisions:
+
+[%header, cols="^.^1, ^.^2"]
+[width=80%]
+[.center]
+|===
+| Motherboard | Notes
+| 250407  | -
+| 250425  | -
+| 250466  | -
+| 326298  | -
+| ku14194 | -
+
+| 250469
+| The developer version of Blue-64 needs a xref:#_shortboard-adapter[special adapter] and the female header is mounted upside down
+|===
+
+[align=center]
+.Shortboard Adapter
+image::{root}doc/pictures/Blue-64-adpt.JPG[width=60%]
+
+
+=== Device Support
+Blue-64 is based on the link:https://bluepad32.readthedocs.io/en/latest/[bluepad32] library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32.
+
+Supported Controllers: https://bluepad32.readthedocs.io/en/latest/supported_gamepads/
+
+Supported Keyboards: https://bluepad32.readthedocs.io/en/latest/supported_keyboards/
+
+
+=== Limitations
+- At the moment Blue-64 only supports Bluetooth Low Energy (BLE) devices.
+
+- Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does **not support additional joystick fire buttons** (other than the primary one) that are based on paddle control. Luckily though, most games supporting additional fire buttons also map them to keyboard keys, which can be mapped to controller buttons through the on-screen menu.
+
+- Blue-64 can only perform **one keystroke at a time**, with the exception of modifier keys like ``control``, ``commodore``, ``left-shift`` and ``restore`` which can all be pressed simultaneously. In order to overcome this limitation, when multiple regular keys are pressed simultaneously, Blue-64 **always performs the latest keypress**. At the same time it remembers the order of the last 8 simultaneous keystrokes, in order to trigger new keystrokes in the inverse order when the current one is released.
+
+//include::doc/firmware_update.adoc[]
+ifndef::root[:root: ../]
+
+== Firmware Update
+Firmware binaries can be found in the "Releases" section of the GitHub page. The three files in the "binaries.zip" folder are necessary to perform a firmware update:
+- bootloader.bin
+- partition-table.bin
+- application.bin
+
+=== "Developer Boards" (up to v0.3)
+. Download and install the CP210X Universal Windows Drivers for the on-board programmer at this website:
+https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
+
+. Download the Espressif Flash Download Tool at this website:
+https://www.espressif.com/en/support/download/other-tools
+
+. Run the .exe application and select "ESP32" as target and "Develop" as work mode when prompted. In the following screen upload the three binary files in the order at the addresses shown in the screenshot below:
+
++
+[align=center]
+.ESP Flash Tool
+image::{root}doc/pictures/flash_tool.png[width=60%]
++
+
+. Connect the PC to the USB port on the Blue-64 and select the appropriate COM port in the Flash Download Tool. Press the "erase" button to erase the FLASH and finally press "start" and the new firmware will be downloaded to the board (should take less than a minute).
+
+. In case the method above does not work, please try the online tool at this website: https://espressif.github.io/esptool-js/
+
+Don't worry you can't brick it (as far as I know), if something fails you will always be able to re-try flashing the new firmware.
+
+=== "Regular Boards" (v1.0 and above)
+. Format an SD card to FAT32.
+. Copy application.bin to the root of the SD card.
+. Switch off the C64 and insert the SD card into the dedicated slot on the Blue-64 board.
+. Switch on the C64, after a few seconds an on-screen prompt will state that the update has started. If the prompt does not appear within 10 seconds it means that the ESP cannot mount the SD card or cannot find the application.bin file in its root.
+. After about a minute an on-screen prompt will communicate the result of the update procedure.
+. Switch off the C64, remove the SD-Card and switch on again.
+, Navigate to the Device-Info entry on the on-screen menu and verify that the latest version is currently running on the device.
+
+// include::doc/misc.adoc[]
+ifndef::root[:root: ../]
+
+== Installation & Precautions
+Most notably, particular care shall be used when plugging the Blue-64 onto the motherboard, as the female connector on the Blue-64 has no alignment key and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard header is properly aligned.
+
+A step-by-steb video guide on how to assemble and install the Blue-64 board is available at the following link:
+https://youtu.be/yE2yL8-_jRQ?si=YmAZqs-F023yzRW5
+Users shall follow these instructions carefully and fully understand the circuit's limitations before installing and/or using it.
+
+Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.
+
+== License
+License information is included on top of all software source files as well as in all schematics. Files that do not contain explicit licensing information are subject to the licensing terms stated in the LICENSE.txt provided in the main project folder:
+
+Unless stated otherwise in individual files, all hardware design Schematics, Bill of Materials, Gerber files and manuals are licensed under Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Unless otherwise stated in individual files, all software source files are Licensed under the Apache License, Version 2.0. You may obtain a copy of this license at http://www.apache.org/licenses/LICENSE-2.0
+
+== Disclaimer
+All material is provided on an 'AS IS' BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND in accordance to the license deed applicable to
+each individual file.
