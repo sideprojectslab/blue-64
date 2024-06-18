@@ -11,10 +11,9 @@ ifndef::misc[:misc:]
 ifndef::mapping[:mapping:]
 ifndef::menu[:menu:]
 
-//- include::doc/resources/styles.adoc[]
-
+//include::doc/resources/styles.adoc[]
+ifndef::env-github[]
 ifndef::env-pdf[]
-
 ++++
 <style>
   .imageblock > .title {
@@ -22,7 +21,7 @@ ifndef::env-pdf[]
   }
 </style>
 ++++
-
+endif::[]
 endif::[]
 
 If you would like to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
@@ -99,6 +98,7 @@ video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
 . Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
 
 
+[[keyboard-mapping]]
 == Keyboard Mapping
 At the moment Blue-64 **only supports the English US layout**. The key mapping can be switched between "symbolic" and "positional ({vice})" through the {on-screen-menu}. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say on the label, including their "shift" function (if applicable) with a few exceptions:
 
@@ -123,7 +123,7 @@ At the moment Blue-64 **only supports the English US layout**. The key mapping c
 ifndef::root[:root: ../]
 ifndef::mapping[:mapping: mapping.adoc]
 
-:keyboard-mapping-profile: xref:{mapping}#_keyboard_mapping[keyboard mapping profile]
+:keyboard-mapping-profile: xref:{mapping}#keyboard-mapping[keyboard mapping profile]
 :mapping-unused-controller-buttons: xref:{mapping}#button-map[Mapping unused controller buttons]
 :autofire: xref:{mapping}#autofire[Autofire]
 
@@ -241,8 +241,8 @@ ifndef::root[:root: ../]
 == Installation & Precautions
 Most notably, particular care shall be used when plugging the Blue-64 onto the motherboard, as the female connector on the Blue-64 has no alignment key and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard header is properly aligned.
 
-A step-by-steb video guide on how to assemble and install the Blue-64 board is available at the following link:
-https://youtu.be/yE2yL8-_jRQ?si=YmAZqs-F023yzRW5
+A step-by-step video guide on how to assemble and install the Blue-64 board is available on xref:https://youtu.be/yE2yL8-_jRQ?si=YmAZqs-F023yzRW5[YouTube]:
+
 Users shall follow these instructions carefully and fully understand the circuit's limitations before installing and/or using it.
 
 Incorrect installation of the board supply or failure to comply with the recommended operating conditions may result in damage to the board and/or to the computer, with risk of overheating, fire and/or explosion.

@@ -4,6 +4,7 @@ ifndef::toc[:toc:]
 :stem: latexmath
 :table-caption: Table
 
+ifndef::env-github[]
 ifndef::env-pdf[]
 
 ++++
@@ -14,4 +15,5 @@ ifndef::env-pdf[]
 </style>
 ++++
 
+endif::[]
 endif::[]
