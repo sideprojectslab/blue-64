@@ -1,0 +1,16 @@
+:sectnums:
+ifndef::toc[:toc:]
+:stem: latexmath
+:table-caption: Table
+
+ifndef::env-pdf[]
+
+++++
+<style>
+  .imageblock > .title {
+    text-align: inherit;
+  }
+</style>
+++++
+
+endif::[]

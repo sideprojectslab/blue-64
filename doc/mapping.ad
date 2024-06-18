@@ -1,0 +1,72 @@
+include::resources/styles.ad[]
+ifndef::root[:root: ../]
+ifndef::menu[:menu: menu.ad]
+
+:on-screen-menu: xref:{menu}#menu[on-screen menu]
+:vice: xref:https://vice-emu.sourceforge.io/vice_1.html#SEC11[Vice]
+
+== Controller Mapping (xInput)
+
+The following key mappings directly apply to xInput devices, such as the Xbox-One controller. Different controllers such as the Switch controller and the Playstation 4/5 controller have nearly identical mapping, where buttons in similar positions perform the same function as their xInput counterparts
+
+[%header, cols="^.^, ^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| Joystick | Controller  | Controller Alt.
+| UP       | D-Pad UP    | Button B
+| DOWN     | D-Pad DOWN  | Button X
+| LEFT     | D-Pad LEFT  | Left Analog
+| RIGHT    | D-Pad RIGHT | Left Analog
+| FIRE     | Button A    | Button Y (Autofire)
+|===
+
+[[autofire]]
+The "Y Button" is dedicated to autofire, which can be configured from inactive to 10Hz (100ms) fire-rate through the {on-screen-menu}
+
+[[button-map]]
+Controller buttons not mentioned in the table above can be mapped to emulate any keyboard key through the {on-screen-menu}. Default Controller-Keyboard mappings are reported below:
+
+[%header, cols="^.^, ^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| Keyboard | Controller
+| SPACE    | Menu Button
+| F1       | Right Shoulder
+|===
+
+=== Mapping Controller Buttons to Keyboard Keys
+
+[width=80%]
+[align=center]
+video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
+
+. Navigate the {on-screen-menu} to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
+. Once the desired controller button is highlighted confirm your choice with "View + Menu" (controller) or "Alt/AltGr + Enter" on(bluetooth keyboard)
+. If you immediately confirm again, the binding will be removed
+. You can now press the desired key on the bluetooth keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.
+. Alternatively (if you don't have a bluetooth keyboard) you can cycle through all available keys manually.
+. Confirm the choice with "View + Menu" (controller) or "Alt/AltGr + Enter" (bluetooth keyboard) and the last key pressed (or the manually selected key, if any) will be assigned to the desired control button.
+. Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
+
+
+== Keyboard Mapping
+At the moment Blue-64 **only supports the English US layout**. The key mapping can be switched between "symbolic" and "positional ({vice})" through the {on-screen-menu}. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say on the label, including their "shift" function (if applicable) with a few exceptions:
+
+[%header, cols="^.^, ^.^"]
+[width=80%]
+[.center]
+|===
+| En-US Key (symbolic) | C64 Key
+| '~'             | Arrow Left
+| '\'             | Arrow Up
+| 6+Shift         | £
+| Tab / Shift+Tab | Stop / Run
+| Esc             | Restore
+| Delete, F12     | Clear
+| Home, F9        | Home
+| Insert, F10     | Insert
+| Start (Windows) | Commodore
+| Shift+'\'       | Pi
+|===
