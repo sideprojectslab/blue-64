@@ -33,6 +33,7 @@
 #define C64B_CTL_BITS 5
 #define C64B_KKA_BITS 3
 
+#define NUM_KEYS         114
 #define C64B_KB_IDX_NONE NUM_KEYS
 
 typedef struct
@@ -81,7 +82,7 @@ typedef unsigned int t_c64b_cport_idx;
 #define CPORT_2    2
 
 extern const t_c64b_key_id KEY_IDS[];
-extern const unsigned int NUM_KEYS;
+//extern const unsigned int NUM_KEYS;
 
 //----------------------------------------------------------------------------//
 // FUNCTIONS

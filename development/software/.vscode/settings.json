@@ -8,6 +8,8 @@
 	"C_Cpp.errorSquiggles": "disabled",
 	"files.associations": {
 		"c64b_threadsafe.h": "c",
-		"numbers": "c"
+		"numbers": "c",
+		"c64b_parser.h": "c",
+		"c64b_properties.h": "c"
 	},
 }

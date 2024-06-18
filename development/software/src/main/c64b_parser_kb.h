@@ -23,43 +23,20 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#ifndef C64B_PINOUT_0V2_H
-#define C64B_PINOUT_0V2_H
+#ifndef C64B_PARSER_KB
+#define C64B_PARSER_KB
 
-#include <uni.h>
+#include "c64b_parser.h"
 
-#define PIN_KCA0 18
-#define PIN_KCA1 19
-#define PIN_KCA2 21
+#define MAX_KEYPRESS 8
 
-#define PIN_COL0 26
-#define PIN_COL1 22
-#define PIN_COL2 23
-#define PIN_COL3 33
-#define PIN_COL4 32
+void    c64b_keychain_clear();
+bool    c64b_keychain_add(const char* s);
+uint8_t c64b_keychain_get_size();
+void    c64b_keychain_update();
+bool    c64b_keychain_press_latest();
 
-#define PIN_KRA0 4
-#define PIN_KRA1 16
-#define PIN_KRA2 17
-
-#define PIN_ROW0 25
-#define PIN_ROW1 14
-#define PIN_ROW2 27
-#define PIN_ROW3 12
-#define PIN_ROW4 13
-
-#define PIN_CTRL 2
-#define PIN_SHFT 0
-#define PIN_CMDR 15
-#define PIN_KBEN 5
-
-#define COL_PERM (uint8_t[]){3, 7, 6, 4, 2, 1, 0, 5}
-#define ROW_PERM (uint8_t[]){5, 7, 4, 1, 2, 0, 3, 6}
-
-#ifndef CONFIG_ESP_CONSOLE_NONE
-	#define PIN_nRST 255
-#else
-	#define PIN_nRST 1
-#endif
+bool c64b_parse_keyboard_symbolic  (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old);
 
 #endif

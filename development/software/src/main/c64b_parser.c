@@ -208,11 +208,11 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 	if (memcmp(kb_old, kb, sizeof(uni_keyboard_t)) == 0)
 		return;
 
-	#if (CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE == 1)
+	#ifndef CONFIG_ESP_CONSOLE_NONE
 		uni_controller_dump(ctl);
 	#endif
 
-	if(kb->modifiers & KB_RALT_MASK)
+	if(kb->modifiers & (KB_RALT_MASK | KB_LALT_MASK))
 		c64b_parse_keyboard_menu(kb, kb_old);
 	else
 		c64b_parse_keyboard_keys(kb, kb_old);
@@ -234,7 +234,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	t_c64b_cport_idx cport_idx;
 	uni_gamepad_t*   gp = &(ctl->gamepad);
 	uni_gamepad_t*   gp_old;
-	bool             kb_nop = true;
 
 	if(ctl == get_ctl(dev_ptr[1]))
 	{
@@ -255,7 +254,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	if (!c64b_gamepad_interesting(gp, gp_old))
 		return;
 
-	#if (CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE == 1)
+	#ifndef CONFIG_ESP_CONSOLE_NONE
 		uni_controller_dump(ctl);
 	#endif
 
@@ -279,7 +278,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 		//--------------------------------------------------------------------//
 		// Manu
-		kb_nop &= c64b_parse_gamepad_menu(gp, gp_old);
+		c64b_parse_gamepad_menu(gp, gp_old);
 
 		//--------------------------------------------------------------------//
 		// swap ports
@@ -297,7 +296,7 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	{
 		//--------------------------------------------------------------------//
 		// direct keyboard control
-		kb_nop &= c64b_parse_gamepad_kbemu(gp, gp_old, cport_idx);
+		c64b_parse_gamepad_kbemu(gp, gp_old, cport_idx);
 
 		//--------------------------------------------------------------------//
 		// controller ports override characters

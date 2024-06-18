@@ -23,10 +23,93 @@
 // limitations under the License.                                             //
 //----------------------------------------------------------------------------//
 
-#include "c64b_parser.h"
+#include "c64b_parser_kb.h"
 
-extern bool c64b_parse_keyboard_symbolic  (uni_keyboard_t* kb, uni_keyboard_t* kb_old);
-extern bool c64b_parse_keyboard_positional(uni_keyboard_t* kb, uni_keyboard_t* kb_old);
+//------------------------------------------------------------------------------
+// functions to implement key precedence logic
+
+static const t_c64b_key_id* old_keys[MAX_KEYPRESS] = {0};
+static const t_c64b_key_id* new_keys[MAX_KEYPRESS] = {0};
+       uint8_t new_pressed = 0;
+static uint8_t old_pressed = 0;
+
+void c64b_keychain_clear()
+{
+	new_pressed = 0;
+}
+
+uint8_t c64b_keychain_get_size()
+{
+	return new_pressed;
+}
+
+
+bool c64b_keychain_add(const char* s)
+{
+	unsigned int   idx = c64b_keyboard_key_to_idx(s);
+	const t_c64b_key_id* h   = &(KEY_IDS[idx]);
+
+	if(new_pressed >= MAX_KEYPRESS)
+		return false;
+
+	new_keys[new_pressed++] = h;
+	return true;
+}
+
+void c64b_keychain_update()
+{
+	// first we check if the old keys are still there in the new keys.
+	// if an old key is not pressed any more is removed from the list of old
+	// keys. If an old key is still pressed it is removed from the list of new
+	// keys
+
+	for(unsigned int i = 0; i < old_pressed; ++i)
+	{
+		if(old_keys[i] == NULL)
+			break;
+
+		bool still_pressed = false;
+		for(unsigned int j = 0; j < new_pressed; ++j)
+		{
+			if(old_keys[i] == new_keys[j])
+			{
+				still_pressed = true;
+				new_keys[j] = NULL;
+				break;
+			}
+		}
+
+		if(still_pressed == false)
+			old_keys[i] = NULL;
+	}
+
+	// next, the old keys are compacted to remove holes
+	unsigned int missing = 0;
+	for(unsigned int i = 0; i < old_pressed; ++i)
+	{
+		if(old_keys[i] == NULL)
+			missing += 1;
+		else
+			old_keys[i - missing] = old_keys[i];
+	}
+
+	// then we add the new keys to the buffer in no particular order
+	old_pressed = old_pressed - missing;
+	for(unsigned int i = 0; i < new_pressed; ++i)
+		if(new_keys[i] != NULL)
+			old_keys[old_pressed++] = new_keys[i];
+}
+
+bool c64b_keychain_press_latest()
+{
+	if(old_pressed == 0)
+		return false;
+	return c64b_keyboard_key_psh(&keyboard, old_keys[old_pressed - 1]);
+}
+
+
+//------------------------------------------------------------------------------
+// main parser functions
 
 bool c64b_parse_keyboard_menu(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 {

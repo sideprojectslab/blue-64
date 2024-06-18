@@ -34,11 +34,12 @@
 #define ESC_LEN_MAX 6
 #define SHIFT_COL   1
 #define SHIFT_ROW   7
+#define NUM_KEYS    114
 
 // the "~" character is used to "escape" complex characters.
 // It is not present on the c64 keyboard and thus is free to use
 
-const t_c64b_key_id KEY_IDS[] =
+const t_c64b_key_id KEY_IDS[NUM_KEYS] =
 {
 	{" "       , 7, 4, false, false, true },
 
@@ -136,7 +137,7 @@ const t_c64b_key_id KEY_IDS[] =
 	{"z"       , 1, 4, false, false, true }, {"Z", 1, 4, true, false, true}
 };
 
-const unsigned int NUM_KEYS = sizeof(KEY_IDS) / sizeof(KEY_IDS[0]);
+//const unsigned int NUM_KEYS = sizeof(KEY_IDS) / sizeof(KEY_IDS[0]);
 
 typedef enum
 {

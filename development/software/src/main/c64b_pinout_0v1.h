@@ -26,6 +26,8 @@
 #ifndef C64B_PINOUT_0V1_H
 #define C64B_PINOUT_0V1_H
 
+#include <uni.h>
+
 #define PIN_KCA0 21
 #define PIN_KCA1 19
 #define PIN_KCA2 18
@@ -54,7 +56,7 @@
 #define COL_PERM (uint8_t[]){5, 1, 0, 3, 4, 6, 7, 2}
 #define ROW_PERM (uint8_t[]){2, 1, 0, 5, 4, 6, 7, 3}
 
-#ifndef CONFIG_BLUEPAD32_USB_OUTPUT_ENABLE
+#ifndef CONFIG_ESP_CONSOLE_NONE
 	#define PIN_nRST 255
 #else
 	#define PIN_nRST 1

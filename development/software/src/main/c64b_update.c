@@ -56,9 +56,9 @@ t_c64b_update_err c64b_update_init(bool check_only)
 	logi("Checking Updates\n");
 
 	gpio_set_pull_mode( 2, GPIO_PULLUP_ONLY);
-	gpio_set_pull_mode( 4, GPIO_PULLUP_ONLY);
-	gpio_set_pull_mode(12, GPIO_PULLUP_ONLY);
-	gpio_set_pull_mode(13, GPIO_PULLUP_ONLY);
+//	gpio_set_pull_mode( 4, GPIO_PULLUP_ONLY);
+//	gpio_set_pull_mode(12, GPIO_PULLUP_ONLY);
+//	gpio_set_pull_mode(13, GPIO_PULLUP_ONLY);
 	gpio_set_pull_mode(15, GPIO_PULLUP_ONLY);
 
 	// Options for mounting the filesystem.
@@ -75,7 +75,7 @@ t_c64b_update_err c64b_update_init(bool check_only)
 
 	sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
 
-	slot_config.width = 4;
+	slot_config.width = 1;
 	slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
 	if(esp_vfs_fat_sdmmc_mount(MOUNT_POINT, &host, &slot_config, &mount_config, &card) != ESP_OK)
