@@ -1,9 +1,3 @@
-:sectnums:
-ifndef::toc[:toc:]
-:toc-placement!:
-:stem: latexmath
-:table-caption: Table
-
 ifndef::env-github[]
 ifndef::env-pdf[]
 

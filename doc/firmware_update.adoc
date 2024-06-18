@@ -1,3 +1,4 @@
+include::resources/header.adoc[]
 include::resources/styles.adoc[]
 
 ifndef::root[:root: ../]

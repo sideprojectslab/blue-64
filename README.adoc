@@ -1,28 +1,15 @@
 = Blue-64
-:sectnums:
-ifndef::toc[:toc:]
-:toc-placement!:
-:stem: latexmath
-:table-caption: Table
+include::doc/resources/header.adoc[]
+
+ifndef::env-github[]
+include::doc/resources/styles.adoc[]
+endif::[]
 
 ifndef::root[:root:]
 ifndef::firmware_update[:firmware_update:]
 ifndef::misc[:misc:]
 ifndef::mapping[:mapping:]
 ifndef::menu[:menu:]
-
-//include::doc/resources/styles.adoc[]
-ifndef::env-github[]
-ifndef::env-pdf[]
-++++
-<style>
-  .imageblock > .title {
-    text-align: inherit;
-  }
-</style>
-++++
-endif::[]
-endif::[]
 
 If you would like to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
 
@@ -98,7 +85,7 @@ video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
 . Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
 
 
-[[keyboard-mapping]]
+[[keyboard-map]]
 == Keyboard Mapping
 At the moment Blue-64 **only supports the English US layout**. The key mapping can be switched between "symbolic" and "positional ({vice})" through the {on-screen-menu}. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say on the label, including their "shift" function (if applicable) with a few exceptions:
 
@@ -123,7 +110,7 @@ At the moment Blue-64 **only supports the English US layout**. The key mapping c
 ifndef::root[:root: ../]
 ifndef::mapping[:mapping: mapping.adoc]
 
-:keyboard-mapping-profile: xref:{mapping}#keyboard-mapping[keyboard mapping profile]
+:keyboard-mapping-profile: xref:{mapping}#keyboard-map[keyboard mapping profile]
 :mapping-unused-controller-buttons: xref:{mapping}#button-map[Mapping unused controller buttons]
 :autofire: xref:{mapping}#autofire[Autofire]
 
@@ -173,9 +160,10 @@ Blue-64 has been verified to be compatible with the following C64 motherboard re
 | ku14194 | -
 
 | 250469
-| The developer version of Blue-64 needs a xref:#_shortboard-adapter[special adapter] and the female header is mounted upside down
+| The developer version of Blue-64 needs a xref:#shortboard-adapter[special adapter] and the female header is mounted upside down
 |===
 
+[[shortboard-adapter]]
 [align=center]
 .Shortboard Adapter
 image::{root}doc/pictures/Blue-64-adpt.JPG[width=60%]
@@ -241,7 +229,7 @@ ifndef::root[:root: ../]
 == Installation & Precautions
 Most notably, particular care shall be used when plugging the Blue-64 onto the motherboard, as the female connector on the Blue-64 has no alignment key and thus won't prevent incorrect installation. Always install the Blue-64 with the computer turned off and verify carefully that the connection to the motherboard header is properly aligned.
 
-A step-by-step video guide on how to assemble and install the Blue-64 board is available on xref:https://youtu.be/yE2yL8-_jRQ?si=YmAZqs-F023yzRW5[YouTube]:
+A step-by-step video guide on how to assemble and install the Blue-64 board is available on link:https://youtu.be/yE2yL8-_jRQ?si=YmAZqs-F023yzRW5[YouTube]:
 
 Users shall follow these instructions carefully and fully understand the circuit's limitations before installing and/or using it.
 

@@ -1,9 +1,10 @@
+include::resources/header.adoc[]
 include::resources/styles.adoc[]
 
 ifndef::root[:root: ../]
 ifndef::mapping[:mapping: mapping.adoc]
 
-:keyboard-mapping-profile: xref:{mapping}#_keyboard_mapping[keyboard mapping profile]
+:keyboard-mapping-profile: xref:{mapping}#keyboard-map[keyboard mapping profile]
 :mapping-unused-controller-buttons: xref:{mapping}#butto-map[Mapping unused controller buttons]
 :autofire: xref:{mapping}#autofire[Autofire]
 

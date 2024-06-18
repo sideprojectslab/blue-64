@@ -1,3 +1,4 @@
+include::resources/header.adoc[]
 include::resources/styles.adoc[]
 
 ifndef::root[:root: ../]
@@ -51,7 +52,7 @@ video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
 . Confirm the choice with "View + Menu" (controller) or "Alt/AltGr + Enter" (bluetooth keyboard) and the last key pressed (or the manually selected key, if any) will be assigned to the desired control button.
 . Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
 
-
+[[keyboard-map]]
 == Keyboard Mapping
 At the moment Blue-64 **only supports the English US layout**. The key mapping can be switched between "symbolic" and "positional ({vice})" through the {on-screen-menu}. With "symbolic" mapping the keys on the bluetooth keyboard do exactly what they say on the label, including their "shift" function (if applicable) with a few exceptions:
 
