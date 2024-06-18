@@ -1,6 +1,5 @@
 = Blue-64
 include::doc/resources/styles.adoc[]
-:toc-placement!:
 ifndef::root[:root:]
 ifndef::firmware_update[:firmware_update:]
 ifndef::misc[:misc:]

@@ -1,5 +1,6 @@
 :sectnums:
 ifndef::toc[:toc:]
+:toc-placement!:
 :stem: latexmath
 :table-caption: Table
 

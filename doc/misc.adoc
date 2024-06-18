@@ -1,5 +1,5 @@
-.misc
 include::resources/styles.adoc[]
+
 ifndef::root[:root: ../]
 
 == Installation & Precautions
