@@ -1,7 +1,7 @@
 
+include::resources/styles.adoc[]
 ifndef::root[:root: ../]
 ifndef::menu[:menu: menu.adoc]
-include::resources/styles.adoc[]
 
 :on-screen-menu: xref:{menu}#menu[on-screen menu]
 :vice: xref:https://vice-emu.sourceforge.io/vice_1.html#SEC11[Vice]
