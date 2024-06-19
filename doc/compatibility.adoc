@@ -8,6 +8,7 @@ ifndef::root[:root: ../]
 === C64 Motherboard Compatibility
 Blue-64 has been verified to be compatible with the following C64 motherboard revisions:
 
+[%unbreakable]
 [%header, cols="^.^1, ^.^2"]
 [width=80%]
 [.center]
