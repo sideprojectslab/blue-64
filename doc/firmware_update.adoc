@@ -19,9 +19,12 @@ https://www.espressif.com/en/support/download/other-tools
 . Run the .exe application and select "ESP32" as target and "Develop" as work mode when prompted. In the following screen upload the three binary files in the order at the addresses shown in the screenshot below:
 
 +
-[align=center]
-.ESP Flash Tool
-image::{root}doc/pictures/flash_tool.png[width=60%]
+[width=60%]
+[.center, frame=none]
+|===
+a|.ESP Flash Tool
+image::{root}doc/pictures/flash_tool.png[width=100%]
+|===
 +
 
 . Connect the PC to the USB port on the Blue-64 and select the appropriate COM port in the Flash Download Tool. Press the "erase" button to erase the FLASH and finally press "start" and the new firmware will be downloaded to the board (should take less than a minute).

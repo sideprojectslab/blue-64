@@ -16,6 +16,7 @@ Blue-64 has an internal menu that is visualized by printing text on screen. The 
 - {mapping-unused-controller-buttons}
 - Enabling/configuring {autofire}
 
+[%unbreakable]
 [%header, cols="^.^, ^.^"]
 [width=80%]
 [.center]

@@ -24,9 +24,12 @@ Blue-64 has been verified to be compatible with the following C64 motherboard re
 |===
 
 [[shortboard-adapter]]
-[align=center]
-.Shortboard Adapter
-image::{root}doc/pictures/Blue-64-adpt.JPG[width=60%]
+[width=60%]
+[.center, frame=none]
+|===
+a|.Shortboard Adapter
+image::{root}doc/pictures/Blue-64-adpt.JPG[width=100%]
+|===
 
 
 === Device Support

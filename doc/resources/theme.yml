@@ -1,0 +1,29 @@
+extends: base
+
+table:
+  caption:
+    end: bottom
+    max-width: fit-content
+
+page:
+  layout: portrait
+  margin: [0.5in, 0.75in, 0.5in, 0.75in]
+
+header:
+  height: 0.5in
+  font_color: #333333
+  background_color: #FFFFFF
+
+footer:
+  height: 0.5in
+  font_color: #333333
+  background_color: #FFFFFF
+
+base:
+  font_color: #333333
+  font_family: Helvetica
+  font_size: 10
+  line_height_length: 1.3
+
+caption:
+  margin-inside: 5pt

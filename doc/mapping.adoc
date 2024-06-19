@@ -11,6 +11,7 @@ ifndef::menu[:menu: menu.adoc]
 
 The following key mappings directly apply to xInput devices, such as the Xbox-One controller. Different controllers such as the Switch controller and the Playstation 4/5 controller have nearly identical mapping, where buttons in similar positions perform the same function as their xInput counterparts
 
+[%unbreakable]
 [%header, cols="^.^, ^.^, ^.^"]
 [width=80%]
 [.center]
@@ -40,9 +41,9 @@ Controller buttons not mentioned in the table above can be mapped to emulate any
 
 === Mapping Controller Buttons to Keyboard Keys
 
-[width=80%]
-[align=center]
-video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
+//[width=80%]
+//[align=center]
+//video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
 
 . Navigate the {on-screen-menu} to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
 . Once the desired controller button is highlighted confirm your choice with "View + Menu" (controller) or "Alt/AltGr + Enter" on(bluetooth keyboard)
