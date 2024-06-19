@@ -9,13 +9,21 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
+  font-family: inherit;
   color: inherit;
   font-weight: bold;
 }
 
 #toc, #toc a {
+  font-family: inherit;
   color: inherit;
   font-weight: bold;
+}
+
+figcaption, caption {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 a {

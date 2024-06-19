@@ -2,6 +2,7 @@
 include::resources/header.adoc[]
 include::resources/styles.adoc[]
 
+ifdef::env-web[:root: https://github.com/sideprojectslab/blue-64/blob/main/]
 ifndef::root[:root: ../]
 ifndef::firmware_update[:firmware_update:]
 ifndef::misc[:misc:]
