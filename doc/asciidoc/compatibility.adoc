@@ -1,0 +1,47 @@
+include::../resources/header.adoc[]
+ifndef::root[:root: ../../]
+
+== Compatibility
+
+=== C64 Motherboard Compatibility
+Blue-64 has been verified to be compatible with the following C64 motherboard revisions:
+
+[%unbreakable]
+[%header, cols="^.^1, ^.^2"]
+[width=80%]
+[.center]
+|===
+| Motherboard | Notes
+| 250407  | -
+| 250425  | -
+| 250466  | -
+| 326298  | -
+| ku14194 | -
+
+| 250469
+| The developer version of Blue-64 needs a xref:#shortboard-adapter[special adapter] and the female header is mounted upside down
+|===
+
+[[shortboard-adapter]]
+[width=60%]
+[.center, frame=none]
+|===
+a|.Shortboard Adapter
+image::{root}doc/pictures/Blue-64-adpt.JPG[width=100%]
+|===
+
+
+=== Device Support
+Blue-64 is based on the link:https://bluepad32.readthedocs.io/en/latest/[bluepad32] library from Ricardo Quesada. As such it supports the exact same devices (bluetooth controllers & keyboards) as bluepad32.
+
+Supported Controllers: https://bluepad32.readthedocs.io/en/latest/supported_gamepads/
+
+Supported Keyboards: https://bluepad32.readthedocs.io/en/latest/supported_keyboards/
+
+
+=== Limitations
+- At the moment Blue-64 only supports Bluetooth Low Energy (BLE) devices.
+
+- Blue-64 can only interact with the lines present on the keyboard header, thus it has no access to the "paddle" control lines. Therefore it cannot emulate the Commodore mouse, paddle controls, and does **not support additional joystick fire buttons** (other than the primary one) that are based on paddle control. Luckily though, most games supporting additional fire buttons also map them to keyboard keys, which can be mapped to controller buttons through the on-screen menu.
+
+- Blue-64 can only perform **one keystroke at a time**, with the exception of modifier keys like ``control``, ``commodore``, ``left-shift`` and ``restore`` which can all be pressed simultaneously. In order to overcome this limitation, when multiple regular keys are pressed simultaneously, Blue-64 **always performs the latest keypress**. At the same time it remembers the order of the last 8 simultaneous keystrokes, in order to trigger new keystrokes in the inverse order when the current one is released.
