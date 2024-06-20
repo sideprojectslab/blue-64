@@ -28,7 +28,7 @@ The "Y Button" is dedicated to autofire, which can be configured from inactive t
 [[button-map]]
 Controller buttons not mentioned in the table above can be mapped to emulate any keyboard key through the {on-screen-menu}. Default Controller-Keyboard mappings are reported below:
 
-[%header, cols="^.^, ^.^, ^.^"]
+[%header, cols="^.^, ^.^"]
 [width=80%]
 [.center]
 |===
