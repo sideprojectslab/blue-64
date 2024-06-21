@@ -480,6 +480,8 @@ unsigned int menu_main_act(int i)
 unsigned int menu_main_ext(int i)
 {
 	keyboard_macro_feed("~clr~");
+	menu_idx[0] = 0;
+	step = 0;
 	return i;
 }
 
