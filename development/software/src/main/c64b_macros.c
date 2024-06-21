@@ -136,9 +136,9 @@ unsigned int menu_af_plt(int i)
 		"~home~~ret~4 4hz  ",
 		"~home~~ret~5 5hz  ",
 		"~home~~ret~6 6hz  ",
-		"~home~~ret~7 3hz  ",
-		"~home~~ret~8 3hz  ",
-		"~home~~ret~9 3hz  ",
+		"~home~~ret~7 7hz  ",
+		"~home~~ret~8 8hz  ",
+		"~home~~ret~9 9hz  ",
 		"~home~~ret~10 10hz",
 	};
 
@@ -156,7 +156,7 @@ unsigned int menu_af_act(int i)
 
 		af_prd = (TickType_t)portMAX_DELAY;
 		if (af_rate != 0)
-			af_prd = (500 / (TickType_t)af_rate) / portTICK_PERIOD_MS; // already divided by two
+			af_prd = (1000 / (TickType_t)af_rate) / portTICK_PERIOD_MS;
 	}
 
 	menu_current_plt = menu_main_plt;

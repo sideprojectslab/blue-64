@@ -125,7 +125,7 @@ static void c64b_gamepad_autofire(t_c64b_cport_idx i)
 			{
 				// make sure this tpress is smaller than the smallest autofire
 				// interval (currently 100ms)
-				const TickType_t tpress = 30 / portTICK_PERIOD_MS;
+				const TickType_t tpress = 40 / portTICK_PERIOD_MS;
 
 				c64b_keyboard_cport_psh(&keyboard, CPORT_FF, i);
 				vTaskDelay(tpress);
