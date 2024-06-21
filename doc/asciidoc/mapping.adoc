@@ -9,7 +9,6 @@ ifndef::menu[:menu: menu.adoc]
 
 The following key mappings directly apply to xInput devices, such as the Xbox-One controller. Different controllers such as the Switch controller and the Playstation 4/5 controller have nearly identical mapping, where buttons in similar positions perform the same function as their xInput counterparts
 
-[%unbreakable]
 [%header, cols="^.^, ^.^, ^.^"]
 [width=80%]
 [.center]

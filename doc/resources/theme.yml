@@ -4,20 +4,35 @@ table:
   caption:
     end: bottom
     max-width: fit-content
+  breakable: false
+
+table-head:
+  background-color: #cccccc
+
+header:
+  height: 75pt
+  vertical-align: top
+  margin: 25pt[top]
+  recto: &shared-header
+    right:
+      content: image:../pictures/spl.png[pdfwidth=50pt]
+  verso: *shared-header
+
+footer:
+  border-width: 0pt
+  height: 25pt
+  vertical-align: top
+  recto: &shared-footer
+    left:
+      content: '{document-title}: {docdate}'
+    right:
+      content: '*{page-number}*'
+  verso: *shared-footer
 
 page:
   layout: portrait
-  margin: [0.5in, 0.75in, 0.5in, 0.75in]
-
-header:
-  height: 0.5in
-  font_color: #333333
-  background_color: #FFFFFF
-
-footer:
-  height: 0.5in
-  font_color: #333333
-  background_color: #FFFFFF
+  # top - right - bottom -left
+  margin: [95pt, 50pt, 50pt, 50pt]
 
 base:
   font_color: #333333

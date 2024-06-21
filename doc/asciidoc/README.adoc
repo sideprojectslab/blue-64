@@ -1,5 +1,6 @@
 = Blue-64
 include::../resources/header.adoc[]
+:pdf-theme: resources/theme.yml
 
 ifndef::root[:root: ../../]
 ifndef::firmware_update[:firmware_update:]
