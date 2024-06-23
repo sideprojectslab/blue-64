@@ -160,7 +160,8 @@ static void c64b_gamepad_autofire_start(unsigned int i)
 		{
 			logi("starting autofire on port %i\n", i + 1);
 			autofire[i] = true;
-			xSemaphoreGive(afsleep_sem_h[i]); // for instant restart
+			if(uxSemaphoreGetCount(afsleep_sem_h[i] == 0))
+				xSemaphoreGive(afsleep_sem_h[i]); // for instant restart
 		}
 		xSemaphoreGive(autofire_sem_h[i]);
 	}
