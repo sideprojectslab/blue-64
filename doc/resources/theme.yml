@@ -1,5 +1,9 @@
 extends: base
 
+heading:
+#  min-height-after: 200pt
+  breakable: true
+
 table:
   caption:
     end: bottom
@@ -8,6 +12,10 @@ table:
 
 table-head:
   background-color: #cccccc
+
+image:
+  caption:
+    align: inherit
 
 header:
   height: 75pt

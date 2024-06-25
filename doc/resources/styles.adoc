@@ -24,6 +24,7 @@ figcaption, caption {
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
+  align: inherit;
 }
 
 a {

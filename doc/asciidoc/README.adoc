@@ -1,6 +1,7 @@
 = Blue-64
-include::../resources/header.adoc[]
 :pdf-theme: resources/theme.yml
+include::../resources/header.adoc[]
+include::../resources/styles.adoc[]
 
 ifndef::root[:root: ../../]
 ifndef::firmware_update[:firmware_update:]
@@ -8,16 +9,18 @@ ifndef::misc[:misc:]
 ifndef::mapping[:mapping:]
 ifndef::menu[:menu:]
 
-If you would like to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
+**Author:** Vittorio Pascucci
+
+If you wish to get in touch with the developer, please join the SPL link:https://discord.gg/gJsCgebkDw[Discord] server.
+
+**LICENSE:**
+This work is provided under the **Creative Commons CC BY-NC-ND 4.0** License: +
+https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+.Blue-64 (Developer Board)
+image::{root}doc/pictures/Blue-64.png[width=60%, align=center]
 
 Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto the keyboard header inside the computer and can control the keyboard lines and emulate keystrokes and joystick inputs. The goal of the project is to support two bluetooth controllers and a bluetooth keyboard simultaneously, in order to be able to controll the C64 completely wirelessly.
-
-[width=60%]
-[.center, frame=none]
-|===
-a|.Blue-64 (Developer Board)
-image::{root}doc/pictures/Blue-64.png[width=100%]
-|===
 
 Blue-64 can be purchased pre-assembled or as a DIY-Kit from these authorized shops:
 
@@ -25,7 +28,7 @@ Blue-64 can be purchased pre-assembled or as a DIY-Kit from these authorized sho
 - link:https://www.retro-updates.com/product/13541624/blue-64-plug-play-bluetooth-for-the-c64[Retro-Updates]
 - link:https://restore-store.de/home/682-blue-64-v03.html?search_query=blue-64&results=7[Restore-Store]
 
-Sales of Blue-64 by any shop other than the ones mentioned above may be in violation of the xref:#_license[License] terms and conditions and and be reported to the developer
+Sales of Blue-64 by any shop other than the ones mentioned above may be in violation of the xref:#_license[License] terms and conditions and should be reported to the developer
 
 <<<
 toc::[]
