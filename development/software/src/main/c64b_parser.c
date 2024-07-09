@@ -418,11 +418,13 @@ void c64b_parser_init()
 
 		if(c64b_update() == UPDATE_OK)
 		{
+			vTaskDelay(500 / portTICK_PERIOD_MS);
 			c64b_keyboard_init(&keyboard);
 			c64b_keyboard_feed_str(&keyboard, update_successful);
 		}
 		else
 		{
+			vTaskDelay(500 / portTICK_PERIOD_MS);
 			c64b_keyboard_init(&keyboard);
 			c64b_keyboard_feed_str(&keyboard, update_failed);
 		}

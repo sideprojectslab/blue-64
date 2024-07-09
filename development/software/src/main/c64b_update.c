@@ -55,11 +55,9 @@ t_c64b_update_err c64b_update_init(bool check_only)
 {
 	logi("Checking Updates\n");
 
-	gpio_set_pull_mode( 2, GPIO_PULLUP_ONLY);
-//	gpio_set_pull_mode( 4, GPIO_PULLUP_ONLY);
-//	gpio_set_pull_mode(12, GPIO_PULLUP_ONLY);
-//	gpio_set_pull_mode(13, GPIO_PULLUP_ONLY);
-	gpio_set_pull_mode(15, GPIO_PULLUP_ONLY);
+	// CLK => GPIO_14
+	// D0  => GPIO_2
+	// CMD => GPIO_15
 
 	// Options for mounting the filesystem.
 	// If format_if_mount_failed is set to true, SD card will be partitioned and
@@ -71,12 +69,13 @@ t_c64b_update_err c64b_update_init(bool check_only)
 	};
 
 	sdmmc_host_t host = SDMMC_HOST_DEFAULT();
-	host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
+//	host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
 
 	sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
 
 	slot_config.width = 1;
-	slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
+	slot_config.flags = 0;
+	slot_config.flags |= SDMMC_HOST_FLAG_1BIT;
 
 	if(esp_vfs_fat_sdmmc_mount(MOUNT_POINT, &host, &slot_config, &mount_config, &card) != ESP_OK)
 		return NO_SDCARD;
@@ -90,8 +89,11 @@ t_c64b_update_err c64b_update_init(bool check_only)
 	if (f == NULL)
 	{
 		esp_vfs_fat_sdcard_unmount(MOUNT_POINT, card);
+		logi("application.bin not found\n");
 		return NO_FIRMWARE;
 	}
+
+	logi("application.bin found\n");
 
 	if(check_only)
 	{
