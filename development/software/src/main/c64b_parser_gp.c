@@ -282,9 +282,9 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
 			else if(gp->buttons & BTN_RS_MASK)
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RS]));
-			else if(c64b_gamepad_trigger_active(gp->brake))
+			else if(c64b_gamepad_trigger_active(gp->brake) || (gp->buttons & BTN_LT_MASK))
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LT]));
-			else if(c64b_gamepad_trigger_active(gp->throttle))
+			else if(c64b_gamepad_trigger_active(gp->throttle) || (gp->buttons & BTN_RT_MASK))
 				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RT]));
 			else
 				kb_nop = true;

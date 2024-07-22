@@ -397,19 +397,22 @@ void c64b_parser_init()
 		const char update_started[] =
 			"~clr~0 firmware update started!"
 			"~ret~0 should take about a minute"
-			"~ret~0 text might change color and/or size";
+			"~ret~0 text might change color and/or size"
+			"~ret~";
 
 		const char update_successful[] =
 			"~clr~0 successfully updated firmware!~ret~"
 			"~ret~"
 			"0 please switch off the computer and~ret~"
-			"0 remove the sd-card";
+			"0 remove the sd-card"
+			"~ret~";
 
 		const char update_failed[] =
 			"~clr~0 firmware updated failed!~ret~"
 			"~ret~"
 			"0 please switch off the computer and~ret~"
-			"0 remove the sd-card";
+			"0 remove the sd-card"
+			"~ret~";
 
 		vTaskDelay(3000 / portTICK_PERIOD_MS);
 

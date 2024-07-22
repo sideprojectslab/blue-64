@@ -56,9 +56,9 @@
 #define BTN_B_MASK       2
 #define BTN_X_MASK       4
 #define BTN_Y_MASK       8
-#define BTN_LT_MASK      0x0001
+#define BTN_LT_MASK      0x0040
 #define BTN_LS_MASK      0x0010
-#define BTN_RT_MASK      0x0002
+#define BTN_RT_MASK      0x0080
 #define BTN_RS_MASK      0x0020
 
 #define BTN_HOME_MASK    1
