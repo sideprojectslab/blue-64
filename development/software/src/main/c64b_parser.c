@@ -143,9 +143,9 @@ void keyboard_macro_feed(const char* str)
 		                        "keyboard-macro-feed",
 		                        1024*6,
 		                        (void * const)&str_h,
-		                        3,
+		                        TASK_PRIO_MACRO,
 		                        NULL,
-		                        tskNO_AFFINITY);
+		                        CORE_AFFINITY);
 
 		first_feed = false;
 	}

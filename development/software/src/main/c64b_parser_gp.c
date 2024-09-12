@@ -134,6 +134,10 @@ static void c64b_gamepad_autofire(t_c64b_cport_idx i)
 
 				xSemaphoreTake(afsleep_sem_h[i], af_prd - tpress * 2);
 			}
+			else
+			{
+				xSemaphoreTake(afsleep_sem_h[i], (TickType_t)portMAX_DELAY);
+			}
 		}
 	}
 }
@@ -158,9 +162,9 @@ static void c64b_gamepad_autofire_start(unsigned int i)
 	{
 		if (!autofire[i])
 		{
-			logi("starting autofire on port %i\n", i + 1);
+			logi("starting autofire on port %i\n", i);
 			autofire[i] = true;
-			if(uxSemaphoreGetCount(afsleep_sem_h[i] == 0))
+			if(uxSemaphoreGetCount(afsleep_sem_h[i]) == 0)
 				xSemaphoreGive(afsleep_sem_h[i]); // for instant restart
 		}
 		xSemaphoreGive(autofire_sem_h[i]);
@@ -175,7 +179,7 @@ static void c64b_gamepad_autofire_stop(unsigned int i)
 	{
 		if (autofire[i])
 		{
-			logi("stopping autofire on port %i\n", i + 1);
+			logi("stopping autofire on port %i\n", i);
 			autofire[i] = false;
 		}
 		xSemaphoreGive(autofire_sem_h[i]);
@@ -199,17 +203,17 @@ void c64b_parse_gamepad_init()
 	                        "autofire 2",
 	                        4096,
 	                        NULL,
-	                        1,
+	                        TASK_PRIO_AFIRE,
 	                        NULL,
-	                        tskNO_AFFINITY);
+	                        CORE_AFFINITY);
 
 	xTaskCreatePinnedToCore(task_c64b_gamepad_autofire_1,
 	                        "autofire 1",
 	                        4096,
 	                        NULL,
-	                        1,
+	                        TASK_PRIO_AFIRE,
 	                        NULL,
-	                        tskNO_AFFINITY);
+	                        CORE_AFFINITY);
 }
 
 //----------------------------------------------------------------------------//
