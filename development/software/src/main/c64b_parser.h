@@ -80,6 +80,11 @@
 #define ANL_UPMASK       (1 << 1)
 #define ANL_DNMASK       (1 << 0)
 
+#define CORE_AFFINITY    1
+#define TASK_PRIO_PARSE  3
+#define TASK_PRIO_MACRO  4
+#define TASK_PRIO_AFIRE  5
+
 //----------------------------------------------------------------------------//
 // keyboard owner must always be protected by a semaphore
 

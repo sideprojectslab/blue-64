@@ -30,6 +30,11 @@ SemaphoreHandle_t mcro_sem_h;
 SemaphoreHandle_t feed_sem_h;
 
 //----------------------------------------------------------------------------//
+
+QueueHandle_t queue_ctl_data[3];
+QueueHandle_t queue_ctl_fbak;
+
+//----------------------------------------------------------------------------//
 SemaphoreHandle_t kbrd_sem_h;
 t_c64b_keyboard   keyboard   = {0};
 t_c64b_kb_owner   kb_owner   = KB_OWNER_NONE;

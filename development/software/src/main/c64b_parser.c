@@ -40,6 +40,7 @@ extern bool c64b_gamepad_interesting (uni_gamepad_t* gp, uni_gamepad_t* gp_old);
 // Static Variables
 
 static uni_hid_device_t* dev_ptr[3]  = {NULL, NULL, NULL};
+static uni_controller_t  ctrl_new[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_old[3] = {{0}, {0}, {0}};
 
 static bool              swap_ports = false;
@@ -143,9 +144,9 @@ void keyboard_macro_feed(const char* str)
 		                        "keyboard-macro-feed",
 		                        1024*6,
 		                        (void * const)&str_h,
-		                        3,
+		                        TASK_PRIO_MACRO,
 		                        NULL,
-		                        tskNO_AFFINITY);
+		                        CORE_AFFINITY);
 
 		first_feed = false;
 	}
@@ -222,7 +223,7 @@ void c64b_parse_keyboard(uni_controller_t* ctl)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parse_gamepad(uni_controller_t* ctl)
+void c64b_parse_gamepad(uni_controller_t* ctl, t_c64b_cport_idx cport_idx)
 {
 	if(ctl == NULL)
 		return;
@@ -231,16 +232,17 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 	if(ctl->klass != UNI_CONTROLLER_CLASS_GAMEPAD)
 		return;
 
-	t_c64b_cport_idx cport_idx;
+	t_c64b_parse_fbak fbak;
+
 	uni_gamepad_t*   gp = &(ctl->gamepad);
 	uni_gamepad_t*   gp_old;
 
-	if(ctl == get_ctl(dev_ptr[1]))
+	if(cport_idx == CPORT_1)
 	{
 		gp_old    = &(ctrl_old[1].gamepad);
 		cport_idx = swap_ports ? CPORT_2 : CPORT_1;
 	}
-	else if(ctl == get_ctl(dev_ptr[2]))
+	else if(cport_idx == CPORT_2)
 	{
 		gp_old    = &(ctrl_old[2].gamepad);
 		cport_idx = swap_ports ? CPORT_1 : CPORT_2;
@@ -282,14 +284,15 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 		//--------------------------------------------------------------------//
 		// swap ports
-		if((cport_idx == CPORT_2) || (dev_ptr[1] == NULL) || (dev_ptr[2] == NULL))
+
+		if(c64b_parse_gamepad_swap(gp, gp_old))
 		{
-			if(c64b_parse_gamepad_swap(gp, gp_old))
-			{
-				swap_ports = !swap_ports;
-				c64b_parser_set_gp_seat(CPORT_1, swap_ports ? 2 : 1);
-				c64b_parser_set_gp_seat(CPORT_2, swap_ports ? 1 : 2);
-			}
+			swap_ports = !swap_ports;
+			fbak.cport_idx  = cport_idx;
+			fbak.swap_ports = swap_ports;
+
+			// here we post only if there are any "news" to report
+			xQueueOverwrite(queue_ctl_fbak, (void *)(&fbak));
 		}
 	}
 	else
@@ -308,14 +311,49 @@ void c64b_parse_gamepad(uni_controller_t* ctl)
 
 //----------------------------------------------------------------------------//
 
+void task_c64b_parse(void *arg)
+{
+	while(1)
+	{
+		if(xQueueReceive(queue_ctl_data[0], &ctrl_new[0], 0))
+			c64b_parse_keyboard(&ctrl_new[0]);
+
+		if(xQueueReceive(queue_ctl_data[1], &ctrl_new[1], 0))
+			c64b_parse_gamepad(&ctrl_new[1], CPORT_1);
+
+		if(xQueueReceive(queue_ctl_data[2], &ctrl_new[2], 0))
+			c64b_parse_gamepad(&ctrl_new[2], CPORT_2);
+	}
+}
+
+//----------------------------------------------------------------------------//
+
 void c64b_parse(uni_hid_device_t* d)
 {
 	if(dev_ptr[0] == d)
-		c64b_parse_keyboard(get_ctl(dev_ptr[0]));
+		xQueueOverwrite(queue_ctl_data[0], (void *)get_ctl(dev_ptr[0]));
 	else if(dev_ptr[1] == d)
-		c64b_parse_gamepad(get_ctl(dev_ptr[1]));
+		xQueueOverwrite(queue_ctl_data[1], (void *)get_ctl(dev_ptr[1]));
 	else if(dev_ptr[2] == d)
-		c64b_parse_gamepad(get_ctl(dev_ptr[2]));
+		xQueueOverwrite(queue_ctl_data[2], (void *)get_ctl(dev_ptr[2]));
+
+	// it's fine to check here because we can catch feedback on
+	// button release events
+
+	t_c64b_parse_fbak fbak;
+	while(1)
+	{
+		if(xQueueReceive(queue_ctl_fbak, &fbak, 0))
+		{
+			if((fbak.cport_idx == CPORT_2) || (dev_ptr[1] == NULL) || (dev_ptr[2] == NULL))
+			{
+				c64b_parser_set_gp_seat(CPORT_1, fbak.swap_ports ? 2 : 1);
+				c64b_parser_set_gp_seat(CPORT_2, fbak.swap_ports ? 1 : 2);
+			}
+		}
+		else
+			break;
+	}
 }
 
 //----------------------------------------------------------------------------//
@@ -347,6 +385,11 @@ void c64b_parser_disconnect(uni_hid_device_t* d)
 
 void c64b_parser_init()
 {
+	queue_ctl_data[0] = xQueueCreate(1, sizeof(uni_controller_t));
+	queue_ctl_data[1] = xQueueCreate(1, sizeof(uni_controller_t));
+	queue_ctl_data[2] = xQueueCreate(1, sizeof(uni_controller_t));
+	queue_ctl_fbak    = xQueueCreate(1, sizeof(t_c64b_parse_fbak));
+
 	kbrd_sem_h = xSemaphoreCreateBinary();
 	mcro_sem_h = xSemaphoreCreateBinary();
 	feed_sem_h = xSemaphoreCreateBinary();
@@ -434,6 +477,15 @@ void c64b_parser_init()
 
 		while(1){}
 	}
+
+	logi("parser: Creating parser thread\n");
+	xTaskCreatePinnedToCore(task_c64b_parse,
+	                        "ctrl_parser",
+	                        1024*16,
+	                        NULL,
+	                        TASK_PRIO_PARSE,
+	                        NULL,
+	                        CORE_AFFINITY);
 
 	c64b_keyboard_init(&keyboard);
 }
