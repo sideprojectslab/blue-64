@@ -8,7 +8,7 @@ ifndef::menu[:menu: menu.adoc]
 
 == Controller Mapping (xInput)
 
-The following key mappings directly apply to xInput devices, such as the Xbox-One controller. Different controllers such as the Switch controller and the Playstation 4/5 controller have nearly identical mapping, where buttons in similar positions perform the same function as their xInput counterparts
+The following key mappings directly apply to "xInput" devices, such as the Xbox-One controller. Different controllers such as the Switch controller and the Playstation 4/5 controller have nearly identical mapping, where buttons in similar positions perform the same function as their xInput counterparts
 
 [%header, cols="^.^, ^.^, ^.^"]
 [width=80%]
@@ -22,11 +22,8 @@ The following key mappings directly apply to xInput devices, such as the Xbox-On
 | FIRE     | Button A    | Button Y (Autofire)
 |===
 
-[[autofire]]
-The "Y Button" is dedicated to autofire, which can be configured from inactive to 10Hz (100ms) fire-rate through the {on-screen-menu}
-
 [[button-map]]
-Controller buttons not mentioned in the table above can be mapped to emulate any keyboard key through the {on-screen-menu}. Default Controller-Keyboard mappings are reported below:
+Controller buttons not mentioned in the table above can be mapped to trigger any keyboard keystroke through the {on-screen-menu}. Default Controller-Keyboard mappings are reported below:
 
 [%header, cols="^.^, ^.^"]
 [width=80%]
@@ -37,19 +34,15 @@ Controller buttons not mentioned in the table above can be mapped to emulate any
 | F1       | Right Shoulder
 |===
 
-=== Mapping Controller Buttons to Keyboard Keys
+[[autofire]]
+=== Autofire
+The "Y Button" is dedicated to autofire, which can be configured from inactive to 10Hz (100ms) fire-rate through the {on-screen-menu}
 
-//[width=80%]
-//[align=center]
-//video::{root}/doc/videos/Blue-64-Tutorial-Mapping.mp4[]
+[[swap-ports]]
+=== Swapping Joystick Ports
+Joystick ports assigned to the connected bluetooth controllers can be swapped with the "View + Y" key combination on the controller.
+If two controllers are currently connected, only the controller currently assigned to joystick port 2 can swap the ports (to prevent pesky little siblings or partners from swapping ports in-game)
 
-. Navigate the {on-screen-menu} to the "controller mapping" submenu and cycle through the mappable buttons, which will also display the current mapping.
-. Once the desired controller button is highlighted confirm your choice with "View + Menu" (controller) or "Alt/AltGr + Enter" on(bluetooth keyboard)
-. If you immediately confirm again, the binding will be removed
-. You can now press the desired key on the bluetooth keyboard. Visible characters will be plotted on screen while modifiers like "shift", "control" and "commodore" will be recorded but not displayed.
-. Alternatively (if you don't have a bluetooth keyboard) you can cycle through all available keys manually.
-. Confirm the choice with "View + Menu" (controller) or "Alt/AltGr + Enter" (bluetooth keyboard) and the last key pressed (or the manually selected key, if any) will be assigned to the desired control button.
-. Exiting the submenu without having pressed any key will simply leave the mapping unchanged.
 
 [[keyboard-map]]
 == Keyboard Mapping

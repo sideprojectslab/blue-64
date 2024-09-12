@@ -35,7 +35,7 @@ toc::[]
 <<<
 
 == Pairing a Bluetooth Device
-The Blue-64 is **always listening to incoming pairing requests** up to a maximum of three devices paired simultaneously. This means that all you need to do is set your Bluetooth controller or keyboard in pairing mode and it will automatically pair with the Blue-64 without the need to set the Blue-64 itself in pairing mode.
+The Blue-64 is **always listening to incoming pairing requests** up to a maximum of three devices paired simultaneously. This means that it is sufficient to simply set a Bluetooth controller or keyboard in pairing mode and it will automatically pair with the Blue-64 without the need to set the Blue-64 itself in pairing mode.
 
 include::mapping.adoc[]
 

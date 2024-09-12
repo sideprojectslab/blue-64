@@ -3,32 +3,111 @@ include::../resources/styles.adoc[]
 ifndef::root[:root: ../../]
 ifndef::mapping[:mapping: mapping.adoc]
 
+
 :keyboard-mapping-profile: xref:{mapping}#keyboard-map[keyboard mapping profile]
-:mapping-unused-controller-buttons: xref:{mapping}#butto-map[Mapping unused controller buttons]
+:unused-controller-buttons: xref:{mapping}#button-map[unused controller buttons]
 :autofire: xref:{mapping}#autofire[Autofire]
+
 
 [[menu]]
 == On-Screen Menu & Additional Functions
-Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc. as well as configuring additional preferences such as:
+Blue-64 has an internal menu that is visualized by printing text on screen. The menu allows typing and executing frequently used macros like loading the tape, loading and/or running programs from disk drive etc. as well as configuring additional preferences.
 
-- Selecting {keyboard-mapping-profile}
-- {mapping-unused-controller-buttons}
-- Enabling/configuring {autofire}
+=== Navigating the On-Screen Menu (xInput)
+. The on-screen menu can only be navigated via a connected bluetooth controller and/or keyboard and **not with the native C64 keyboard**
+. In order to **Enter** the on-screen menu simply press "View + A/B" on the controller or "Alt/AltGr + Up/Down/Left/Right Arrow" on the keyboard, and menu entries will start printing on screen
+. Once inside the on-screen menu, in order to move or **"Cycle"** through the varius entries press "View + A/B" on the controller or "Alt/AltGr + Up/Down/Left/Right Arrow" on the keyboard
+. In order to **Exit** the on-screen menu or any submenu press "View + X" on the controller or "Alt/AltGr + Backspace" on the keyboard. This will bring the menu "back one level" or produce a blank screen when exiting the menu completely
+. In order to **Confirm** a choice press "View + Menu" on the controller or "Alt/AltGr + Enter" on the keyboard
 
-[%header, cols="^.^, ^.^"]
+//-
+
+[%header, cols="^.^, ^.^, ^.^"]
 [width=80%]
 [.center]
 |===
-| Function                     | Button(s)
-| Swap Player 1-2              | View + Y
-| Cycle Menu (controller)      | View + A/B
-| Select/Run Menu (controller) | View + Menu
-| Exit Menu (controller)       | View + X
-| Cycle Menu (keyboard)        | Alt/AltGr + Up/Down/Left/Right Arrow
-| Select/Run Menu (keyboard)   | Alt/AltGr + Enter
-| Exit Menu (keyboard)         | Alt/AltGr + Backspace
+| Function         | Controller Button(s) | Keyboard Key(s)
+| Enter/Cycle Menu | View + A/B           | Alt/AltGr + Up/Down/Left/Right Arrow
+| Confirm Menu     | View + Menu          | Alt/AltGr + Enter
+| Exit Menu        | View + X             | Alt/AltGr + Backspace
 |===
+
+NOTE: Pressing "View + Menu" on the controller or "Alt/AltGr + Enter" on the keyboard outside of the on-screen menu will launch the last displayed entry. If no entry was yet displayed, the **"LOAD TAPE"** entry will be launched.
 
 NOTE: Please beware that the "view" and "menu" buttons may be called differently on non xInput devices but are generally in similar positions
 
-NOTE: Please beware that some controllers, such as 8bitDo or Switch controllers have X-Y and A-B button labels swapped compared to a regular Xbox controllers. What matters in this case is the buttons' position, not the label, so for instance the A button will always be the one of the bottom regardless of the label
+NOTE: Please beware that some controllers, such as 8bitDo or Switch controllers have X-Y and A-B button labels swapped compared to a regular Xbox controllers. What matters in this case is the buttons' position, not the label, so for instance the A button will always be the one at the bottom regardless of the label
+
+=== Loading Tape/Disk
+The first entries of the on-screen menu allow to quickly launch commonly used commands:
+
+. **LOAD TAPE:** LOAD
+. **LOAD DISK:** LOAD$,8
+. **RUN DISK:** LOAD*,8
+
+In order to launch these commands:
+
+. **Enter** the on-screen menu
+. **Cycle** to find the desired command
+. **Confirm** (The appropriate command will be automatically typed on-screen and run)
+
+NOTE: When loading the tape it is often necessary to press "space" on the keyboard to run the first program. The "space" key is also mapped by default on the "Menu" button of the controller
+
+=== Checking Device information
+The **"DEVICE INFO"** menu entry shows relevant information about the device, including the firmware version. In order to display the device info:
+
+. **Enter** the on-screen menu
+. **Cycle** to find the "DEVICE INFO" entry
+. **Confirm**
+. Once the device information is plotted on screen, **Exit** the (sub)menu
+
+=== Selecting Keyboard Mapping
+The {keyboard-mapping-profile} can be switched between "symbolic" and "positional". In order to select the desired profile:
+
+. **Enter** the on-screen menu
+. **Cycle** to find the "KEYBOARD MAPPING" entry
+. **Confirm** to enter the submenu
+. **Cycle** to select the desired profile
+. **Confirm** (this will also exit the submenu)
+. **Exit** the menu
+
+=== Configuring Autofire Rate
+{autofire} rate can be configured between "none" (single shot) to 10Hz (10 shots per second) through the on-screen menu. In order to configure the autofire rate:
+
+. **Enter** the on-screen menu
+. **Cycle** to find the "AUTOFIRE RATE" entry
+. **Confirm** to enter the submenu
+. **Cycle** to select the desired rate
+. **Confirm** (this will also exit the submenu)
+. **Exit** the menu
+
+=== Mapping Controller Buttons to Keyboard Keys
+All {unused-controller-buttons} can be remapped to trigger keyboard keystrokes through the on-screen menu. In order to assign keystrokes to controller buttons:
+
+. **Enter** the on-screen menu
+. **Cycle** to find the "CONTROLLER MAPPING" entry
+. **Confirm** to enter the submenu
+. **Cycle** to find the controller button you wish to assign a keystroke to
+
+NOTE: While cycling through the controller buttons, the currently assigned keystroke is shown on the right. If no keystroke is assigned to the currently displayed button the **""** (empty) symbol is shown
+
+. **Confirm** to select the currently displayed controller button
+.. To leave the current association unchanged **Exit** the (sub)menu immediately
+.. To remove the current keystroke association **Confirm** immediately
+.. If a bluetooth keyboard is connected, press the desired key (including modifiers) on the bluetooth keyboard, then **Confirm**
+.. If no bluetooth keyboard is connected, **Cycle** until the desired key is displayed on the right, then **Confirm**.
+. Any of the aforementioned actions will also deselect the current button
+. **Cycle** to find another desired button to assign a keystroke to
+. Repeat the steps above until all desired buttons have been mapped
+. **Exit** the (sub)menu
+
+
+=== Restoring Default Settings
+Default settings can be restored through the on-screen menu. In order to restore default settings:
+
+. **Enter** the on-screen menu
+. **Cycle** to find the "RESTORE DEFAULTS" entry
+. **Confirm** to enter the submenu
+. **Cycle** to select "YES"
+. **Confirm** (this will also exit the submenu)
+. **Exit** the menu
