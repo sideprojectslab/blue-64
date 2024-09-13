@@ -43,6 +43,12 @@ typedef enum
 	KB_OWNER_COUNT
 } t_c64b_kb_owner;
 
+typedef struct
+{
+	t_c64b_cport_idx cport_idx;
+	bool             swap_ports;
+} t_c64b_parse_fbak;
+
 //----------------------------------------------------------------------------//
 // unprotected
 
@@ -50,6 +56,10 @@ typedef enum
 extern SemaphoreHandle_t kbrd_sem_h; // protects access to keyboard keystrokes
 extern t_c64b_keyboard   keyboard;
 extern t_c64b_kb_owner   kb_owner;
+
+//----------------------------------------------------------------------------//
+extern QueueHandle_t queue_ctl_data[3];
+extern QueueHandle_t queue_ctl_fbak;
 
 //----------------------------------------------------------------------------//
 extern SemaphoreHandle_t mcro_sem_h; // protects access to keyboard macro

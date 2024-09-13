@@ -28,7 +28,7 @@
 
 #include <stddef.h>
 
-#define C64B_FW_VERSION "v1.6"
+#define C64B_FW_VERSION "v1.7"
 
 void menu_fwd();
 void menu_bwd();
