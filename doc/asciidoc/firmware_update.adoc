@@ -25,7 +25,8 @@ https://www.espressif.com/en/support/download/other-tools
 NOTE: It has been reported that the Espressif Download Tool often fails. Please utilize the online tool instead by following the same steps: https://espressif.github.io/esptool-js/
 +
 
-. Run the .exe application and select "ESP32" as target and "Develop" as work mode when prompted. In the following screen upload the three binary files in the order at the addresses shown in the screenshot below:
+. Run the .exe application and select "ESP32" as target and "Develop" as work mode when prompted. Be sure to select a UART baud rate of 115200.
+. In the following screen upload the three binary files in the order at the addresses shown in the screenshot below:
 
 +
 .ESP Flash Tool
