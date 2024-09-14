@@ -15,23 +15,33 @@ Firmware binaries can be found in the "Releases" section of the project's {githu
 
 NOTE: It is not possible to "brick" the "Developer Board", if something fails it will always be able to re-try flashing new firmware.
 
+. Connect the Blue-64 to the PC through a data-capable Micro-USB cable. The power led on the Blue-64 board shall turn on.
+
 . Download and install the CP210X Universal Windows Drivers for the on-board programmer at this website:
 https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads
 
-. Download the Espressif Flash Download Tool at this website:
-https://www.espressif.com/en/support/download/other-tools
-
-. Run the .exe application and select "ESP32" as target and "Develop" as work mode when prompted. In the following screen upload the three binary files in the order at the addresses shown in the screenshot below:
-
-NOTE: It has been reported that the Espressif Download Tool often fails. Please utilize the online tool instead by following the same steps: https://espressif.github.io/esptool-js/
+. Open the Espressif Online tool in your browser at the following link: https://espressif.github.io/esptool-js/
 
 +
-.ESP Flash Tool
-image::{root}doc/pictures/flash_tool.png[width=60%, align=center]
+.ESP Online Tool: Start Screen
+image::{root}doc/pictures/EOT1.png[width=60%, align=center]
+
+. Select the highest Baudrate and click "connect". The dialog shown below shall appear, allowing the selection of the currently connected Blue-64
 +
+.ESP Online Tool: Device Selection
+image::{root}doc/pictures/EOT2.png[width=60%, align=center]
++
+NOTE: if pressing the "connect" button on the start screen, please try opening the web page with a different web browser.
 
-. Connect the PC to the USB port on the Blue-64 and select the appropriate COM port in the Flash Download Tool. Press the "erase" button to erase the FLASH and finally press "start" and the new firmware will be downloaded to the board (should take less than a minute).
+. Add the update files so that the page looks like the picture below and press "program"
++
+.ESP Online Tool: Binary Upload
+image::{root}doc/pictures/EOT3.png[width=60%, align=center]
 
+. If everything went well, the console below should look like the picture below
+
+.ESP Online Tool: Successful Update
+image::{root}doc/pictures/EOT4.png[width=60%, align=center]
 
 === "Regular Boards" (v1.0 and above)
 Regular boards are updated via the Micro SD card slot.
