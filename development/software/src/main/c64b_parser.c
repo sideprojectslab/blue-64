@@ -43,6 +43,7 @@ static uni_hid_device_t* dev_ptr[3]  = {NULL, NULL, NULL};
 static uni_controller_t  ctrl_new[3] = {{0}, {0}, {0}};
 static uni_controller_t  ctrl_old[3] = {{0}, {0}, {0}};
 
+bool                     pairing_enabled = true;
 static bool              swap_ports = false;
 static const uint8_t     col_perm[] = COL_PERM;
 static const uint8_t     row_perm[] = ROW_PERM;
@@ -154,6 +155,12 @@ void keyboard_macro_feed(const char* str)
 	{
 		xSemaphoreGive(feed_sem_h);
 	}
+}
+
+//----------------------------------------------------------------------------//
+uni_error_t c64b_parser_discover(bd_addr_t addr)
+{
+	return UNI_ERROR_SUCCESS;
 }
 
 //----------------------------------------------------------------------------//
@@ -328,6 +335,16 @@ void task_c64b_parse(void *arg)
 
 //----------------------------------------------------------------------------//
 
+void task_c64b_disable_pairing(void * arg)
+{
+	vTaskDelay(60*1000 / portTICK_PERIOD_MS);
+	//uni_bt_enable_new_connections_safe(false);
+	pairing_enabled = false;
+	vTaskDelete(NULL);
+}
+
+//----------------------------------------------------------------------------//
+
 void c64b_parse(uni_hid_device_t* d)
 {
 	if(dev_ptr[0] == d)
@@ -482,6 +499,15 @@ void c64b_parser_init()
 	xTaskCreatePinnedToCore(task_c64b_parse,
 	                        "ctrl_parser",
 	                        1024*16,
+	                        NULL,
+	                        TASK_PRIO_PARSE,
+	                        NULL,
+	                        CORE_AFFINITY);
+
+	logi("parser: Creating pairing-disabler thread\n");
+	xTaskCreatePinnedToCore(task_c64b_disable_pairing,
+	                        "disable_pairing",
+	                        1024*4,
 	                        NULL,
 	                        TASK_PRIO_PARSE,
 	                        NULL,
