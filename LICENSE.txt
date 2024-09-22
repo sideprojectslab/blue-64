@@ -10,9 +10,9 @@
 //----------------------------------------------------------------------------//
 //      Unless otherwise stated in individual files, all hardware design      //
 //      Schematics, Bill of Material and Gerber files are licensed under      //
-//                              CC BY-NC-SA 4.0.                              //
+//                              CC BY-NC-ND 4.0.                              //
 //                    To view a copy of this license, visit                   //
-//              http://creativecommons.org/licenses/by-nc-sa/4.0/             //
+//              http://creativecommons.org/licenses/by-nc-nd/4.0/             //
 //                                                                            //
 // Unless otherwise stated in individual files, all software source files are //
 // Licensed under the Apache License, Version 2.0. You may obtain a copy of   //
