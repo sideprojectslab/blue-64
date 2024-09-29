@@ -163,10 +163,17 @@ uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod,
 	if ((cod & UNI_BT_COD_MINOR_KEYBOARD) ||
 		(cod & UNI_BT_COD_MINOR_REMOTE_CONTROL)) // gamepad / joystick
 	{
-		logi("Device Detected, Adding to allowlist\n");
 		// adding the new device to the allowlist
 		if(uni_bt_allowlist_is_enabled() == false)
+		{
+			logi("Device Detected, Adding to allowlist\n");
 			uni_bt_allowlist_add_addr(addr, true);
+		}
+		else if(uni_bt_allowlist_is_allowed_addr(addr) == false)
+		{
+			logi("Unknown Device Detected, Pairing Disabled, Ignoring...\n");
+			return UNI_ERROR_IGNORE_DEVICE;
+		}
 
 		// we basically try to connect with any RSSI
 		return UNI_ERROR_SUCCESS;
