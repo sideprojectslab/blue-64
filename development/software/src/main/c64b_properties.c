@@ -185,7 +185,7 @@ void c64b_property_init(void)
 {
 	old_property_init();
 	kb_map    = c64b_property_get_u8(C64B_PROPERTY_KEY_KB_MAP, KB_MAP_SYMBOLIC);
-	scan_time = c64b_property_get_u8(C64B_PROPERTY_KEY_SCAN_TIME, 2);
+	scan_time = c64b_property_get_u8(C64B_PROPERTY_KEY_SCAN_TIME, 0);
 	af_rate   = c64b_property_get_u8(C64B_PROPERTY_KEY_AF_RATE, 0);
 	if (af_rate != 0)
 		af_prd = (1000 / (TickType_t)af_rate) / portTICK_PERIOD_MS;
