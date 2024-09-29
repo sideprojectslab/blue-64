@@ -178,6 +178,53 @@ unsigned int menu_af_ext(int i)
 }
 
 //----------------------------------------------------------------------------//
+//                            BT SCAN DURATION MENU                           //
+//----------------------------------------------------------------------------//
+
+unsigned int menu_bt_plt(int i)
+{
+	static const char* entries[] =
+	{
+		"~home~~ret~0 forever   ",
+		"~home~~ret~1 1 minute  ",
+		"~home~~ret~2 2 minutes ",
+		"~home~~ret~3 5 minutes ",
+		"~home~~ret~4 10 minutes",
+		"~home~~ret~5 30 minutes",
+	};
+
+	WRAP(i, entries);
+	keyboard_macro_feed(entries[i]);
+	return i;
+}
+
+unsigned int menu_bt_act(int i)
+{
+	if (scan_time != i)
+	{
+		scan_time = i;
+		c64b_property_set_u8(C64B_PROPERTY_KEY_SCAN_TIME, i);
+	}
+
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+unsigned int menu_bt_ext(int i)
+{
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+//----------------------------------------------------------------------------//
 //                             KEYBOARD MAP MENU                              //
 //----------------------------------------------------------------------------//
 
@@ -396,7 +443,8 @@ unsigned int menu_main_plt(int i)
 		"~clr~4 keyboard mapping",
 		"~clr~5 controller mapping (xbox)",
 		"~clr~6 autofire rate",
-		"~clr~7 restore defaults"
+		"~clr~7 bluetooth scan time",
+		"~clr~8 restore defaults"
 	};
 
 	WRAP(i, entries);
@@ -418,6 +466,7 @@ unsigned int menu_main_act(int i)
 		"~clr~load \"$\",8~ret~",
 		"~clr~load \"*\",8~ret~",
 		device_info,
+		":",
 		":",
 		":",
 		":",
@@ -463,6 +512,17 @@ unsigned int menu_main_act(int i)
 			break;
 
 		case 7:
+			menu_current_plt = menu_bt_plt;
+			menu_current_act = menu_bt_act;
+			menu_current_ext = menu_bt_ext;
+			menu_lvl++;
+			menu_idx[menu_lvl] = scan_time;
+
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
+				menu_current_plt(menu_idx[menu_lvl]);
+			break;
+
+		case 8:
 			menu_current_plt = menu_restore_plt;
 			menu_current_act = menu_restore_act;
 			menu_current_ext = menu_restore_ext;
