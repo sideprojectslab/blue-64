@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <uni.h>
+#include <bt/uni_bt_allowlist.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -86,10 +87,9 @@
 #define TASK_PRIO_AFIRE  5
 
 //----------------------------------------------------------------------------//
-// keyboard owner must always be protected by a semaphore
 
 void c64b_parser_init();
-uni_error_t c64b_parser_discover(bd_addr_t addr);
+uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi);
 void c64b_parser_connect(uni_hid_device_t* d);
 void c64b_parser_disconnect(uni_hid_device_t* d);
 void c64b_parser_set_kb_leds(uint8_t mask);

@@ -141,12 +141,12 @@ void keyboard_macro_feed(const char* str)
 	{
 		logi("parser: Creating macro feed thread\n");
 		xTaskCreatePinnedToCore(task_keyboard_macro_feed,
-		                        "keyboard-macro-feed",
-		                        1024*6,
-		                        (void * const)&str_h,
-		                        TASK_PRIO_MACRO,
-		                        NULL,
-		                        CORE_AFFINITY);
+								"keyboard-macro-feed",
+								1024*6,
+								(void * const)&str_h,
+								TASK_PRIO_MACRO,
+								NULL,
+								CORE_AFFINITY);
 
 		first_feed = false;
 	}
@@ -157,10 +157,23 @@ void keyboard_macro_feed(const char* str)
 }
 
 //----------------------------------------------------------------------------//
-uni_error_t c64b_parser_discover(bd_addr_t addr)
+uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi)
 {
-	// we basically try to connect with any RSSI
-	return UNI_ERROR_SUCCESS;
+	cod &= UNI_BT_COD_MINOR_MASK;
+	if ((cod & UNI_BT_COD_MINOR_KEYBOARD) ||
+		(cod & UNI_BT_COD_MINOR_REMOTE_CONTROL)) // gamepad / joystick
+	{
+		logi("Device Detected, Adding to allowlist\n");
+		// adding the new device to the allowlist
+		if(uni_bt_allowlist_is_enabled() == false)
+			uni_bt_allowlist_add_addr(addr, true);
+
+		// we basically try to connect with any RSSI
+		return UNI_ERROR_SUCCESS;
+	}
+
+	logi("Ignoring keyboard\n");
+	return UNI_ERROR_IGNORE_DEVICE;
 }
 
 //----------------------------------------------------------------------------//
@@ -194,6 +207,7 @@ void c64b_parser_connect(uni_hid_device_t* d)
 	else
 	{
 		logi("parser: device class not supported: %d\n", d->controller.klass);
+		return;
 	}
 }
 
@@ -337,9 +351,13 @@ void task_c64b_parse(void *arg)
 
 void task_c64b_disable_pairing(void * arg)
 {
-	if(scan_time_to_minutes[scan_time] != 0)
-		vTaskDelay(60 * configTICK_RATE_HZ * scan_time_to_minutes[scan_time]);
-	uni_bt_enable_new_connections_safe(false);
+	size_t time = (size_t)arg;
+	if(time != 0)
+	{
+		vTaskDelay(60 * configTICK_RATE_HZ * time);
+		uni_bt_enable_pairing_safe(false);
+		logi("Pairing disabled\n");
+	}
 	vTaskDelete(NULL);
 }
 
@@ -497,21 +515,24 @@ void c64b_parser_init()
 
 	logi("parser: Creating parser thread\n");
 	xTaskCreatePinnedToCore(task_c64b_parse,
-	                        "ctrl_parser",
-	                        1024*16,
-	                        NULL,
-	                        TASK_PRIO_PARSE,
-	                        NULL,
-	                        CORE_AFFINITY);
+							"ctrl_parser",
+							1024*16,
+							NULL,
+							TASK_PRIO_PARSE,
+							NULL,
+							CORE_AFFINITY);
 
-	logi("parser: Creating pairing-disabler thread\n");
-	xTaskCreatePinnedToCore(task_c64b_disable_pairing,
-	                        "disable_pairing",
-	                        1024*4,
-	                        NULL,
-	                        TASK_PRIO_PARSE,
-	                        NULL,
-	                        CORE_AFFINITY);
+	if(scan_time_to_minutes[scan_time] != 0)
+	{
+		logi("parser: Creating pairing-disabler thread\n");
+		xTaskCreatePinnedToCore(task_c64b_disable_pairing,
+								"disable_pairing",
+								1024*4,
+								(void *)scan_time_to_minutes[scan_time],
+								TASK_PRIO_PARSE,
+								NULL,
+								CORE_AFFINITY);
+	}
 
 	c64b_keyboard_init(&keyboard);
 }
