@@ -160,7 +160,7 @@
 // format: command name, byte offset, bit nr in 64-byte supported commands
 // currently stored in 32-bit variable
 #define SUPPORTED_HCI_COMMANDS \
-    X( SUPPORTED_HCI_COMMAND_READ_REMOTE_EXTENDED_FEATURES         ,  2, 5) \
+    X( SUPPORTED_HCI_COMMAND_READ_REMOTE_EXTENDED_FEATURES         ,  2, 6) \
     X( SUPPORTED_HCI_COMMAND_WRITE_SYNCHRONOUS_FLOW_CONTROL_ENABLE , 10, 4) \
     X( SUPPORTED_HCI_COMMAND_READ_BUFFER_SIZE                      , 14, 7) \
     X( SUPPORTED_HCI_COMMAND_WRITE_DEFAULT_ERRONEOUS_DATA_REPORTING, 18, 3) \
@@ -3394,9 +3394,10 @@ static void hci_handle_le_connection_complete_event(const uint8_t * hci_event){
             connection_was_cancelled = true;
 		    // reset state
             hci_stack->le_connecting_state = LE_CONNECTING_IDLE;
-			// get outgoing connection conn struct for direct connect
+            // get outgoing connection conn struct for direct connect
+            conn = gap_get_outgoing_le_connection();
+            // prepare restart if still active
             if (hci_stack->le_connecting_request == LE_CONNECTING_DIRECT){
-                conn = gap_get_outgoing_le_connection();
                 conn->state = SEND_CREATE_CONNECTION;
             }
 		}
@@ -3414,7 +3415,7 @@ static void hci_handle_le_connection_complete_event(const uint8_t * hci_event){
         // - connection cancelled by user
         // by this, no event is emitted for intermediate connection cancel required filterlist modification
         if ((connection_was_cancelled == false) || cancelled_by_user){
-            hci_emit_event(gap_event, sizeof(gap_event), 1);
+            hci_emit_btstack_event(gap_event, sizeof(gap_event), 1);
         }
         return;
 	}
@@ -3646,7 +3647,7 @@ static void event_handler(uint8_t *packet, uint16_t size){
 #if defined(ENABLE_LE_ISOCHRONOUS_STREAMS) || defined(ENABLE_LE_EXTENDED_ADVERTISING)
     btstack_linked_list_iterator_t it;
 #endif
-#ifdef ENABLE_LE_EXTENDED_ADVERTISING
+#if defined(ENABLE_LE_EXTENDED_ADVERTISING) && defined(ENABLE_LE_CENTRAL)
     uint8_t advertising_handle;
 #endif
 
@@ -4269,15 +4270,6 @@ static void event_handler(uint8_t *packet, uint16_t size){
                 hci_iso_stream_finalize(iso_stream);
                 break;
             }
-
-            // finalize iso stream(s) for ACL handle
-            btstack_linked_list_iterator_init(&it, &hci_stack->iso_streams);
-            while (btstack_linked_list_iterator_has_next(&it)){
-                iso_stream = (hci_iso_stream_t *) btstack_linked_list_iterator_next(&it);
-                if (iso_stream->acl_handle == handle ) {
-                    hci_iso_stream_finalize(iso_stream);
-                }
-            }
 #endif
 
 #if defined(ENABLE_BLE) && defined (ENABLE_HCI_COMMAND_STATUS_DISCARDED_FOR_FAILED_CONNECTIONS_WORKAROUND)
@@ -4757,7 +4749,16 @@ static void packet_handler(uint8_t packet_type, uint8_t *packet, uint16_t size){
     }
 #endif
 
-    hci_dump_packet(packet_type, 1, packet, size);
+    // don't log internal events unless requested
+    bool internal_event = (packet_type == HCI_EVENT_PACKET) && (hci_event_packet_get_type(packet) >= BTSTACK_EVENT_FIRST);
+    bool log_packet = internal_event == false;
+#ifdef ENABLE_LOG_BTSTACK_EVENTS
+    log_packet = true;
+#endif
+    if (log_packet){
+        hci_dump_packet(packet_type, 1, packet, size);
+    }
+
     switch (packet_type) {
         case HCI_EVENT_PACKET:
             event_handler(packet, size);
@@ -5342,6 +5343,7 @@ static void hci_power_enter_halting_state(void){
             entry->state = LE_WHITELIST_ADD_TO_CONTROLLER;
         }
     }
+#ifdef ENABLE_LE_CENTRAL
 #ifdef ENABLE_LE_PERIODIC_ADVERTISING
     btstack_linked_list_iterator_init(&it, &hci_stack->le_periodic_advertiser_list);
     const uint8_t mask = LE_PERIODIC_ADVERTISER_LIST_ENTRY_REMOVE_FROM_CONTROLLER | LE_PERIODIC_ADVERTISER_LIST_ENTRY_REMOVE_FROM_CONTROLLER;
@@ -5355,6 +5357,7 @@ static void hci_power_enter_halting_state(void){
             continue;
         }
     }
+#endif
 #endif
 #endif
     // see hci_run
@@ -7189,17 +7192,17 @@ static bool hci_run_iso_tasks(void){
                 hci_stack->iso_active_operation_type = HCI_ISO_TYPE_CIS;
                 iso_stream->state = HCI_ISO_STREAM_STATE_W4_ISO_SETUP_INPUT;
                 hci_send_cmd(&hci_le_setup_iso_data_path, iso_stream->cis_handle, 0, 0, HCI_AUDIO_CODING_FORMAT_TRANSPARENT, 0, 0, 0, 0, NULL);
-                break;
+                return true;
             case HCI_ISO_STREAM_STATE_W2_SETUP_ISO_OUTPUT:
                 hci_stack->iso_active_operation_group_id = HCI_ISO_GROUP_ID_SINGLE_CIS;
                 hci_stack->iso_active_operation_type = HCI_ISO_TYPE_CIS;
                 iso_stream->state = HCI_ISO_STREAM_STATE_W4_ISO_SETUP_OUTPUT;
                 hci_send_cmd(&hci_le_setup_iso_data_path, iso_stream->cis_handle, 1, 0, HCI_AUDIO_CODING_FORMAT_TRANSPARENT, 0, 0, 0, 0, NULL);
-                break;
+                return true;
             case HCI_ISO_STREAM_STATE_W2_CLOSE:
                 iso_stream->state = HCI_ISO_STREAM_STATE_W4_DISCONNECTED;
-                hci_send_cmd(&hci_disconnect, iso_stream->cis_handle);
-                break;
+                hci_send_cmd(&hci_disconnect, iso_stream->cis_handle, ERROR_CODE_REMOTE_USER_TERMINATED_CONNECTION);
+                return true;
             default:
                 break;
         }
@@ -8929,6 +8932,7 @@ uint8_t gap_periodic_advertising_stop(uint8_t advertising_handle){
     return ERROR_CODE_SUCCESS;
 }
 
+#ifdef ENABLE_LE_CENTRAL
 uint8_t gap_periodic_advertising_sync_transfer_set_default_parameters(uint8_t mode, uint16_t skip, uint16_t sync_timeout, uint8_t cte_type){
     hci_stack->le_past_mode = mode;
     hci_stack->le_past_skip = skip;
@@ -8949,6 +8953,7 @@ uint8_t gap_periodic_advertising_sync_transfer_send(hci_con_handle_t con_handle,
     hci_run();
     return ERROR_CODE_SUCCESS;
 }
+#endif
 
 uint8_t gap_periodic_advertising_set_info_transfer_send(hci_con_handle_t con_handle, uint16_t service_data, uint8_t advertising_handle){
     hci_connection_t * hci_connection = hci_connection_for_handle(con_handle);
