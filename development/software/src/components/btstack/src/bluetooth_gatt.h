@@ -70,19 +70,25 @@
 #define ORG_BLUETOOTH_SERVICE_BINARY_SENSOR                                                                           0x183B // Binary Sensor 
 #define ORG_BLUETOOTH_SERVICE_BROADCAST_AUDIO_ANNOUNCEMENT_SERVICE                                                    0x1852 // Broadcast Audio Announcement Service
 #define ORG_BLUETOOTH_SERVICE_BROADCAST_AUDIO_SCAN_SERVICE                                                            0x184F // Broadcast Audio Scan Service
+#define ORG_BLUETOOTH_SERVICE_COMMON_AUDIO_SERVICE                                                                    0x1853 // Commmon Audio Service
 #define ORG_BLUETOOTH_SERVICE_CONSTANT_TONE_EXTENSION                                                                 0x184A // Constant Tone Extension
 #define ORG_BLUETOOTH_SERVICE_COORDINATED_SET_IDENTIFICATION_SERVICE                                                  0x1846 // Coordinated Set Identification Service
 #define ORG_BLUETOOTH_SERVICE_DEVICE_TIME                                                                             0x1847 // Device Time
+#define ORG_BLUETOOTH_SERVICE_ELECTRONIC_SHELF_LABEL                                                                  0x1857 // Electronic Shelf Label service
 #define ORG_BLUETOOTH_SERVICE_EMERGENCY_CONFIGURATION                                                                 0x183C // Emergency Configuration
-#define ORG_BLUETOOTH_SERVICE_GENERIC_MEDIA_CONTROL_SERVICE                                                           0x1849 // Generic Media Control Service 
+#define ORG_BLUETOOTH_SERVICE_GAMING_AUDIO                                                                            0x1858 // Gaming Audio service
+#define ORG_BLUETOOTH_SERVICE_GENERIC_MEDIA_CONTROL_SERVICE                                                           0x1849 // Generic Media Control Service
 #define ORG_BLUETOOTH_SERVICE_GENERIC_TELEPHONE_BEARER_SERVICE                                                        0x184C // Generic Telephone Bearer Service
 #define ORG_BLUETOOTH_SERVICE_MEDIA_CONTROL_SERVICE                                                                   0x1848 // Media Control Service
 #define ORG_BLUETOOTH_SERVICE_MICROPHONE_CONTROL                                                                      0x184D // Microphone Control
 #define ORG_BLUETOOTH_SERVICE_PHYSICAL_ACTIVITY_MONITOR                                                               0x183E // Physical Activity Monitor
 #define ORG_BLUETOOTH_SERVICE_PUBLISHED_AUDIO_CAPABILITIES_SERVICE                                                    0x1850 // Published Audio Capabilities Service
+#define ORG_BLUETOOTH_SERVICE_PUBLIC_BROADCAST_ANNOUNCEMENT                                                           0x1856 // Public Broadcast Announcement Service
 #define ORG_BLUETOOTH_SERVICE_TELEPHONE_BEARER_SERVICE                                                                0x184B // Telephone Bearer Service
+#define ORT_BLUETOOTH_SERVICE_TMAS_SERVICE                                                                            0x1855 // Telephone and Media Audio Service
 #define ORG_BLUETOOTH_SERVICE_VOLUME_CONTROL                                                                          0x1844 // Volume Control
 #define ORG_BLUETOOTH_SERVICE_VOLUME_OFFSET_CONTROL                                                                   0x1845 // Volume Offset Control
+#define ORG_BLUETOOTH_SERVICE_HEARING_ACCESS                                                                          0x1854 // Hearing Access Service
 
 /**
  * Assigned numbers from www.bluetooth.com/specifications/gatt/characteristics
@@ -295,6 +301,7 @@
 #define ORG_BLUETOOTH_CHARACTERISTIC_TIME_UPDATE_STATE                                                                0x2A17 // Time Update State
 #define ORG_BLUETOOTH_CHARACTERISTIC_TIME_WITH_DST                                                                    0x2A11 // Time with DST
 #define ORG_BLUETOOTH_CHARACTERISTIC_TIME_ZONE                                                                        0x2A0E // Time Zone
+#define ORG_BLUETOOTH_CHARACTERISTIC_TMAP_ROLE                                                                        0x2B51 // TMAP Role
 #define ORG_BLUETOOTH_CHARACTERISTIC_TRAINING_STATUS                                                                  0x2AD3 // Training Status
 #define ORG_BLUETOOTH_CHARACTERISTIC_TREADMILL_DATA                                                                   0x2ACD // Treadmill Data
 #define ORG_BLUETOOTH_CHARACTERISTIC_TRUE_WIND_DIRECTION                                                              0x2A71 // True Wind Direction
@@ -354,6 +361,7 @@
 #define ORG_BLUETOOTH_CHARACTERISTIC_ACTIVITY_GOAL                                                                    0x2B4E // Activity Goal
 #define ORG_BLUETOOTH_CHARACTERISTIC_SEDENTARY_INTERVAL_NOTIFICATION                                                  0x2B4F // Sedentary Interval Notification
 #define ORG_BLUETOOTH_CHARACTERISTIC_CALORIC_INTAKE                                                                   0x2B50 // Caloric Intake
+#define ORG_BLUETOOTH_CHARACTERISTIC_TMAP_ROLE                                                                        0x2B51 // TMAP Role
 #define ORG_BLUETOOTH_CHARACTERISTIC_AUDIO_INPUT_STATE                                                                0x2B77 // Audio Input State
 #define ORG_BLUETOOTH_CHARACTERISTIC_GAIN_SETTINGS_ATTRIBUTE                                                          0x2B78 // Gain Settings Attribute
 #define ORG_BLUETOOTH_CHARACTERISTIC_AUDIO_INPUT_TYPE                                                                 0x2B79 // Audio Input Type
@@ -435,7 +443,9 @@
 #define ORG_BLUETOOTH_CHARACTERISTIC_SOURCE_AUDIO_LOCATIONS                                                           0x2BCC // Source Audio Locations
 #define ORG_BLUETOOTH_CHARACTERISTIC_AVAILABLE_AUDIO_CONTEXTS                                                         0x2BCD // Available Audio Contexts
 #define ORG_BLUETOOTH_CHARACTERISTIC_SUPPORTED_AUDIO_CONTEXTS                                                         0x2BCE // Supported Audio Contexts
-
+#define ORG_BLUETOOTH_CHARACTERISTIC_HEARING_AID_FEATURES                                                             0x2BDA // Hearing Aid Features
+#define ORG_BLUETOOTH_CHARACTERISTIC_HEARING_AID_PRESET_CONTROL_POINT                                                 0x2BDB // Hearing Aid Preset Control Point
+#define ORG_BLUETOOTH_CHARACTERISTIC_ACTIVE_PRESET_INDEX                                                              0x2BDC // Active Preset Index
 #define ORG_BLUETOOTH_CHARACTERISTIC_BATTERY_CRITCAL_STATUS                                                           0x2BE9 // Battery Critical Status
 #define ORG_BLUETOOTH_CHARACTERISTIC_BATTERY_HEALTH_STATUS                                                            0x2BEA // Battery Health Status
 #define ORG_BLUETOOTH_CHARACTERISTIC_BATTERY_HEALTH_INFORMATION                                                       0x2BEB // Battery Health Information
@@ -444,7 +454,7 @@
 #define ORG_BLUETOOTH_CHARACTERISTIC_BATTERY_TIME_STATUS                                                              0x2BEE // Battery Time Status
 #define ORG_BLUETOOTH_CHARACTERISTIC_ESTIMATED_SERVICE_DATE                                                           0x2BEF // Estimated Service Date
 #define ORG_BLUETOOTH_CHARACTERISTIC_BATTERY_ENERGY_STATUS                                                            0x2BF0 // Battery Energy Status
-
+#define ORG_BLUETOOTH_CHARACTERISTIC_UDI_FOR_MEDICAL_DEVICES                                                          0x2BFF // UDI for Medical Devices
 /**
  * Assigned numbers from www.bluetooth.com/specifications/gatt/descriptors
  */

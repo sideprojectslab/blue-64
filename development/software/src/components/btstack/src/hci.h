@@ -158,12 +158,13 @@ extern "C" {
     #endif
 #endif
 
-// BNEP may uncompress the IP Header by 16 bytes, GATT Client requires two additional bytes for long characteristic reads
+// BNEP may uncompress the IP Header by 16 bytes, GATT Client requires six additional bytes for long characteristic reads
+// wih service_id + connection_id
 #ifndef HCI_INCOMING_PRE_BUFFER_SIZE
 #ifdef ENABLE_CLASSIC
 #define HCI_INCOMING_PRE_BUFFER_SIZE (16 - HCI_ACL_HEADER_SIZE - 4)
 #else
-#define HCI_INCOMING_PRE_BUFFER_SIZE 2
+#define HCI_INCOMING_PRE_BUFFER_SIZE 6
 #endif
 #endif
 
@@ -248,7 +249,8 @@ typedef enum {
     OPEN,
     SEND_DISCONNECT,
     SENT_DISCONNECT,
-    RECEIVED_DISCONNECTION_COMPLETE
+    RECEIVED_DISCONNECTION_COMPLETE,
+    ANNOUNCED // connection handle announced in advertisement set terminated event
 } CONNECTION_STATE;
 
 // bonding flags

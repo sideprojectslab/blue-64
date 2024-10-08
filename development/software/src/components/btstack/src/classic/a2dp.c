@@ -35,6 +35,8 @@
  *
  */
 
+#define BTSTACK_FILE__ "a2dp.c"
+
 #include <stdint.h>
 #include <string.h>
 #include "a2dp.h"
@@ -45,8 +47,6 @@
 #include "btstack_event.h"
 #include "bluetooth_sdp.h"
 #include "bluetooth_psm.h"
-
-#define BTSTACK_FILE__ "a2dp.c"
 
 #include <stddef.h>
 #include "bluetooth.h"
@@ -494,6 +494,7 @@ void a2dp_config_process_avdtp_event_handler(avdtp_role_t role, uint8_t *packet,
     uint8_t status;
     uint8_t local_seid;
     uint8_t remote_seid;
+    bool outgoing_active;
 
     switch (hci_event_avdtp_meta_get_subevent_code(packet)){
         case AVDTP_SUBEVENT_SIGNALING_CONNECTION_ESTABLISHED:
@@ -760,22 +761,24 @@ void a2dp_config_process_avdtp_event_handler(avdtp_role_t role, uint8_t *packet,
             cid = avdtp_subevent_streaming_connection_established_get_avdtp_cid(packet);
             connection = avdtp_get_connection_for_avdtp_cid(cid);
             btstack_assert(connection != NULL);
+
             config_process = a2dp_config_process_for_role(role, connection);
-
-            if (config_process->state != A2DP_W4_OPEN_STREAM_WITH_SEID) break;
-
+            outgoing_active = config_process->outgoing_active;
             config_process->outgoing_active = false;
             status = avdtp_subevent_streaming_connection_established_get_status(packet);
             if (status != ERROR_CODE_SUCCESS){
                 log_info("A2DP source streaming connection could not be established, avdtp_cid 0x%02x, status 0x%02x ---", cid, status);
-                a2dp_replace_subevent_id_and_emit_for_role(role, packet, size, A2DP_SUBEVENT_STREAM_ESTABLISHED);
-                break;
+                config_process->state = A2DP_CONNECTED;
+                // suppress event if streaming wasn't requested by us
+                if (outgoing_active == false){
+                    break;
+                }
+            } else {
+                log_info("A2DP source streaming connection established --- avdtp_cid 0x%02x, local seid 0x%02x, remote seid 0x%02x", cid,
+                         avdtp_subevent_streaming_connection_established_get_local_seid(packet),
+                         avdtp_subevent_streaming_connection_established_get_remote_seid(packet));
+                config_process->state = A2DP_STREAMING_OPENED;
             }
-
-            log_info("A2DP source streaming connection established --- avdtp_cid 0x%02x, local seid 0x%02x, remote seid 0x%02x", cid,
-                     avdtp_subevent_streaming_connection_established_get_local_seid(packet),
-                     avdtp_subevent_streaming_connection_established_get_remote_seid(packet));
-            config_process->state = A2DP_STREAMING_OPENED;
             a2dp_replace_subevent_id_and_emit_for_role(role, packet, size, A2DP_SUBEVENT_STREAM_ESTABLISHED);
             break;
 

@@ -85,12 +85,15 @@ static uint32_t hfp_hf_indicators_value[HFP_MAX_NUM_INDICATORS];
 
 static uint8_t  hfp_hf_speaker_gain;
 static uint8_t  hfp_hf_microphone_gain;
-
-static hfp_call_status_t      hfp_hf_call_status;
-static hfp_callsetup_status_t hfp_hf_callsetup_status;
-static hfp_callheld_status_t  hfp_hf_callheld_status;
-
 static char hfp_hf_phone_number[25];
+
+// Apple Accessory Information
+static uint16_t hfp_hf_apple_vendor_id;
+static uint16_t hfp_hf_apple_product_id;
+static const char * hfp_hf_apple_version;
+static uint8_t  hfp_hf_apple_features;
+static int8_t hfp_hf_apple_battery_level;
+static int8_t hfp_hf_apple_docked;
 
 
 static int has_codec_negotiation_feature(hfp_connection_t * hfp_connection){
@@ -1065,6 +1068,57 @@ static void hfp_hf_run_for_context(hfp_connection_t * hfp_connection){
         }
     }
 
+    if (hfp_connection->send_apple_information){
+        hfp_connection->send_apple_information = false;
+        hfp_connection->ok_pending = 1;
+        hfp_connection->response_pending_for_command = HFP_CMD_APPLE_ACCESSORY_INFORMATION;
+        char buffer[40];
+        snprintf(buffer, sizeof(buffer), "AT%s=%04x-%04x-%s,%u\r", HFP_APPLE_ACCESSORY_INFORMATION,
+                 hfp_hf_apple_vendor_id, hfp_hf_apple_product_id, hfp_hf_apple_version, hfp_hf_apple_features);
+        (void) send_str_over_rfcomm(hfp_connection->rfcomm_cid, buffer);
+        return;
+    }
+
+    if (hfp_connection->apple_accessory_commands_supported){
+        uint8_t num_apple_values = 0;
+        uint8_t first_key = 0;
+        uint8_t first_value = 0;
+        if (hfp_connection->apple_accessory_battery_level >= 0){
+            num_apple_values++;
+            first_key = 1;
+            first_value = hfp_connection->apple_accessory_battery_level;
+        }
+        if (hfp_connection->apple_accessory_docked >= 0){
+            num_apple_values++;
+            first_key = 2;
+            first_value = hfp_connection->apple_accessory_docked;
+        }
+        if (num_apple_values > 0){
+            char buffer[40];
+            switch (num_apple_values){
+                case 1:
+                    snprintf(buffer, sizeof(buffer), "AT%s=1,%u,%u\r", HFP_APPLE_ACCESSORY_STATE,
+                             first_key, first_value);
+                    break;
+                case 2:
+                    snprintf(buffer, sizeof(buffer), "AT%s=2,1,%u,2,%u\r", HFP_APPLE_ACCESSORY_STATE,
+                             hfp_connection->apple_accessory_battery_level, hfp_connection->apple_accessory_docked);
+                    break;
+                default:
+                    btstack_unreachable();
+                    break;
+            }
+            // clear
+            hfp_connection->apple_accessory_battery_level = -1;
+            hfp_connection->apple_accessory_docked = -1;
+            // construct
+            hfp_connection->ok_pending = 1;
+            hfp_connection->response_pending_for_command = HFP_CMD_APPLE_ACCESSORY_STATE;
+            (void) send_str_over_rfcomm(hfp_connection->rfcomm_cid, buffer);
+            return;
+        }
+    }
+
     if (hfp_connection->send_custom_message != NULL){
         const char * message = hfp_connection->send_custom_message;
         hfp_connection->send_custom_message = NULL;
@@ -1087,6 +1141,19 @@ static void hfp_hf_run_for_context(hfp_connection_t * hfp_connection){
     }
 }
 
+
+static void hfp_hf_apple_trigger_send(void){
+    btstack_linked_list_iterator_t it;
+    btstack_linked_list_iterator_init(&it, hfp_get_connections());
+    while (btstack_linked_list_iterator_has_next(&it)){
+        hfp_connection_t * hfp_connection = (hfp_connection_t *)btstack_linked_list_iterator_next(&it);
+        if (hfp_connection->local_role == HFP_ROLE_HF) {
+            hfp_connection->apple_accessory_battery_level = hfp_hf_apple_battery_level;
+            hfp_connection->apple_accessory_docked = hfp_hf_apple_docked;
+        }
+    }
+}
+
 static void hfp_hf_slc_established(hfp_connection_t * hfp_connection){
     hfp_connection->state = HFP_SERVICE_LEVEL_CONNECTION_ESTABLISHED;
 
@@ -1102,6 +1169,9 @@ static void hfp_hf_slc_established(hfp_connection_t * hfp_connection){
         hfp_emit_ag_indicator_status_event(hfp_connection, &hfp_connection->ag_indicators[i]);
     }
     
+    hfp_connection->apple_accessory_commands_supported = false;
+    hfp_connection->send_apple_information = hfp_hf_apple_vendor_id != 0;
+
     // restore volume settings
     hfp_connection->speaker_gain = hfp_hf_speaker_gain;
     hfp_connection->send_speaker_gain = 1;
@@ -1130,6 +1200,11 @@ static void hfp_hf_handle_suggested_codec(hfp_connection_t * hfp_connection){
 		hfp_connection->hf_send_supported_codecs = true;
 	}
 }
+static void hfp_hf_apple_extension_supported(hfp_connection_t * hfp_connection, bool supported){
+    hfp_connection->apple_accessory_commands_supported = supported;
+    log_info("Apple Extension supported: %u", supported);
+    hfp_emit_event(hfp_connection, HFP_SUBEVENT_APPLE_EXTENSION_SUPPORTED, hfp_hf_microphone_gain);
+}
 
 static bool hfp_hf_switch_on_ok_pending(hfp_connection_t *hfp_connection, uint8_t status){
     bool event_emited = true;
@@ -1146,6 +1221,9 @@ static bool hfp_hf_switch_on_ok_pending(hfp_connection_t *hfp_connection, uint8_
             break;
         case HFP_CMD_CUSTOM_MESSAGE:
             hfp_emit_event(hfp_connection, HFP_SUBEVENT_CUSTOM_AT_MESSAGE_SENT, status);
+            break;
+        case HFP_CMD_APPLE_ACCESSORY_INFORMATION:
+            hfp_hf_apple_extension_supported(hfp_connection, true);
             break;
         default:
             event_emited = false;
@@ -1273,7 +1351,7 @@ static void hfp_hf_handle_transfer_ag_indicator_status(hfp_connection_t * hfp_co
         if (hfp_connection->ag_indicators[i].status_changed) {
             if (strcmp(hfp_connection->ag_indicators[i].name, "callsetup") == 0){
                 hfp_callsetup_status_t new_hf_callsetup_status = (hfp_callsetup_status_t) hfp_connection->ag_indicators[i].status;
-                bool ringing_old = hfp_is_ringing(hfp_hf_callsetup_status);
+                bool ringing_old = hfp_is_ringing(hfp_connection->hf_callsetup_status);
                 bool ringing_new = hfp_is_ringing(new_hf_callsetup_status);
                 if (ringing_old != ringing_new){
                     if (ringing_new){
@@ -1281,22 +1359,22 @@ static void hfp_hf_handle_transfer_ag_indicator_status(hfp_connection_t * hfp_co
                     } else {
                         hfp_emit_simple_event(hfp_connection, HFP_SUBEVENT_STOP_RINGING);
                     } 
-                }                
-                hfp_hf_callsetup_status = new_hf_callsetup_status;
+                }
+                hfp_connection->hf_callsetup_status = new_hf_callsetup_status;
             } else if (strcmp(hfp_connection->ag_indicators[i].name, "callheld") == 0){
-                hfp_hf_callheld_status = (hfp_callheld_status_t) hfp_connection->ag_indicators[i].status;
+                hfp_connection->hf_callheld_status = (hfp_callheld_status_t) hfp_connection->ag_indicators[i].status;
                 // avoid set but not used warning
-                (void) hfp_hf_callheld_status;
+                (void) hfp_connection->hf_callheld_status;
             } else if (strcmp(hfp_connection->ag_indicators[i].name, "call") == 0){
                 hfp_call_status_t new_hf_call_status = (hfp_call_status_t) hfp_connection->ag_indicators[i].status;
-                if (hfp_hf_call_status != new_hf_call_status){
+                if (hfp_connection->hf_call_status != new_hf_call_status){
                     if (new_hf_call_status == HFP_CALL_STATUS_NO_HELD_OR_ACTIVE_CALLS){
                         hfp_emit_simple_event(hfp_connection, HFP_SUBEVENT_CALL_TERMINATED);
                     } else {
                         hfp_emit_simple_event(hfp_connection, HFP_SUBEVENT_CALL_ANSWERED);
                     }
                 }
-                hfp_hf_call_status = new_hf_call_status; 
+                hfp_connection->hf_call_status = new_hf_call_status;
             }
             hfp_connection->ag_indicators[i].status_changed = 0;
             hfp_emit_ag_indicator_status_event(hfp_connection, &hfp_connection->ag_indicators[i]);
@@ -1374,6 +1452,15 @@ static void hfp_hf_handle_rfcomm_command(hfp_connection_t * hfp_connection){
                     break;
             }           
             
+            switch (hfp_connection->response_pending_for_command){
+                case HFP_CMD_APPLE_ACCESSORY_INFORMATION:
+                    hfp_connection->response_pending_for_command = HFP_CMD_NONE;
+                    hfp_hf_apple_extension_supported(hfp_connection, false);
+                    return;
+                default:
+                    break;
+            }
+
             // handle error response for voice activation (HF initiated)
             switch(hfp_connection->vra_state_requested){
                 case HFP_VRA_W4_ENHANCED_VOICE_RECOGNITION_READY_FOR_AUDIO:
@@ -1497,13 +1584,13 @@ static void hfp_hf_hci_event_packet_handler(uint8_t packet_type, uint16_t channe
 
 static void hfp_hf_set_defaults(void){
     hfp_hf_supported_features = HFP_DEFAULT_HF_SUPPORTED_FEATURES;
-    hfp_hf_call_status = HFP_CALL_STATUS_NO_HELD_OR_ACTIVE_CALLS;
-    hfp_hf_callsetup_status = HFP_CALLSETUP_STATUS_NO_CALL_SETUP_IN_PROGRESS;
-    hfp_hf_callheld_status= HFP_CALLHELD_STATUS_NO_CALLS_HELD;
     hfp_hf_codecs_nr = 0;
     hfp_hf_speaker_gain = 9;
     hfp_hf_microphone_gain = 9;
     hfp_hf_indicators_nr = 0;
+    // Apple extension
+    hfp_hf_apple_docked = -1;
+    hfp_hf_apple_battery_level = -1;
 }
 
 uint8_t hfp_hf_set_default_microphone_gain(uint8_t gain){
@@ -1533,7 +1620,7 @@ uint8_t hfp_hf_init(uint8_t rfcomm_channel_nr){
 
     hfp_hf_hci_event_callback_registration.callback = &hfp_hf_hci_event_packet_handler;
     hci_add_event_handler(&hfp_hf_hci_event_callback_registration);
-    
+
     // used to set packet handler for outgoing rfcomm connections - could be handled by emitting an event to us
     hfp_set_hf_rfcomm_packet_handler(&hfp_hf_rfcomm_packet_handler);
     return ERROR_CODE_SUCCESS;
@@ -1544,6 +1631,7 @@ void hfp_hf_deinit(void){
     hfp_hf_set_defaults();
 
     hfp_hf_callback = NULL;
+    hfp_hf_apple_vendor_id = 0;
     (void) memset(&hfp_hf_hci_event_callback_registration, 0, sizeof(btstack_packet_callback_registration_t));
     (void) memset(hfp_hf_phone_number, 0, sizeof(hfp_hf_phone_number));
 }
@@ -1728,11 +1816,11 @@ uint8_t hfp_hf_answer_incoming_call(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
 
-    if (hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS){
+    if (hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS){
         hfp_connection->hf_answer_incoming_call = 1;
         hfp_hf_run_for_context(hfp_connection);
     } else {
-        log_error("HFP HF: answering incoming call with wrong callsetup status %u", hfp_hf_callsetup_status);
+        log_error("HFP HF: answering incoming call with wrong callsetup status %u", hfp_connection->hf_callsetup_status);
         return ERROR_CODE_COMMAND_DISALLOWED;
     }
     return ERROR_CODE_SUCCESS;
@@ -1754,7 +1842,7 @@ uint8_t hfp_hf_reject_incoming_call(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if (hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS){
+    if (hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS){
         hfp_connection->hf_send_chup = 1;
         hfp_hf_run_for_context(hfp_connection);
     }
@@ -1767,7 +1855,7 @@ uint8_t hfp_hf_user_busy(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if (hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS){
+    if (hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS){
         hfp_connection->hf_send_chld_0 = 1;
         hfp_hf_run_for_context(hfp_connection);
     }
@@ -1792,8 +1880,8 @@ uint8_t hfp_hf_end_active_and_accept_other(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if ((hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
-        (hfp_hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
+    if ((hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
+        (hfp_connection->hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
         hfp_connection->hf_send_chld_1 = 1;
         hfp_hf_run_for_context(hfp_connection);
     }
@@ -1806,8 +1894,8 @@ uint8_t hfp_hf_swap_calls(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if ((hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
-        (hfp_hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
+    if ((hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
+        (hfp_connection->hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
         hfp_connection->hf_send_chld_2 = 1;
         hfp_hf_run_for_context(hfp_connection);
     }
@@ -1820,8 +1908,8 @@ uint8_t hfp_hf_join_held_call(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if ((hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
-        (hfp_hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
+    if ((hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
+        (hfp_connection->hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
         hfp_connection->hf_send_chld_3 = 1;
         hfp_hf_run_for_context(hfp_connection);
     }
@@ -1834,8 +1922,8 @@ uint8_t hfp_hf_connect_calls(hci_con_handle_t acl_handle){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if ((hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
-        (hfp_hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
+    if ((hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
+        (hfp_connection->hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
         hfp_connection->hf_send_chld_4 = 1;
         hfp_hf_run_for_context(hfp_connection);
     }
@@ -1848,8 +1936,8 @@ uint8_t hfp_hf_release_call_with_index(hci_con_handle_t acl_handle, int index){
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if ((hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
-        (hfp_hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
+    if ((hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
+        (hfp_connection->hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
         hfp_connection->hf_send_chld_x = 1;
         hfp_connection->hf_send_chld_x_index = 10 + index;
         hfp_hf_run_for_context(hfp_connection);
@@ -1863,8 +1951,8 @@ uint8_t hfp_hf_private_consultation_with_call(hci_con_handle_t acl_handle, int i
         return ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER;
     }
     
-    if ((hfp_hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
-        (hfp_hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
+    if ((hfp_connection->hf_callsetup_status == HFP_CALLSETUP_STATUS_INCOMING_CALL_SETUP_IN_PROGRESS) ||
+        (hfp_connection->hf_call_status == HFP_CALL_STATUS_ACTIVE_OR_HELD_CALL_IS_PRESENT)){
         hfp_connection->hf_send_chld_x = 1;
         hfp_connection->hf_send_chld_x_index = 20 + index;
         hfp_hf_run_for_context(hfp_connection);
@@ -2228,6 +2316,31 @@ uint8_t hfp_hf_set_hf_indicator(hci_con_handle_t acl_handle, int assigned_number
             }
         }
     }
+    return ERROR_CODE_SUCCESS;
+}
+
+void hfp_hf_apple_set_identification(uint16_t vendor_id, uint16_t product_id, const char * version, uint8_t features){
+    hfp_hf_apple_vendor_id  = vendor_id;
+    hfp_hf_apple_product_id = product_id;
+    hfp_hf_apple_version    = version;
+    hfp_hf_apple_features   = features;
+}
+
+uint8_t hfp_hf_apple_set_battery_level(uint8_t battery_level){
+    if (battery_level > 9) {
+        return ERROR_CODE_INVALID_HCI_COMMAND_PARAMETERS;
+    }
+    hfp_hf_apple_battery_level = (int8_t) battery_level;
+    hfp_hf_apple_trigger_send();
+    return ERROR_CODE_SUCCESS;
+}
+
+uint8_t hfp_hf_apple_set_docked_state(uint8_t docked){
+    if (docked > 1) {
+        return ERROR_CODE_INVALID_HCI_COMMAND_PARAMETERS;
+    }
+    hfp_hf_apple_docked = (int8_t) docked;
+    hfp_hf_apple_trigger_send();
     return ERROR_CODE_SUCCESS;
 }
 

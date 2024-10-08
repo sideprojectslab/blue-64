@@ -163,17 +163,17 @@ uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod,
 	if ((cod & UNI_BT_COD_MINOR_KEYBOARD) ||
 		(cod & UNI_BT_COD_MINOR_REMOTE_CONTROL)) // gamepad / joystick
 	{
-		// adding the new device to the allowlist
-		if(uni_bt_allowlist_is_enabled() == false)
-		{
-			logi("Device Detected, Adding to allowlist\n");
-			uni_bt_allowlist_add_addr(addr, true);
-		}
-		else if(uni_bt_allowlist_is_allowed_addr(addr) == false)
-		{
-			logi("Unknown Device Detected, Pairing Disabled, Ignoring...\n");
-			return UNI_ERROR_IGNORE_DEVICE;
-		}
+//		// adding the new device to the allowlist
+//		if(uni_bt_allowlist_is_enabled() == false)
+//		{
+//			logi("Device Detected, Adding to allowlist\n");
+//			uni_bt_allowlist_add_addr(addr, true);
+//		}
+//		else if(uni_bt_allowlist_is_allowed_addr(addr) == false)
+//		{
+//			logi("Unknown Device Detected, Pairing Disabled, Ignoring...\n");
+//			return UNI_ERROR_IGNORE_DEVICE;
+//		}
 
 		// we basically try to connect with any RSSI
 		return UNI_ERROR_SUCCESS;
@@ -362,7 +362,8 @@ void task_c64b_disable_pairing(void * arg)
 	if(time != 0)
 	{
 		vTaskDelay(60 * configTICK_RATE_HZ * time);
-		uni_bt_enable_pairing_safe(false);
+		//uni_bt_enable_pairing_safe(false);
+		uni_bt_stop_scanning_safe();
 		logi("Pairing disabled\n");
 	}
 	vTaskDelete(NULL);
@@ -542,4 +543,6 @@ void c64b_parser_init()
 	}
 
 	c64b_keyboard_init(&keyboard);
+
+	uni_bt_start_scanning_and_autoconnect_safe();
 }

@@ -144,7 +144,7 @@ typedef enum {
     P_W2_EMIT_CONNECTED,
     P_L2CAP_CLOSED,
 } gatt_client_state_t;
-    
+
     
 typedef enum{
     SEND_MTU_EXCHANGE,
@@ -152,6 +152,20 @@ typedef enum{
     MTU_EXCHANGED,
     MTU_AUTO_EXCHANGE_DISABLED
 } gatt_client_mtu_t;
+
+typedef enum {
+    GATT_CLIENT_SERVICE_DISCOVER_W2_SEND,
+    GATT_CLIENT_SERVICE_DISCOVER_W4_DONE,
+    GATT_CLIENT_SERVICE_DISCOVER_CHARACTERISTICS_W2_SEND,
+    GATT_CLIENT_SERVICE_DISCOVER_CHARACTERISTICS_W4_DONE,
+    GATT_CLIENT_SERVICE_SERVICE_CHANGED_WRITE_CCCD_W2_SEND,
+    GATT_CLIENT_SERVICE_SERVICE_CHANGED_WRITE_CCCD_W4_DONE,
+    GATT_CLIENT_SERVICE_DATABASE_HASH_READ_W2_SEND,
+    GATT_CLIENT_SERVICE_DATABASE_HASH_READ_W4_DONE,
+    GATT_CLIENT_SERVICE_DATABASE_HASH_WRITE_CCCD_W2_SEND,
+    GATT_CLIENT_SERVICE_DATABASE_HASH_WRITE_CCCD_W4_DONE,
+    GATT_CLIENT_SERVICE_DONE,
+} gatt_client_service_state_t;
 
 #ifdef ENABLE_GATT_OVER_EATT
 typedef enum {
@@ -190,10 +204,14 @@ typedef struct gatt_client{
 
     att_bearer_type_t bearer_type;
 
-#ifdef ENABLE_GATT_OVER_CLASSIC
-    bd_addr_t addr;
-    uint16_t  l2cap_psm;
+#if defined(ENABLE_GATT_OVER_CLASSIC) || defined(ENABLE_GATT_OVER_EATT)
     uint16_t  l2cap_cid;
+    bd_addr_t addr;
+    bd_addr_type_t  addr_type;
+#endif
+
+#ifdef ENABLE_GATT_OVER_CLASSIC
+    uint16_t  l2cap_psm;
     btstack_context_callback_registration_t callback_request;
 #endif
 
@@ -204,8 +222,6 @@ typedef struct gatt_client{
     uint16_t eatt_storage_size;
     uint8_t  eatt_num_clients;
     uint8_t  gatt_server_supported_features;
-    uint16_t gatt_service_start_group_handle;
-    uint16_t gatt_service_end_group_handle;
     uint16_t gatt_client_supported_features_handle;
 #endif
 
@@ -253,14 +269,44 @@ typedef struct gatt_client{
 
     gap_security_level_t security_level;
 
+    // Context
+    uint16_t service_id;
+    uint16_t connection_id;
+
+    // GATT Service Changes
+    gatt_client_service_state_t gatt_service_state;
+    uint16_t                    gatt_service_start_group_handle;
+    uint16_t                    gatt_service_end_group_handle;
+    // - Service Changed
+    uint16_t                    gatt_service_changed_value_handle;
+    uint16_t                    gatt_service_changed_cccd_handle;
+    uint16_t                    gatt_service_changed_end_handle;
+    // - Database Hash
+    uint16_t                    gatt_service_database_hash_value_handle;
+    uint16_t                    gatt_service_database_hash_cccd_handle;
+    uint16_t                    gatt_service_database_hash_end_handle;
+
 } gatt_client_t;
 
-typedef struct gatt_client_notification {
+// Single characteristic, with wildcards for con_handle and attribute_handle
+typedef struct {
     btstack_linked_item_t    item;
     btstack_packet_handler_t callback;
     hci_con_handle_t con_handle;
     uint16_t attribute_handle;
 } gatt_client_notification_t;
+
+// Attribute range, aka service, no wildcards, used for implementing GATT Service clients
+typedef struct {
+    btstack_linked_item_t    item;
+    btstack_packet_handler_t callback;
+    hci_con_handle_t con_handle;
+    uint16_t start_group_handle;
+    uint16_t end_group_handle;
+    // Context
+    uint16_t service_id;
+    uint16_t connection_id;
+} gatt_client_service_notification_t;
 
 /* API_START */
 
@@ -338,11 +384,11 @@ uint8_t gatt_client_le_enhanced_connect(btstack_packet_handler_t callback, hci_c
  * @brief MTU is available after the first query has completed. If status is equal to ERROR_CODE_SUCCESS, it returns the real value, 
  * otherwise the default value ATT_DEFAULT_MTU (see bluetooth.h). 
  * @param  con_handle   
- * @param  mtu
+ * @param  mtu or 0 in case of error
  * @return status ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER                  if no HCI connection for con_handle is found 
  *                BTSTACK_MEMORY_ALLOC_FAILED                               if no GATT client for con_handle could be allocated 
  *                GATT_CLIENT_IN_WRONG_STATE                                if MTU is not exchanged and MTU auto-exchange is disabled
- *                ERROR_CODE_SUCCESS                                        if query is successfully registered
+ *                ERROR_CODE_SUCCESS                                        on success
  */
 uint8_t gatt_client_get_mtu(hci_con_handle_t con_handle, uint16_t * mtu);
 
@@ -405,7 +451,23 @@ uint8_t gatt_client_discover_secondary_services(btstack_packet_handler_t callbac
  */
 uint8_t gatt_client_discover_primary_services_by_uuid16(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t uuid16);
 
-/** 
+/**
+ * @brief Discovers a specific primary service given its UUID. This service may exist multiple times.
+ * For each found service a GATT_EVENT_SERVICE_QUERY_RESULT event will be emitted.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of discovery.
+ * @param callback
+ * @param con_handle
+ * @param uuid16
+ * @param service_id    - context provided to callback in events
+ * @param connection_id - contest provided to callback in events
+ * @return status BTSTACK_MEMORY_ALLOC_FAILED, if no GATT client for con_handle is found
+ *                GATT_CLIENT_IN_WRONG_STATE , if GATT client is not ready
+ *                ERROR_CODE_SUCCESS         , if query is successfully registered
+ */
+uint8_t gatt_client_discover_primary_services_by_uuid16_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle,
+                                                                     uint16_t uuid16, uint16_t service_id, uint16_t connection_id);
+
+/**
  * @brief Discovers a specific primary service given its UUID. This service may exist multiple times. 
  * For each found service a GATT_EVENT_SERVICE_QUERY_RESULT event will be emitted.
  * The GATT_EVENT_QUERY_COMPLETE event marks the end of discovery. 
@@ -435,7 +497,27 @@ uint8_t gatt_client_discover_primary_services_by_uuid128(btstack_packet_handler_
  */
 uint8_t gatt_client_find_included_services_for_service(btstack_packet_handler_t callback, hci_con_handle_t con_handle, gatt_client_service_t * service);
 
-/** 
+/**
+ * @brief Finds included services within the specified service.
+ * For each found included service a GATT_EVENT_INCLUDED_SERVICE_QUERY_RESULT event will be emitted.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of discovery.
+ * Information about included service type (primary/secondary) can be retrieved either by sending
+ * an ATT find information request for the returned start group handle
+ * (returning the handle and the UUID for primary or secondary service) or by comparing the service
+ * to the list of all primary services.
+ * @param  callback
+ * @param  con_handle
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @param  service_id
+ * @return status BTSTACK_MEMORY_ALLOC_FAILED, if no GATT client for con_handle is found
+ *                GATT_CLIENT_IN_WRONG_STATE , if GATT client is not ready
+ *                ERROR_CODE_SUCCESS         , if query is successfully registered
+ */
+uint8_t gatt_client_find_included_services_for_service_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle,
+                                                                    gatt_client_service_t * service, uint16_t service_id, uint16_t connection_id);
+
+/**
  * @brief Discovers all characteristics within the specified service. 
  * For each found characteristic a GATT_EVENT_CHARACTERISTIC_QUERY_RESULT event will be emited. 
  * The GATT_EVENT_QUERY_COMPLETE event marks the end of discovery.
@@ -448,7 +530,23 @@ uint8_t gatt_client_find_included_services_for_service(btstack_packet_handler_t 
  */
 uint8_t gatt_client_discover_characteristics_for_service(btstack_packet_handler_t callback, hci_con_handle_t con_handle, gatt_client_service_t * service);
 
-/** 
+/**
+ * @brief Discovers all characteristics within the specified service.
+ * For each found characteristic a GATT_EVENT_CHARACTERISTIC_QUERY_RESULT event will be emited.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of discovery.
+ * @param  callback
+ * @param  con_handle
+ * @param  service
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @return status BTSTACK_MEMORY_ALLOC_FAILED, if no GATT client for con_handle is found
+ *                GATT_CLIENT_IN_WRONG_STATE , if GATT client is not ready
+ *                ERROR_CODE_SUCCESS         , if query is successfully registered
+ */
+uint8_t gatt_client_discover_characteristics_for_service_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle, gatt_client_service_t * service,
+                                                                      uint16_t service_id, uint16_t connection_id);
+
+/**
  * @brief The following four functions are used to discover all characteristics within 
  * the specified service or handle range, and return those that match the given UUID. 
  * 
@@ -525,6 +623,24 @@ uint8_t gatt_client_discover_characteristics_for_service_by_uuid128(btstack_pack
  */
 uint8_t gatt_client_discover_characteristic_descriptors(btstack_packet_handler_t callback, hci_con_handle_t con_handle, gatt_client_characteristic_t * characteristic);
 
+
+/**
+ * @brief Discovers attribute handle and UUID of a characteristic descriptor within the specified characteristic.
+ * For each found descriptor a GATT_EVENT_ALL_CHARACTERISTIC_DESCRIPTORS_QUERY_RESULT event will be emitted.
+ *
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of discovery.
+ * @param  callback
+ * @param  con_handle
+ * @param  characteristic
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @return status BTSTACK_MEMORY_ALLOC_FAILED, if no GATT client for con_handle is found
+ *                GATT_CLIENT_IN_WRONG_STATE , if GATT client is not ready
+ *                ERROR_CODE_SUCCESS         , if query is successfully registered
+ */
+uint8_t gatt_client_discover_characteristic_descriptors_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle,
+                                                                     gatt_client_characteristic_t * characteristic, uint16_t service_id, uint16_t connection_it);
+
 /** 
  * @brief Reads the characteristic value using the characteristic's value handle. 
  * If the characteristic value is found a GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT event will be emitted.
@@ -550,6 +666,23 @@ uint8_t gatt_client_read_value_of_characteristic(btstack_packet_handler_t callba
  *                ERROR_CODE_SUCCESS         , if query is successfully registered 
  */
 uint8_t gatt_client_read_value_of_characteristic_using_value_handle(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle);
+
+/**
+ * @brief Reads the characteristic value using the characteristic's value handle.
+ * If the characteristic value is found a GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT event will be emitted.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of read.
+ * @param  callback
+ * @param  con_handle
+ * @param  value_handle
+ * @return status BTSTACK_MEMORY_ALLOC_FAILED, if no GATT client for con_handle is found
+ *                GATT_CLIENT_IN_WRONG_STATE , if GATT client is not ready
+ *                ERROR_CODE_SUCCESS         , if query is successfully registered
+ */
+uint8_t gatt_client_read_value_of_characteristic_using_value_handle_with_context(btstack_packet_handler_t callback,
+                                                                                 hci_con_handle_t con_handle,
+                                                                                 uint16_t value_handle,
+                                                                                 uint16_t service_id,
+                                                                                 uint16_t connection_id);
 
 /**
  * @brief Reads the characteric value of all characteristics with the uuid. 
@@ -608,6 +741,24 @@ uint8_t gatt_client_read_long_value_of_characteristic(btstack_packet_handler_t c
  *                ERROR_CODE_SUCCESS         , if query is successfully registered 
  */
 uint8_t gatt_client_read_long_value_of_characteristic_using_value_handle(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle);
+
+/**
+ * @brief Reads the long characteristic value using the characteristic's value handle.
+ * The value will be returned in several blobs.
+ * For each blob, a GATT_EVENT_LONG_CHARACTERISTIC_VALUE_QUERY_RESULT event with updated value offset will be emitted.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of read.
+ * @param  callback
+ * @param  con_handle
+ * @param  value_handle
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @return status BTSTACK_MEMORY_ALLOC_FAILED, if no GATT client for con_handle is found
+ *                GATT_CLIENT_IN_WRONG_STATE , if GATT client is not ready
+ *                ERROR_CODE_SUCCESS         , if query is successfully registered
+ */
+uint8_t gatt_client_read_long_value_of_characteristic_using_value_handle_with_context(btstack_packet_handler_t callback,
+                                                                                      hci_con_handle_t con_handle, uint16_t value_handle,
+                                                                                      uint16_t service_id, uint16_t connection_id);
 
 /** 
  * @brief Reads the long characteristic value using the characteristic's value handle. 
@@ -676,12 +827,13 @@ uint8_t gatt_client_write_value_of_characteristic_without_response(hci_con_handl
  * @param  value_handle
  * @param  message_len
  * @param  message is not copied, make sure memory is accessible until write is done
- * @return status ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER                  if no HCI connection for con_handle is found 
+ * @return status ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER                  if no HCI connection for con_handle is found
  *                BTSTACK_MEMORY_ALLOC_FAILED                               if no GATT client for con_handle could be allocated 
  *                GATT_CLIENT_IN_WRONG_STATE                                if GATT client is not ready
  *                ERROR_CODE_SUCCESS                                        if query is successfully registered
  */
-uint8_t gatt_client_signed_write_without_response(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle, uint16_t message_len, uint8_t * message);
+uint8_t gatt_client_signed_write_without_response(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle,
+                                                  uint16_t message_len, uint8_t * message);
 
 /** 
  * @brief Writes the characteristic value using the characteristic's value handle. 
@@ -701,6 +853,26 @@ uint8_t gatt_client_signed_write_without_response(btstack_packet_handler_t callb
 uint8_t gatt_client_write_value_of_characteristic(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle, uint16_t value_length, uint8_t * value);
 
 /** 
+ * @brief Writes the characteristic value using the characteristic's value handle.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of write.
+ * The write is successfully performed, if the event's att_status field is set to
+ * ATT_ERROR_SUCCESS (see bluetooth.h for ATT_ERROR codes).
+ * @param  callback
+ * @param  con_handle
+ * @param  value_handle
+ * @param  value_length
+ * @param  value is not copied, make sure memory is accessible until write is done, i.e. GATT_EVENT_QUERY_COMPLETE is received
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @return status ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER                  if no HCI connection for con_handle is found
+ *                BTSTACK_MEMORY_ALLOC_FAILED                               if no GATT client for con_handle could be allocated
+ *                GATT_CLIENT_IN_WRONG_STATE                                if GATT client is not ready
+ *                ERROR_CODE_SUCCESS                                        if query is successfully registered
+ */
+uint8_t gatt_client_write_value_of_characteristic_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle,
+                                                               uint16_t value_length, uint8_t * value, uint16_t service_id, uint16_t connection_id);
+
+/**
  * @brief Writes the characteristic value using the characteristic's value handle. 
  * The GATT_EVENT_QUERY_COMPLETE event marks the end of write. 
  * The write is successfully performed if the event's att_status field is set to ATT_ERROR_SUCCESS (see bluetooth.h for ATT_ERROR codes).
@@ -716,7 +888,26 @@ uint8_t gatt_client_write_value_of_characteristic(btstack_packet_handler_t callb
  */
 uint8_t gatt_client_write_long_value_of_characteristic(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle, uint16_t value_length, uint8_t * value);
 
-/** 
+/**
+ * @brief Writes the characteristic value using the characteristic's value handle.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of write.
+ * The write is successfully performed if the event's att_status field is set to ATT_ERROR_SUCCESS (see bluetooth.h for ATT_ERROR codes).
+ * @param  callback
+ * @param  con_handle
+ * @param  value_handle
+ * @param  value_length
+ * @param  value is not copied, make sure memory is accessible until write is done, i.e. GATT_EVENT_QUERY_COMPLETE is received
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @return status ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER                  if no HCI connection for con_handle is found
+ *                BTSTACK_MEMORY_ALLOC_FAILED                               if no GATT client for con_handle could be allocated
+ *                GATT_CLIENT_IN_WRONG_STATE                                if GATT client is not ready
+ *                ERROR_CODE_SUCCESS                                        if query is successfully registered
+ */
+uint8_t gatt_client_write_long_value_of_characteristic_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle, uint16_t value_handle,
+                                                                    uint16_t value_length, uint8_t * value, uint16_t service_id, uint16_t connection_id);
+
+/**
  * @brief Writes the characteristic value using the characteristic's value handle. 
  * The GATT_EVENT_QUERY_COMPLETE event marks the end of write. 
  * The write is successfully performed if the event's att_status field is set to ATT_ERROR_SUCCESS (see bluetooth.h for ATT_ERROR codes).
@@ -924,6 +1115,51 @@ uint8_t gatt_client_write_long_characteristic_descriptor_using_descriptor_handle
 uint8_t gatt_client_write_client_characteristic_configuration(btstack_packet_handler_t callback, hci_con_handle_t con_handle, gatt_client_characteristic_t * characteristic, uint16_t configuration);
 
 /**
+ * @brief Writes the client characteristic configuration of the specified characteristic.
+ * It is used to subscribe for notifications or indications of the characteristic value.
+ * For notifications or indications specify: GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION
+ * resp. GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_INDICATION as configuration value.
+ * The GATT_EVENT_QUERY_COMPLETE event marks the end of write.
+ * The write is successfully performed if the event's att_status field is set to ATT_ERROR_SUCCESS (see bluetooth.h for ATT_ERROR codes).
+ * @param  callback
+ * @param  con_handle
+ * @param  characteristic
+ * @param  configuration                                                    GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_NOTIFICATION, GATT_CLIENT_CHARACTERISTICS_CONFIGURATION_INDICATION
+ * @param  service_id    - context provided to callback in events
+ * @param  connection_id - contest provided to callback in events
+ * @return status ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER                  if no HCI connection for con_handle is found
+ *                BTSTACK_MEMORY_ALLOC_FAILED                               if no GATT client for con_handle could be allocated
+ *                GATT_CLIENT_IN_WRONG_STATE                                if GATT client is not ready
+ *                GATT_CLIENT_CHARACTERISTIC_NOTIFICATION_NOT_SUPPORTED     if configuring notification, but characteristic has no notification property set
+ *                GATT_CLIENT_CHARACTERISTIC_INDICATION_NOT_SUPPORTED       if configuring indication, but characteristic has no indication property set
+ *                ERROR_CODE_UNSUPPORTED_FEATURE_OR_PARAMETER_VALUE         if configuration is invalid
+ *                ERROR_CODE_SUCCESS                                        if query is successfully registered
+ */
+uint8_t gatt_client_write_client_characteristic_configuration_with_context(btstack_packet_handler_t callback, hci_con_handle_t con_handle,
+                                                                           gatt_client_characteristic_t * characteristic, uint16_t configuration, uint16_t service_id, uint16_t connection_id);
+
+/**
+ * @brief Register for changes to the Service Changed and Database Hash Characteristics of the remote GATT Service
+ * *
+ * When configured, GATT_EVENT_QUERY_COMPLETE event is emitted
+ * If supported, the Database Hash is read as well
+ *
+ * Requires ENABLE_GATT_CLIENT_SERVICE_CHANGED
+ *
+ * @param callback
+ */
+void gatt_client_add_service_changed_handler(btstack_packet_callback_registration_t * callback);
+
+/**
+ * @brief Remove callback for service changes
+ *
+ * Requires ENABLE_GATT_CLIENT_SERVICE_CHANGED
+ *
+ * @param callback
+ */
+void gatt_client_remove_service_changed_handler(btstack_packet_callback_registration_t * callback);
+
+/**
  * @brief Register for notifications and indications of a characteristic enabled by 
  * the gatt_client_write_client_characteristic_configuration function.
  * @param notification struct used to store registration
@@ -939,6 +1175,32 @@ void gatt_client_listen_for_characteristic_value_updates(gatt_client_notificatio
  * @param notification struct used in gatt_client_listen_for_characteristic_value_updates
  */
 void gatt_client_stop_listening_for_characteristic_value_updates(gatt_client_notification_t * notification);
+
+/**
+ * @brief Register for notifications and indications of characteristic in a service
+ * the gatt_client_write_client_characteristic_configuration function.
+ * @param notification struct used to store registration
+ * @param callback
+ * @param con_handle or GATT_CLIENT_ANY_CONNECTION to receive updates from all connected devices
+ * @param service
+ * @param end_handle
+ * @param service_id    - context provided to callback in events
+ * @param connection_id - contest provided to callback in events
+ */
+void gatt_client_listen_for_service_characteristic_value_updates(gatt_client_service_notification_t * notification,
+                                                                 btstack_packet_handler_t callback,
+                                                                 hci_con_handle_t con_handle,
+                                                                 gatt_client_service_t * service,
+                                                                 uint16_t service_id,
+                                                                 uint16_t connection_id);
+
+/**
+ * @brief Stop listening to characteristic value updates for registered service with
+ * the gatt_client_listen_for_characteristic_value_updates function.
+ * @param notification struct used in gatt_client_listen_for_characteristic_value_updates
+ */
+void gatt_client_stop_listening_for_service_characteristic_value_updates(gatt_client_service_notification_t * notification);
+
 
 /**
  * @brief Transactional write. It can be called as many times as it is needed to write the characteristics within the same transaction. 
@@ -976,6 +1238,14 @@ uint8_t gatt_client_cancel_write(btstack_packet_handler_t callback, hci_con_hand
  * @return ERROR_CODE_SUCCESS if ok, ERROR_CODE_UNKNOWN_CONNECTION_IDENTIFIER if handle unknown, and ERROR_CODE_COMMAND_DISALLOWED if callback already registered
  */
 uint8_t gatt_client_request_to_send_gatt_query(btstack_context_callback_registration_t * callback_registration, hci_con_handle_t con_handle);
+
+/**
+ * @brief Remove queued callback for regular gatt queries, to be used on disconnect for example
+ * @param callback_registration
+ * @param con_handle
+ * @return ERROR_CODE_SUCCESS if ok
+ */
+uint8_t gatt_client_remove_gatt_query(btstack_context_callback_registration_t * callback_registration, hci_con_handle_t con_handle);
 
 /**
  * @brief Request callback when writing characteristic value without response is possible

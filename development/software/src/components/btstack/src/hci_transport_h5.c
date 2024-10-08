@@ -663,6 +663,7 @@ static void hci_transport_h5_process_frame(uint16_t frame_size){
                 case HCI_EVENT_PACKET:
                 case HCI_ACL_DATA_PACKET:
                 case HCI_SCO_DATA_PACKET:
+                case HCI_ISO_DATA_PACKET:
                     // seems like peer is awake
                     link_peer_asleep = 0;
                     // forward packet to stack
@@ -670,8 +671,10 @@ static void hci_transport_h5_process_frame(uint16_t frame_size){
                     // reset inactvitiy timer
                     hci_transport_inactivity_timer_set();
                     break;
+                default:
+                    // ignore unknown packet type
+                    break;
             }
-
             break;
         default:
             break;
@@ -905,4 +908,6 @@ void hci_transport_h5_enable_bcsp_mode(void){
     hci_transport_bcsp_mode = 1;
 }
 
+#else
+typedef int _fix_empty_translation_unit_warnig;
 #endif

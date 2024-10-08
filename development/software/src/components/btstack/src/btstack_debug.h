@@ -76,7 +76,8 @@ extern "C" {
 #endif /* btstack_assert */
 #else /* HAVE_ASSERT */
 #ifdef ENABLE_BTSTACK_ASSERT
-void btstack_assert_failed(const char * file, uint16_t line_nr);
+#include <stdnoreturn.h>
+noreturn void btstack_assert_failed(const char * file, uint16_t line_nr);
 #ifndef btstack_assert
 // use btstack macro that calls btstack_assert_failed() - provided by port
 #define btstack_assert(condition)         if (condition) {} else { btstack_assert_failed(BTSTACK_FILE__, __LINE__);  }
@@ -86,6 +87,9 @@ void btstack_assert_failed(const char * file, uint16_t line_nr);
 #define btstack_assert(condition)         {(void)(condition);}
 #endif /* btstack_assert */
 #endif /* HAVE_ASSERT */
+
+/* Compile-time assert macro */
+#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
 
 // mark code that should not be reached. Similar to assert, but mapped to NOP for coverage
 #ifdef UNIT_TEST
@@ -99,15 +103,23 @@ void btstack_assert_failed(const char * file, uint16_t line_nr);
 #ifdef __AVR__
 #define BTSTACK_PRINTF(format, ...)          printf_P(PSTR(format), ## __VA_ARGS__)
 #else
-#define BTSTACK_PRINTF(format, ...)          printf(format, ## __VA_ARGS__)
+#define BTSTACK_PRINTF(...)          printf( __VA_ARGS__)
 #endif
 #endif
 
 #ifdef __AVR__
-#define HCI_DUMP_LOG(log_level, format, ...) hci_dump_log_P(log_level, PSTR("%S.%u: " format), PSTR(BTSTACK_FILE__), __LINE__, ## __VA_ARGS__)
+#define HCI_DUMP_LOG_PRINTF(log_level, format, ...) hci_dump_log_P(log_level, PSTR("%S.%u: " format), PSTR(BTSTACK_FILE__), __LINE__, ## __VA_ARGS__)
+#define HCI_DUMP_LOG_PUTS(log_level, format)        hci_dump_log_P(log_level, PSTR("%S.%u: " format), PSTR(BTSTACK_FILE__), __LINE__)
 #else
-#define HCI_DUMP_LOG(log_level, format, ...) hci_dump_log(log_level, "%s.%u: " format, BTSTACK_FILE__, __LINE__, ## __VA_ARGS__)
+#define HCI_DUMP_LOG_PRINTF(log_level, format, ...) hci_dump_log(log_level, "%s.%u: " format, BTSTACK_FILE__, __LINE__, ## __VA_ARGS__)
+#define HCI_DUMP_LOG_PUTS(log_level, format)        hci_dump_log(log_level, "%s.%u: " format, BTSTACK_FILE__, __LINE__);
 #endif
+
+#ifdef _MSC_VER
+
+// original version that requires GNU Macro extensions, but works with Visual Studio 2022
+
+#define HCI_DUMP_LOG HCI_DUMP_LOG_PRINTF
 
 #ifdef ENABLE_LOG_DEBUG
 #define log_debug(format, ...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_DEBUG, format,  ## __VA_ARGS__)
@@ -126,6 +138,35 @@ void btstack_assert_failed(const char * file, uint16_t line_nr);
 #else
 #define log_error(...) (void)(0)
 #endif
+
+#else  /* _MSC_VER */
+
+// C99 Pedantic version - does not work for Visual Studio 2022
+
+#define GET_LOGGER_TYPE_FOR_ARG_COUNT( _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, NAME, ... ) NAME
+
+#define HCI_DUMP_LOG( ... ) GET_LOGGER_TYPE_FOR_ARG_COUNT(__VA_ARGS__, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PRINTF, HCI_DUMP_LOG_PUTS, UNUSED)( __VA_ARGS__ )
+
+#ifdef ENABLE_LOG_DEBUG
+#define log_debug(...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_DEBUG, ## __VA_ARGS__)
+#else
+#define log_debug(...) (void)(0)
+#endif
+
+#ifdef ENABLE_LOG_INFO
+#define log_info(...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_INFO, ## __VA_ARGS__)
+#else
+#define log_info(...) (void)(0)
+#endif
+
+#ifdef ENABLE_LOG_ERROR
+#define log_error(...)  HCI_DUMP_LOG(HCI_DUMP_LOG_LEVEL_ERROR, ## __VA_ARGS__)
+#else
+#define log_error(...) (void)(0)
+#endif
+
+#endif /* _MSC_VER */
+
 
 /* API_START */
 

@@ -434,6 +434,8 @@ static bool sm_passkey_entry(stk_generation_method_t method);
 static void sm_pairing_complete(sm_connection_t * sm_conn, uint8_t status, uint8_t reason);
 
 static void log_info_hex16(const char * name, uint16_t value){
+    UNUSED(name);
+    UNUSED(value);
     log_info("%-6s 0x%04x", name, value);
 }
 
@@ -1584,6 +1586,8 @@ static void sm_remove_le_device_db_entry(uint16_t i) {
 }
 
 static uint8_t sm_key_distribution_validate_received(sm_connection_t * sm_conn){
+    UNUSED(sm_conn);
+
     // if identity is provided, abort if we have bonding with same address but different irk
     if ((setup->sm_key_distribution_received_set & SM_KEYDIST_FLAG_IDENTITY_INFORMATION) != 0u){
         int index = sm_le_device_db_index_lookup(BD_ADDR_TYPE_LE_PUBLIC, setup->sm_peer_address);
@@ -3319,10 +3323,16 @@ static void sm_run(void){
                 sm_send_connectionless(connection, (uint8_t *) &setup->sm_s_pres, sizeof(sm_pairing_packet_t));
                 break;
             case SM_BR_EDR_DISTRIBUTE_KEYS:
+                // send next key
                 if (setup->sm_key_distribution_send_set != 0) {
                     sm_run_distribute_keys(connection);
+                }
+
+                // more to send?
+                if (setup->sm_key_distribution_send_set != 0){
                     return;
                 }
+
                 // keys are sent
                 if (IS_RESPONDER(connection->sm_role)) {
                     // responder -> receive master keys if there are any
@@ -3790,6 +3800,7 @@ static void sm_event_handle_classic_encryption_event(sm_connection_t * sm_conn, 
     if (sm_conn->sm_connection_encrypted != 2) return;
     // prepare for pairing request
     if (IS_RESPONDER(sm_conn->sm_role)){
+        log_info("CTKD: SM_BR_EDR_RESPONDER_W4_PAIRING_REQUEST");
         sm_conn->sm_engine_state = SM_BR_EDR_RESPONDER_W4_PAIRING_REQUEST;
     } else if (sm_conn->sm_pairing_requested){
         // check if remote supports fixed channels
@@ -3908,9 +3919,17 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                     sm_conn->sm_cid = L2CAP_CID_BR_EDR_SECURITY_MANAGER;
                     sm_conn->sm_engine_state = SM_BR_EDR_W4_ENCRYPTION_COMPLETE;
 			        break;
+
 #endif
 
 #ifdef ENABLE_CROSS_TRANSPORT_KEY_DERIVATION
+                case HCI_EVENT_ROLE_CHANGE:
+                    hci_event_role_change_get_bd_addr(packet, addr);
+                    sm_conn = sm_get_connection_for_bd_addr_and_type(addr, BD_ADDR_TYPE_ACL);
+                    if (sm_conn == NULL) break;
+                    sm_conn->sm_role = hci_event_role_change_get_role(packet);
+                    break;
+
 			    case HCI_EVENT_SIMPLE_PAIRING_COMPLETE:
 			        if (hci_event_simple_pairing_complete_get_status(packet) != ERROR_CODE_SUCCESS) break;
                     hci_event_simple_pairing_complete_get_bd_addr(packet, addr);
@@ -3984,6 +4003,8 @@ static void sm_event_packet_handler (uint8_t packet_type, uint16_t channel, uint
                                 uint8_t advertising_handle = hci_subevent_le_advertising_set_terminated_get_advertising_handle(packet);
                                 con_handle = hci_subevent_le_advertising_set_terminated_get_connection_handle(packet);
                                 sm_conn = sm_get_connection_for_handle(con_handle);
+                                if (!sm_conn) break;
+
                                 gap_le_get_own_advertising_set_address(&sm_conn->sm_own_addr_type, sm_conn->sm_own_address, advertising_handle);
                                 log_info("Adv set %u terminated -> use addr type %u, addr %s for con handle 0x%04x", advertising_handle, sm_conn->sm_own_addr_type,
                                          bd_addr_to_str(sm_conn->sm_own_address), con_handle);

@@ -2506,13 +2506,13 @@ static l2cap_channel_t * l2cap_create_channel_entry(btstack_packet_handler_t pac
     channel->remote_sig_id = L2CAP_SIG_ID_INVALID;
     channel->local_sig_id = L2CAP_SIG_ID_INVALID;
 
-    log_info("create channel %p, local_cid 0x%04x", channel, channel->local_cid);
+    log_info("create channel %p, local_cid 0x%04x", (void*)channel, channel->local_cid);
 
     return channel;
 }
 
 static void l2cap_free_channel_entry(l2cap_channel_t * channel){
-    log_info("free channel %p, local_cid 0x%04x", channel, channel->local_cid);
+    log_info("free channel %p, local_cid 0x%04x", (void*)channel, channel->local_cid);
     // assert all timers are stopped
     l2cap_stop_rtx(channel);
 #ifdef ENABLE_L2CAP_ENHANCED_RETRANSMISSION_MODE
@@ -2974,6 +2974,9 @@ static void l2cap_handle_disconnection_complete(hci_con_handle_t handle){
                     case L2CAP_STATE_WAIT_ENHANCED_RENEGOTIATION_RESPONSE:
                         // emit reconfigure failure - result = 0xffff
                         l2cap_ecbm_emit_reconfigure_complete(channel, 0xffff);
+                        break;
+                    case L2CAP_STATE_WAIT_INCOMING_SECURITY_LEVEL_UPDATE:
+                        // no incoming event has been sent to higher layer, no need to follow up
                         break;
                     default:
                         l2cap_emit_simple_event_with_cid(channel, L2CAP_EVENT_CHANNEL_CLOSED);
@@ -5250,6 +5253,15 @@ static void l2cap_credit_based_notify_channel_can_send(l2cap_channel_t *channel)
     log_debug("le can send now, local_cid 0x%x", channel->local_cid);
     l2cap_emit_simple_event_with_cid(channel, L2CAP_EVENT_CAN_SEND_NOW);
 }
+
+static uint16_t l2cap_credit_based_available_credits(uint16_t local_cid){
+    l2cap_channel_t * channel = l2cap_get_channel_for_local_cid(local_cid);
+    if (channel != NULL) {
+        return channel->credits_outgoing;
+    }
+    return 0;
+}
+
 #endif
 
 #ifdef ENABLE_L2CAP_LE_CREDIT_BASED_FLOW_CONTROL_MODE
@@ -5445,7 +5457,7 @@ uint8_t l2cap_cbm_create_channel(btstack_packet_handler_t packet_handler, hci_co
     if (!channel) {
         return BTSTACK_MEMORY_ALLOC_FAILED;
     }
-    log_info("created %p", channel);
+    log_info("created %p", (void*)channel);
 
     // store local_cid
     if (out_local_cid){
@@ -5484,6 +5496,10 @@ uint8_t l2cap_cbm_create_channel(btstack_packet_handler_t packet_handler, hci_co
 
 uint8_t l2cap_cbm_provide_credits(uint16_t local_cid, uint16_t credits){
     return l2cap_credit_based_provide_credits(local_cid, credits);
+}
+
+uint16_t l2cap_cbm_available_credits(uint16_t local_cid){
+    return l2cap_credit_based_available_credits(local_cid);
 }
 #endif
 
@@ -5719,6 +5735,10 @@ uint8_t l2cap_ecbm_reconfigure_channels(uint8_t num_cids, uint16_t * local_cids,
 uint8_t l2cap_ecbm_provide_credits(uint16_t local_cid, uint16_t credits){
     return l2cap_credit_based_provide_credits(local_cid, credits);
 }
+
+uint16_t l2cap_ecbm_available_credits(uint16_t local_cid){
+    return l2cap_credit_based_available_credits(local_cid);
+}
 #endif
 
 #ifdef ENABLE_L2CAP_ENHANCED_RETRANSMISSION_MODE
@@ -5843,5 +5863,22 @@ void l2cap_free_channels_fuzz(void){
             btstack_memory_l2cap_channel_free(channel);
         }
     }
+}
+
+l2cap_channel_t * l2cap_get_dynamic_channel_fuzz(void){
+    btstack_linked_list_iterator_t it;
+    btstack_linked_list_iterator_init(&it, &l2cap_channels);
+    while (btstack_linked_list_iterator_has_next(&it)){
+        l2cap_channel_t * channel = (l2cap_channel_t*) btstack_linked_list_iterator_next(&it);
+        switch (channel->channel_type) {
+            case L2CAP_CHANNEL_TYPE_CLASSIC:
+            case L2CAP_CHANNEL_TYPE_CHANNEL_CBM:
+            case L2CAP_CHANNEL_TYPE_CHANNEL_ECBM:
+                return channel;
+            default:
+                break;
+        }
+    }
+    return NULL;
 }
 #endif

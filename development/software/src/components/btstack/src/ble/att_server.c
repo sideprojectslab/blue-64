@@ -54,12 +54,12 @@
 #include "ble/core.h"
 #include "ble/le_device_db.h"
 #include "ble/sm.h"
+#include "bluetooth_psm.h"
 #include "btstack_debug.h"
 #include "btstack_event.h"
 #include "btstack_memory.h"
 #include "btstack_run_loop.h"
 #include "gap.h"
-#include "hci.h"
 #include "hci_dump.h"
 #include "l2cap.h"
 #include "btstack_tlv.h"
@@ -117,13 +117,6 @@ static hci_con_handle_t att_server_last_can_send_now = HCI_CON_HANDLE_INVALID;
 static uint8_t att_server_flags;
 
 #ifdef ENABLE_GATT_OVER_EATT
-typedef struct {
-    btstack_linked_item_t item;
-    att_server_t     att_server;
-    att_connection_t att_connection;
-    uint8_t * receive_buffer;
-    uint8_t * send_buffer;
-} att_server_eatt_bearer_t;
 static att_server_eatt_bearer_t * att_server_eatt_bearer_for_con_handle(hci_con_handle_t con_handle);
 static btstack_linked_list_t att_server_eatt_bearer_pool;
 static btstack_linked_list_t att_server_eatt_bearer_active;
@@ -560,11 +553,6 @@ static void att_signed_write_handle_cmac_result(uint8_t hash[8]){
 static void att_server_handle_response_pending(att_server_t *att_server, const att_connection_t *att_connection,
                                                const uint8_t *eatt_buffer,
                                                uint16_t att_response_size) {
-    // free reserved buffer
-    if (eatt_buffer == NULL){
-        l2cap_release_packet_buffer();
-    }
-
     // update state
     att_server->state = ATT_SERVER_RESPONSE_PENDING;
 
@@ -586,6 +574,11 @@ static void att_server_handle_response_pending(att_server_t *att_server, const a
             btstack_assert(att_server_client_read_callback != NULL);
             (*att_server_client_read_callback)(att_connection->con_handle, ATT_READ_RESPONSE_PENDING, 0, NULL, 0);
         }
+    }
+
+    // free reserved buffer - might trigger next read/write
+    if (eatt_buffer == NULL){
+        l2cap_release_packet_buffer();
     }
 }
 #endif
@@ -1638,7 +1631,7 @@ static void att_server_eatt_handler(uint8_t packet_type, uint16_t channel, uint8
 
                 case L2CAP_EVENT_CHANNEL_CLOSED:
                     eatt_bearer = att_server_eatt_bearer_for_cid(l2cap_event_channel_closed_get_local_cid(packet));
-                    btstack_assert(eatt_bearers != NULL);
+                    btstack_assert(eatt_bearer != NULL);
 
                     // TODO: finalize - abort queued writes
 
@@ -1683,8 +1676,6 @@ uint8_t att_server_eatt_init(uint8_t num_eatt_bearers, uint8_t * storage_buffer,
         eatt_bearer++;
     }
     // TODO: define minimum EATT MTU
-    l2cap_ecbm_register_service(att_server_eatt_handler, BLUETOOTH_PSM_EATT, 64, 0, false);
-
-    return 0;
+    return l2cap_ecbm_register_service(att_server_eatt_handler, BLUETOOTH_PSM_EATT, 64, LEVEL_2, false);
 }
 #endif
