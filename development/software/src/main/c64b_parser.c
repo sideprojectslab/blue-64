@@ -486,14 +486,20 @@ void c64b_parser_init()
 			"~ret~";
 
 		const char update_successful[] =
-			"~clr~0 successfully updated firmware!~ret~"
+			"~ret~~clr~"
+			"~cmdr-psh~7~cmdr-rel~"
+			"~ctrl-psh~0~ctrl-rel~"
+			"0 successfully updated firmware!~ret~"
 			"~ret~"
 			"0 please switch off the computer and~ret~"
 			"0 remove the sd-card"
 			"~ret~";
 
 		const char update_failed[] =
-			"~clr~0 firmware updated failed!~ret~"
+			"~ret~~clr~"
+			"~cmdr-psh~7~cmdr-rel~"
+			"~ctrl-psh~0~ctrl-rel~"
+			"0 firmware updated failed!~ret~"
 			"~ret~"
 			"0 please switch off the computer and~ret~"
 			"0 remove the sd-card"
