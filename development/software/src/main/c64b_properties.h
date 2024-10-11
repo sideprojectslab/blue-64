@@ -38,8 +38,9 @@ uint8_t  c64b_property_get_u8(const char* key, uint8_t def);
 #define KB_MAP_SYMBOLIC   0
 #define KB_MAP_POSITIONAL 1
 
-#define C64B_PROPERTY_KEY_KB_MAP  "c64b.kb_map"
-#define C64B_PROPERTY_KEY_AF_RATE "c64b.af_dly"
+#define C64B_PROPERTY_KEY_KB_MAP    "c64b.kb_map"
+#define C64B_PROPERTY_KEY_AF_RATE   "c64b.af_dly"
+#define C64B_PROPERTY_KEY_SCAN_TIME "c64b.scan_time" // this is expressed in minutes
 
 typedef enum
 {
@@ -52,10 +53,14 @@ typedef enum
 	CT_MAP_IDX_NUM
 } t_c64b_ct_map_idx;
 
-extern unsigned int kb_map;
-extern unsigned int af_rate;
-extern TickType_t   af_prd;
-extern const char*  ct_map_key[CT_MAP_IDX_NUM];
-extern unsigned int ct_map[CT_MAP_IDX_NUM];
+extern unsigned int  kb_map;
+extern unsigned int  af_rate;
+extern unsigned int  scan_time;
+extern TickType_t    af_prd;
+extern unsigned int  scan_time;
+extern unsigned int  scan_minutes;
+extern const uint8_t scan_time_to_minutes[6];
+extern const char*   ct_map_key[CT_MAP_IDX_NUM];
+extern unsigned int  ct_map[CT_MAP_IDX_NUM];
 
 #endif

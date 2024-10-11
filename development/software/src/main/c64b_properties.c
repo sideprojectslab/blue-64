@@ -35,9 +35,10 @@
 //----------------------------------------------------------------------------//
 // properties
 
-unsigned int kb_map = KB_MAP_SYMBOLIC;
-unsigned int af_rate = 0;
-TickType_t   af_prd = (TickType_t)portMAX_DELAY;
+unsigned int kb_map                 = KB_MAP_SYMBOLIC;
+unsigned int af_rate                = 0;
+TickType_t   af_prd                 = (TickType_t)portMAX_DELAY;
+unsigned int scan_time              = 0;
 unsigned int ct_map[CT_MAP_IDX_NUM] = {0};
 
 const char* ct_map_key[CT_MAP_IDX_NUM] =
@@ -49,6 +50,8 @@ const char* ct_map_key[CT_MAP_IDX_NUM] =
 	"c64b.ct_ls",
 	"c64b.ct_rs"
 };
+
+const uint8_t scan_time_to_minutes[6] = {0, 1, 2, 5, 10, 30};
 
 //----------------------------------------------------------------------------//
 // former bluepad32 functions
@@ -181,8 +184,9 @@ uint8_t c64b_property_get_u8(const char* key, uint8_t def)
 void c64b_property_init(void)
 {
 	old_property_init();
-	kb_map = c64b_property_get_u8(C64B_PROPERTY_KEY_KB_MAP, KB_MAP_SYMBOLIC);
-	af_rate = c64b_property_get_u8(C64B_PROPERTY_KEY_AF_RATE, 0);
+	kb_map    = c64b_property_get_u8(C64B_PROPERTY_KEY_KB_MAP, KB_MAP_SYMBOLIC);
+	scan_time = c64b_property_get_u8(C64B_PROPERTY_KEY_SCAN_TIME, 0);
+	af_rate   = c64b_property_get_u8(C64B_PROPERTY_KEY_AF_RATE, 0);
 	if (af_rate != 0)
 		af_prd = (1000 / (TickType_t)af_rate) / portTICK_PERIOD_MS;
 

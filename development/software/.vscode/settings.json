@@ -10,6 +10,8 @@
 		"c64b_threadsafe.h": "c",
 		"numbers": "c",
 		"c64b_parser.h": "c",
-		"c64b_properties.h": "c"
+		"c64b_properties.h": "c",
+		"uni_bt_service.h": "c",
+		"semphr.h": "c"
 	},
 }

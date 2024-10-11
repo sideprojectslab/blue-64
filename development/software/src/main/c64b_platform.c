@@ -38,8 +38,6 @@
 //----------------------------------------------------------------------------//
 // Globals
 
-static int g_delete_keys = 0;
-
 //----------------------------------------------------------------------------//
 // Platform Overrides
 
@@ -59,6 +57,12 @@ static void c64b_on_init_complete(void) {
 //	uni_bt_list_keys_unsafe();
 
 	logi("c64b: on_init_complete()\n");
+}
+
+uni_error_t c64b_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi)
+{
+	logi("c64b: device discovered: %s\n", name);
+	return c64b_parser_discover(addr, name, cod, rssi);
 }
 
 static void c64b_on_device_connected(uni_hid_device_t* d) {
@@ -109,6 +113,7 @@ struct uni_platform* c64b_platform_create(void) {
 		.name = "c64b",
 		.init = c64b_init,
 		.on_init_complete = c64b_on_init_complete,
+		.on_device_discovered = c64b_on_device_discovered,
 		.on_device_connected = c64b_on_device_connected,
 		.on_device_disconnected = c64b_on_device_disconnected,
 		.on_device_ready = c64b_on_device_ready,
