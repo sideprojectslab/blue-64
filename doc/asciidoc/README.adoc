@@ -17,8 +17,17 @@ If you wish to get in touch with the developer, please join the SPL link:https:/
 This work is provided under the **Creative Commons CC BY-NC-ND 4.0** License: +
 https://creativecommons.org/licenses/by-nc-nd/4.0/
 
-.Blue-64 (Developer Board)
-image::{root}doc/pictures/Blue-64.png[width=60%, align=center]
+
+
+[cols="100a,113a"]
+[width=80%]
+[.center, frame=none, grid=none]
+|===
+|.Blue-64-developer ("Developer" Board)
+image::{root}doc/pictures/Blue-64.png[align=center]
+|.Blue-64-regular ("Regular" Board)
+image::{root}doc/pictures/longboard_solo.png[align=center]
+|===
 
 Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto the keyboard header inside the computer and can control the keyboard lines and emulate keystrokes and joystick inputs. The goal of the project is to support two bluetooth controllers and a bluetooth keyboard simultaneously, in order to be able to controll the C64 completely wirelessly.
 
