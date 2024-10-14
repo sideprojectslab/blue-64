@@ -33,8 +33,8 @@ Blue-64 is a plug & play bluetooth adapter for the Commodore 64 that plugs onto 
 
 Blue-64 can be purchased pre-assembled or as a DIY-Kit from these authorized shops:
 
-- link:https://retro8bitshop.com/product/spl-blue-64/[Retro8BitShop]
-- link:https://www.retro-updates.com/product/13541624/blue-64-plug-play-bluetooth-for-the-c64[Retro-Updates]
+- link:https://retro8bitshop.com/product/spl-blue-64-v1/[Retro8BitShop]
+- link:https://www.retro-updates.com/product/15909946/blue-64-v1-0-plug-play-bluetooth-for-the-c64[Retro-Updates]
 - link:https://restore-store.de/home/682-blue-64-v03.html?search_query=blue-64&results=7[Restore-Store]
 
 Sales of Blue-64 by any shop other than the ones mentioned above may be in violation of the xref:#_license[License] terms and conditions and should be reported to the developer
