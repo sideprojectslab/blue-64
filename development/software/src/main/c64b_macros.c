@@ -181,7 +181,7 @@ unsigned int menu_af_ext(int i)
 //                            BT SCAN DURATION MENU                           //
 //----------------------------------------------------------------------------//
 
-unsigned int menu_bt_plt(int i)
+unsigned int menu_bts_plt(int i)
 {
 	static const char* entries[] =
 	{
@@ -198,7 +198,7 @@ unsigned int menu_bt_plt(int i)
 	return i;
 }
 
-unsigned int menu_bt_act(int i)
+unsigned int menu_bts_act(int i)
 {
 	if (scan_time != i)
 	{
@@ -214,7 +214,49 @@ unsigned int menu_bt_act(int i)
 	return 0;
 }
 
-unsigned int menu_bt_ext(int i)
+unsigned int menu_bts_ext(int i)
+{
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+//----------------------------------------------------------------------------//
+//                      BLUETOOTH FORGET DEVICES MENU                         //
+//----------------------------------------------------------------------------//
+
+unsigned int menu_btf_plt(int i)
+{
+	static const char* entries[] =
+	{
+		"~home~~ret~0 no",
+		"~home~~ret~1 yes"
+	};
+
+	WRAP(i, entries);
+	keyboard_macro_feed(entries[i]);
+	return i;
+}
+
+unsigned int menu_btf_act(int i)
+{
+	if(i == 1)
+	{
+		uni_bt_forget_devices_safe();
+	}
+
+	menu_current_plt = menu_main_plt;
+	menu_current_act = menu_main_act;
+	menu_current_ext = menu_main_ext;
+	menu_lvl--;
+	menu_current_plt(menu_idx[menu_lvl]);
+	return 0;
+}
+
+unsigned int menu_btf_ext(int i)
 {
 	menu_current_plt = menu_main_plt;
 	menu_current_act = menu_main_act;
@@ -444,7 +486,8 @@ unsigned int menu_main_plt(int i)
 		"~clr~5 controller mapping (xbox)",
 		"~clr~6 autofire rate",
 		"~clr~7 bluetooth scan time",
-		"~clr~8 restore defaults"
+		"~clr~8 bluetooth forget devices",
+		"~clr~9 restore defaults"
 	};
 
 	WRAP(i, entries);
@@ -512,9 +555,9 @@ unsigned int menu_main_act(int i)
 			break;
 
 		case 7:
-			menu_current_plt = menu_bt_plt;
-			menu_current_act = menu_bt_act;
-			menu_current_ext = menu_bt_ext;
+			menu_current_plt = menu_bts_plt;
+			menu_current_act = menu_bts_act;
+			menu_current_ext = menu_bts_ext;
 			menu_lvl++;
 			menu_idx[menu_lvl] = scan_time;
 
@@ -523,6 +566,17 @@ unsigned int menu_main_act(int i)
 			break;
 
 		case 8:
+			menu_current_plt = menu_btf_plt;
+			menu_current_act = menu_btf_act;
+			menu_current_ext = menu_btf_ext;
+			menu_lvl++;
+			menu_idx[menu_lvl] = 0;
+
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
+				menu_current_plt(menu_idx[menu_lvl]);
+			break;
+
+		case 9:
 			menu_current_plt = menu_restore_plt;
 			menu_current_act = menu_restore_act;
 			menu_current_ext = menu_restore_ext;
