@@ -15,6 +15,7 @@ folders = [
 
 metrics = {}
 targets = {}
+histogram_data = {}
 
 targets['PATH']   = 1000
 targets['GOTO']   = 0
@@ -40,6 +41,13 @@ excluded_functions = [
     'src/l2cap.c:l2cap_cbm_can_send_now',
     'src/l2cap.c:l2cap_cbm_request_can_send_now_even'
 ]
+
+def histogram_add_data(key, value):
+    global histogram_data
+    if key not in histogram_data.keys():
+        histogram_data[key] = []
+    histogram_data[key].append(value)
+
 
 def metric_sum(name, value):
     global metrics
@@ -70,11 +78,10 @@ def metric_measure(metric_name, function_name, actual):
         metric_sum(metric_name + '_SUM', actual)
         if actual > targets[metric_name]:
             metric_sum(metric_name + '_DEVIATIONS', 1)
-            # metric_list(metric_name + '_LIST', function_name + '(%u)' % actual)
-            metric_list(metric_name + '_LIST', function_name)
+            metric_list(metric_name + '_LIST', function_name + ' - %u' % actual)
 
 
-def analyze_folders(btstack_root, folders):
+def analyze_folders(btstack_root, folders, metrics_file):
     global excluded_functions
 
     # File,Name,"'goto' keyword count (raw source)","Return points","Statement count (raw source)(local)",
@@ -88,12 +95,16 @@ def analyze_folders(btstack_root, folders):
         metrics[key + '_DEVIATIONS'] = 0
 
     # for now, just read the file
-    with open("metrics.tsv") as fd:
+    with open(metrics_file) as fd:
         rd = csv.reader(fd, delimiter="\t")
         last_function_name = ''
         for row in rd:
             file = ''
             function_metrics = {}
+            # skip optional header
+            if row[0].startswith('#'):
+                continue
+
             for key, value in zip(fields, row):
                 if key == 'file':
                     # get rid of directory traversal on buildbot
@@ -109,6 +120,8 @@ def analyze_folders(btstack_root, folders):
                 if key == '_':
                     continue
                 function_metrics[key] = value
+                histogram_add_data(key,int(value))
+
             if file.endswith('.h'):
                 continue
             qualified_function_name = file+':'+function_name
@@ -119,13 +132,13 @@ def analyze_folders(btstack_root, folders):
             for key,value in function_metrics.items():
                 metric_measure(key, qualified_function_name, int(function_metrics[key]))
 
-def analyze(folders):
+def analyze(folders, metrics_file):
     # print ("\nAnalyzing:")
     # for path in folders:
     #     print('- %s' % path)
     #     analyze_folder(btstack_root + "/" + path)
     btstack_root = os.path.abspath(os.path.dirname(sys.argv[0]) + '/../..')
-    analyze_folders(btstack_root, folders)
+    analyze_folders(btstack_root, folders, metrics_file)
 
 def list_targets():
     print ("Targets:")
@@ -170,8 +183,12 @@ def list_deviations():
         print ("\n%s" % key)
         print ('\n'.join(value))
  
-analyze(folders)
-list_metrics_table()
-# list_targets()
-# list_metrics()
-# list_deviations()
+def main(argv):
+    analyze(folders, "metrics.tsv")
+    list_metrics_table()
+    # list_targets()
+    # list_metrics()
+    # list_deviations()
+
+if __name__ == "__main__":
+   main(sys.argv[1:])
