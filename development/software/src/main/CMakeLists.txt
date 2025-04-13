@@ -1,5 +1,7 @@
 set(srcs "main.c"
          "uni_platform_custom.c"
+         "c64b_bt.c"
+         "c64b_bt_allowlist.c"
          "c64b_threadsafe.c"
          "c64b_keyboard.c"
          "c64b_platform.c"
@@ -16,5 +18,9 @@ set(srcs "main.c"
 set(requires "bluepad32" "btstack" "fatfs")
 
 idf_component_register(SRCS "${srcs}"
-                    INCLUDE_DIRS "."
+                    INCLUDE_DIRS
+                        "."
+                        "../../../../resources/bluepad32/src/components/bluepad32"
                     REQUIRES "${requires}")
+
+target_link_libraries(${COMPONENT_LIB} PUBLIC __idf_bluepad32)

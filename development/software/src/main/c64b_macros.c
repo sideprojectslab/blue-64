@@ -27,6 +27,9 @@
 #include "c64b_parser.h"
 #include "c64b_threadsafe.h"
 
+extern void uni_bt_enable_pairing_safe(bool enabled);
+extern void uni_bt_forget_devices_safe();
+
 //----------------------------------------------------------------------------//
 // static variables
 

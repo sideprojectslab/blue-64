@@ -1,2 +1,7 @@
 {
+	"files.associations": {
+		"uni_bt.h": "c",
+		"uni_bt_allowlist.h": "c",
+		"uni_config.h": "c"
+	}
 }

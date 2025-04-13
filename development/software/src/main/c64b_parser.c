@@ -36,6 +36,10 @@ extern bool c64b_parse_gamepad_ctrl  (uni_gamepad_t*  gp, uni_gamepad_t*  gp_old
 extern void c64b_parse_gamepad_init  ();
 extern bool c64b_gamepad_interesting (uni_gamepad_t* gp, uni_gamepad_t* gp_old);
 
+extern bool uni_bt_allowlist_add_addr_force(bd_addr_t addr);
+extern void uni_bt_enable_pairing_safe(bool enabled);
+extern void uni_bt_forget_devices_safe();
+
 //----------------------------------------------------------------------------//
 // Static Variables
 
@@ -167,7 +171,7 @@ uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod,
 		if(uni_bt_allowlist_is_enabled() == false)
 		{
 			logi("Device Detected, Adding to allowlist\n");
-			uni_bt_allowlist_add_addr(addr, true);
+			uni_bt_allowlist_add_addr_force(addr);
 		}
 		else if(uni_bt_allowlist_is_allowed_addr(addr) == false)
 		{
