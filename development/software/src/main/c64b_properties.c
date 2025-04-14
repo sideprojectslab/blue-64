@@ -191,9 +191,9 @@ void c64b_property_init(void)
 		af_prd = (1000 / (TickType_t)af_rate) / portTICK_PERIOD_MS;
 
 	ct_map[CT_MAP_IDX_BH] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_BH], C64B_KB_IDX_NONE);
-	ct_map[CT_MAP_IDX_BM] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_BM], c64b_keyboard_key_to_idx(" "));
+	ct_map[CT_MAP_IDX_BM] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_BM], c64b_keyboard_char_to_idx(" "));
 	ct_map[CT_MAP_IDX_LT] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_LT], C64B_KB_IDX_NONE);
 	ct_map[CT_MAP_IDX_RT] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_RT], C64B_KB_IDX_NONE);
 	ct_map[CT_MAP_IDX_LS] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_LS], C64B_KB_IDX_NONE);
-	ct_map[CT_MAP_IDX_RS] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_RS], c64b_keyboard_key_to_idx("~f1~"));
+	ct_map[CT_MAP_IDX_RS] = c64b_property_get_u8(ct_map_key[CT_MAP_IDX_RS], c64b_keyboard_char_to_idx("~f1~"));
 }

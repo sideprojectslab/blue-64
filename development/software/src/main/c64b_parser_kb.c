@@ -46,7 +46,7 @@ uint8_t c64b_keychain_get_size()
 
 bool c64b_keychain_add(const char* s)
 {
-	unsigned int   idx = c64b_keyboard_key_to_idx(s);
+	unsigned int   idx = c64b_keyboard_char_to_idx(s);
 	const t_c64b_key_id* h   = &(KEY_IDS[idx]);
 
 	if(new_pressed >= MAX_KEYPRESS)

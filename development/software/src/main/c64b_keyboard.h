@@ -33,8 +33,9 @@
 #define C64B_CTL_BITS 5
 #define C64B_KKA_BITS 3
 
-#define NUM_KEYS         114
-#define C64B_KB_IDX_NONE NUM_KEYS
+#define NUM_KEYS         116
+#define C64B_KB_IDX_REST (NUM_KEYS - 2)
+#define C64B_KB_IDX_NONE (NUM_KEYS - 1)
 
 typedef struct
 {
@@ -117,8 +118,9 @@ bool c64b_keyboard_char_rel(t_c64b_keyboard *h, const char *s);
 bool c64b_keyboard_feed_str(t_c64b_keyboard *h, char* s);
 bool c64b_keyboard_feed_prg(t_c64b_keyboard *h, char** s, uint32_t nlines);
 
-unsigned int c64b_keyboard_key_to_idx(const char* s);
-const char*  c64b_keyboard_idx_to_key(unsigned int i);
+unsigned int         c64b_keyboard_char_to_idx(const char* s);
+const char*          c64b_keyboard_idx_to_char(unsigned int i);
+const t_c64b_key_id* c64b_keyboard_idx_to_key(unsigned int i);
 
 void                 c64b_keyboard_trace_reset(t_c64b_keyboard *h);
 const t_c64b_key_id* c64b_keyboard_trace_get(t_c64b_keyboard *h);

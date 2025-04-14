@@ -13,6 +13,8 @@
 		"c64b_properties.h": "c",
 		"uni_bt_service.h": "c",
 		"semphr.h": "c",
-		"uni_bt_allowlist.h": "c"
+		"uni_bt_allowlist.h": "c",
+		"sstream": "c",
+		"regex": "c"
 	},
 }

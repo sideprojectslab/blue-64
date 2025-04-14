@@ -34,7 +34,7 @@
 #define ESC_LEN_MAX 6
 #define SHIFT_COL   1
 #define SHIFT_ROW   7
-#define NUM_KEYS    114
+#define NUM_KEYS    116
 
 // the "~" character is used to "escape" complex characters.
 // It is not present on the c64 keyboard and thus is free to use
@@ -134,7 +134,11 @@ const t_c64b_key_id KEY_IDS[NUM_KEYS] =
 	{"w"       , 1, 1, false, false, true }, {"W", 1, 1, true, false, true},
 	{"x"       , 2, 7, false, false, true }, {"X", 2, 7, true, false, true},
 	{"y"       , 3, 1, false, false, true }, {"Y", 3, 1, true, false, true},
-	{"z"       , 1, 4, false, false, true }, {"Z", 1, 4, true, false, true}
+	{"z"       , 1, 4, false, false, true }, {"Z", 1, 4, true, false, true},
+
+	// additional dummy keys with exceptions
+	{"~rest~"  , 0, 0, false, false, false},
+	{""        , 0, 0, false, false, true}
 };
 
 //const unsigned int NUM_KEYS = sizeof(KEY_IDS) / sizeof(KEY_IDS[0]);
@@ -165,7 +169,15 @@ static const char* MOD_EVT_IDS[] =
 };
 
 //----------------------------------------------------------------------------//
-unsigned int c64b_keyboard_key_to_idx(const char* s)
+const t_c64b_key_id * c64b_keyboard_idx_to_key(unsigned int i)
+{
+	if(i < sizeof(KEY_IDS) / sizeof(KEY_IDS[0]))
+		return &KEY_IDS[i];
+	return NULL;
+}
+
+//----------------------------------------------------------------------------//
+unsigned int c64b_keyboard_char_to_idx(const char* s)
 {
 	if(s == NULL)
 		return C64B_KB_IDX_NONE;
@@ -187,13 +199,15 @@ unsigned int c64b_keyboard_key_to_idx(const char* s)
 }
 
 //----------------------------------------------------------------------------//
-const char *c64b_keyboard_idx_to_key(unsigned int i)
+const char *c64b_keyboard_idx_to_char(unsigned int i)
 {
 	if(i == C64B_KB_IDX_NONE)
 		return "";
-	if(i < sizeof(KEY_IDS) / sizeof(KEY_IDS[0]))
-		return KEY_IDS[i].str;
-	return NULL;
+	if(i == C64B_KB_IDX_REST)
+		return "rest";
+
+	const t_c64b_key_id * key = c64b_keyboard_idx_to_key(i);
+	return key->str;
 }
 
 //----------------------------------------------------------------------------//
@@ -203,7 +217,7 @@ static const t_c64b_key_id * c64b_keyboard_char_to_key(const char* s)
 	if(s == NULL)
 		return NULL;
 
-	int i = c64b_keyboard_key_to_idx(s);
+	int i = c64b_keyboard_char_to_idx(s);
 	if(i != C64B_KB_IDX_NONE)
 		return &(KEY_IDS[i]);
 	return NULL;
@@ -274,6 +288,7 @@ void c64b_keyboard_keys_rel(t_c64b_keyboard *h, bool rel_shft)
 		return;
 
 	c64b_keyboard_clr_mux(h);
+	c64b_keyboard_rest_rel(h);
 
 	if(rel_shft)
 		gpio_set_level(h->pin_shft, 0);
@@ -297,15 +312,22 @@ void c64b_keyboard_mods_rel(t_c64b_keyboard *h)
 
 bool c64b_keyboard_key_psh(t_c64b_keyboard *h, const t_c64b_key_id *k)
 {
-	if((h == NULL) || (k == NULL))
+	if((h == NULL) || (k == NULL) || (k == &(KEY_IDS[C64B_KB_IDX_NONE])))
 		return false;
 
 	h->trace_key = k;
 
-	if(k->shft)
-		c64b_keyboard_shft_psh(h);
+	if(k == &(KEY_IDS[C64B_KB_IDX_REST]))
+	{
+		c64b_keyboard_rest_psh(h);
+	}
+	else
+	{
+		if(k->shft)
+			c64b_keyboard_shft_psh(h);
 
-	c64b_keyboard_set_mux(h, k->col, k->row);
+		c64b_keyboard_set_mux(h, k->col, k->row);
+	}
 
 	vTaskDelay(h->feed_psh_ms / portTICK_PERIOD_MS);
 	return true;
@@ -663,7 +685,7 @@ void c64b_keyboard_trace_reset(t_c64b_keyboard *h)
 {
 	if(h == NULL)
 		return;
-	h->trace_key = NULL;
+	h->trace_key = &(KEY_IDS[C64B_KB_IDX_NONE]);
 }
 
 const t_c64b_key_id* c64b_keyboard_trace_get(t_c64b_keyboard *h)

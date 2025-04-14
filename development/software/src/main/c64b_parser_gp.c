@@ -279,17 +279,17 @@ bool c64b_parse_gamepad_kbemu(uni_gamepad_t* gp, uni_gamepad_t* gp_old, t_c64b_c
 			kb_nop   = false;
 
 			if(gp->misc_buttons & BTN_MENU_MASK)
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BM]));
+				c64b_keyboard_key_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BM]));
 			else if(gp->misc_buttons & BTN_HOME_MASK)
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BH]));
+				c64b_keyboard_key_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_BH]));
 			else if(gp->buttons & BTN_LS_MASK)
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
+				c64b_keyboard_key_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LS]));
 			else if(gp->buttons & BTN_RS_MASK)
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RS]));
+				c64b_keyboard_key_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RS]));
 			else if(c64b_gamepad_trigger_active(gp->brake) || (gp->buttons & BTN_LT_MASK))
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LT]));
+				c64b_keyboard_key_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_LT]));
 			else if(c64b_gamepad_trigger_active(gp->throttle) || (gp->buttons & BTN_RT_MASK))
-				c64b_keyboard_char_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RT]));
+				c64b_keyboard_key_psh(&keyboard, c64b_keyboard_idx_to_key(ct_map[CT_MAP_IDX_RT]));
 			else
 				kb_nop = true;
 

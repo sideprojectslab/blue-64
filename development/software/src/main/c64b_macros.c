@@ -26,6 +26,7 @@
 #include "c64b_macros.h"
 #include "c64b_parser.h"
 #include "c64b_threadsafe.h"
+#include "ctype.h"
 
 extern void uni_bt_enable_pairing_safe(bool enabled);
 extern void uni_bt_forget_devices_safe();
@@ -336,7 +337,7 @@ unsigned int menu_ct_plt(int i)
 	strcat(str_buf, entries[i]);
 	strcat(str_buf, "\"~strip~");
 	last_len = strlen(str_buf);
-	strcat(str_buf, c64b_keyboard_idx_to_key(ct_map[i]));
+	strcat(str_buf, c64b_keyboard_idx_to_char(ct_map[i]));
 	strcat(str_buf, "\"");
 
 	if(KEY_IDS[i].prnt)
@@ -392,7 +393,8 @@ unsigned int menu_ct_ext(int i)
 
 unsigned int menu_key_plt(int i)
 {
-	i = wrap(i, NUM_KEYS + 1);
+	// we include "restore" and "no key"
+	i = wrap(i, NUM_KEYS);
 
 	strcpy(str_buf, "");
 	for (unsigned int j = 0; j < last_len; ++j)
@@ -400,13 +402,15 @@ unsigned int menu_key_plt(int i)
 
 	if(i == C64B_KB_IDX_NONE)
 	{
+		// it is intentional that we don't print anything because the "none" key
+		// also works as input for a user defined key
 		last_len = 0;
 	}
 	else
 	{
 		strcat(str_buf, "\"~strip~");
 		last_len = strlen(str_buf);
-		strcat(str_buf, c64b_keyboard_idx_to_key(i));
+		strcat(str_buf, c64b_keyboard_idx_to_char(i));
 		strcat(str_buf, "\"");
 
 		if(KEY_IDS[i].prnt)
@@ -423,6 +427,7 @@ unsigned int menu_key_plt(int i)
 		}
 	}
 
+
 	logi("printing string: %s\n", str_buf);
 
 	keyboard_macro_feed(str_buf);
@@ -437,18 +442,22 @@ unsigned int menu_key_act(int i)
 
 	if(i == C64B_KB_IDX_NONE)
 	{
-		if(key != NULL)
+		if(key != &(KEY_IDS[C64B_KB_IDX_NONE]))
 		{
-			ct_map[j] = c64b_keyboard_key_to_idx(key->str);
+			ct_map[j] = c64b_keyboard_char_to_idx(key->str);
 		}
 		else
 		{
 			ct_map[j] = C64B_KB_IDX_NONE;
 		}
 	}
+	else if (i == C64B_KB_IDX_REST)
+	{
+		ct_map[j] = C64B_KB_IDX_REST;
+	}
 	else
 	{
-		ct_map[j] = c64b_keyboard_key_to_idx(KEY_IDS[i].str);
+		ct_map[j] = c64b_keyboard_char_to_idx(KEY_IDS[i].str);
 	}
 
 	c64b_property_set_u8(ct_map_key[j], ct_map[j]);
@@ -500,18 +509,23 @@ unsigned int menu_main_plt(int i)
 
 unsigned int menu_main_act(int i)
 {
+	static bd_addr_t bt_addr;
+	static char * bt_addr_str;
+
+	static const char device_addr[] =
+		"0 bluetooth address: ";
+
 	static const char device_info[] =
-		"~clr~"
-		"0 device info:~ret~"
+		"~ret~"
 		"0 blue-64 by side-projects-lab~ret~"
-		"0 firmware version: "C64B_FW_VERSION;
+		"0 firmware version: "C64B_FW_VERSION"~ret~""~ret~";
 
 	static const char* entries[] =
 	{
 		"~clr~load~ret~",
 		"~clr~load \"$\",8~ret~",
 		"~clr~load \"*\",8~ret~",
-		device_info,
+		":",
 		":",
 		":",
 		":",
@@ -523,6 +537,22 @@ unsigned int menu_main_act(int i)
 
 	switch(i)
 	{
+		case 3:
+			uni_bt_get_local_bd_addr_safe(bt_addr);
+			bt_addr_str = bd_addr_to_str(bt_addr);
+
+			for(int j = 0; bt_addr_str[j]; ++j){
+				bt_addr_str[j] = tolower(bt_addr_str[j]);
+			}
+
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
+				keyboard_macro_feed(device_info);
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
+				keyboard_macro_feed(device_addr);
+			if(xSemaphoreTake(mcro_sem_h, (TickType_t)portMAX_DELAY) == true)
+				keyboard_macro_feed(bt_addr_str);
+			break;
+
 		case 4:
 			menu_current_plt = menu_kb_plt;
 			menu_current_act = menu_kb_act;
@@ -633,13 +663,3 @@ void menu_act()
 {
 	menu_current_act(menu_idx[menu_lvl]);
 }
-
-
-/*
-const char color_change[] =
-	"~clr~"
-	"poke 53280,1~ret~"
-	"poke 53281,5~ret~"
-	"~ctrl-psh~6~ctrl-rel~"
-	"~clr~new color scheme active";
-*/
