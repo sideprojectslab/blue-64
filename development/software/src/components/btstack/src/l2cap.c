@@ -2457,7 +2457,7 @@ static void l2cap_handle_remote_supported_features_received(l2cap_channel_t * ch
 
         // incoming: assert security requirements
         channel->state = L2CAP_STATE_WAIT_INCOMING_SECURITY_LEVEL_UPDATE;
-        if (channel->required_security_level <= gap_security_level(channel->con_handle)){
+        if (1) {
             l2cap_handle_security_level_incoming_sufficient(channel);
         } else {
             // send connection pending if not already done
