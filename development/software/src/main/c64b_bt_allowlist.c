@@ -51,6 +51,7 @@ bool uni_bt_allowlist_add_addr_force(bd_addr_t addr) {
 			bd_addr_copy(addr_allow_list[i-1], addr_allow_list[i]);
 		}
 		bd_addr_copy(addr_allow_list[i-1], addr);
+		update_allowlist_to_property();
 		return true;
 	}
 
@@ -61,4 +62,10 @@ void uni_bt_allowlist_set_enabled_soft(bool enabled) {
 	if (enabled != enforced) {
 		enforced = enabled;
 	}
+}
+
+
+void uni_bt_allowlist_init_soft(void) {
+	update_allowlist_from_property();
+	uni_bt_allowlist_list();
 }

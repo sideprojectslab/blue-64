@@ -78,7 +78,7 @@ typedef enum
 
 
 typedef unsigned int t_c64b_cport_idx;
-#define CPORT_NONE 0
+#define KPORT      0
 #define CPORT_1    1
 #define CPORT_2    2
 

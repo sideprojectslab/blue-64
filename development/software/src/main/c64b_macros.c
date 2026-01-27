@@ -90,7 +90,7 @@ unsigned int menu_restore_plt(int i)
 {
 	static const char* entries[] =
 	{
-		"~home~~ret~0 no",
+		"~home~~ret~0 no ",
 		"~home~~ret~1 yes"
 	};
 
@@ -236,7 +236,7 @@ unsigned int menu_btf_plt(int i)
 {
 	static const char* entries[] =
 	{
-		"~home~~ret~0 no",
+		"~home~~ret~0 no ",
 		"~home~~ret~1 yes"
 	};
 
@@ -530,6 +530,7 @@ unsigned int menu_main_act(int i)
 		":",
 		":",
 		":",
+		"?",
 		"?"
 	};
 

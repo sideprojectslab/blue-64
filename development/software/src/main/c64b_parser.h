@@ -88,12 +88,12 @@
 
 //----------------------------------------------------------------------------//
 
-void c64b_parser_init();
-uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi);
-void c64b_parser_connect(uni_hid_device_t* d);
-void c64b_parser_disconnect(uni_hid_device_t* d);
-void c64b_parser_set_kb_leds(uint8_t mask);
-void c64b_parse(uni_hid_device_t* d);
+void c64b_mt_parser_init();
+uni_error_t c64b_mt_parser_discover(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi);
+void c64b_mt_parser_connect(uni_hid_device_t* d);
+void c64b_mt_parser_disconnect(uni_hid_device_t* d);
+void c64b_mt_parser_set_kb_leds(uint8_t mask);
+void c64b_mt_parse(uni_hid_device_t* d);
 
 void keyboard_macro_feed(const char* str);
 

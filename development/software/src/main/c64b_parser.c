@@ -39,6 +39,7 @@ extern bool c64b_gamepad_interesting (uni_gamepad_t* gp, uni_gamepad_t* gp_old);
 extern bool uni_bt_allowlist_add_addr_force(bd_addr_t addr);
 extern void uni_bt_enable_pairing_safe(bool enabled);
 extern void uni_bt_forget_devices_safe();
+extern void uni_bt_allowlist_init_soft(void);
 
 //----------------------------------------------------------------------------//
 // Static Variables
@@ -62,7 +63,7 @@ uni_controller_t* get_ctl(uni_hid_device_t* d)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parser_set_kb_leds(uint8_t mask)
+void c64b_mt_parser_set_kb_leds(uint8_t mask)
 {
 	if(dev_ptr[0] == NULL)
 		return;
@@ -73,7 +74,7 @@ void c64b_parser_set_kb_leds(uint8_t mask)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parser_set_gp_seat(unsigned int idx, unsigned int seat)
+void c64b_mt_parser_set_gp_seat(unsigned int idx, unsigned int seat)
 {
 	if((idx != CPORT_1) && (idx != CPORT_2))
 		return;
@@ -161,7 +162,7 @@ void keyboard_macro_feed(const char* str)
 }
 
 //----------------------------------------------------------------------------//
-uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi)
+uni_error_t c64b_mt_parser_discover(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi)
 {
 	cod &= UNI_BT_COD_MINOR_MASK;
 	if ((cod & UNI_BT_COD_MINOR_KEYBOARD) ||
@@ -189,7 +190,7 @@ uni_error_t c64b_parser_discover(bd_addr_t addr, const char* name, uint16_t cod,
 
 //----------------------------------------------------------------------------//
 
-void c64b_parser_connect(uni_hid_device_t* d)
+void c64b_mt_parser_connect(uni_hid_device_t* d)
 {
 	// keyboard ID always sits on index 0
 	if(uni_hid_device_is_keyboard(d))
@@ -207,12 +208,12 @@ void c64b_parser_connect(uni_hid_device_t* d)
 		if(dev_ptr[2] == NULL)
 		{
 			dev_ptr[2] = d;
-			c64b_parser_set_gp_seat(2, swap_ports ? 1 : 2);
+			c64b_mt_parser_set_gp_seat(2, swap_ports ? 1 : 2);
 		}
 		else if(dev_ptr[1] == NULL)
 		{
 			dev_ptr[1] = d;
-			c64b_parser_set_gp_seat(1, swap_ports ? 2 : 1);
+			c64b_mt_parser_set_gp_seat(1, swap_ports ? 2 : 1);
 		}
 	}
 	else
@@ -263,8 +264,6 @@ void c64b_parse_gamepad(uni_controller_t* ctl, t_c64b_cport_idx cport_idx)
 	// this function only supports gamepads
 	if(ctl->klass != UNI_CONTROLLER_CLASS_GAMEPAD)
 		return;
-
-	t_c64b_parse_fbak fbak;
 
 	uni_gamepad_t*   gp = &(ctl->gamepad);
 	uni_gamepad_t*   gp_old;
@@ -319,12 +318,20 @@ void c64b_parse_gamepad(uni_controller_t* ctl, t_c64b_cport_idx cport_idx)
 
 		if(c64b_parse_gamepad_swap(gp, gp_old))
 		{
-			swap_ports = !swap_ports;
-			fbak.cport_idx  = cport_idx;
-			fbak.swap_ports = swap_ports;
+			// accessing dev_ptr[n] here is not technically thread-safe, however
+			// the consequences of race conditions here are not too bad, as
+			// player 1 may be able to switch ports if player 2 just connected
+			if((cport_idx == CPORT_2) || (dev_ptr[1] == NULL) || (dev_ptr[2] == NULL))
+			{
+				t_c64b_parse_fbak fbak;
 
-			// here we post only if there are any "news" to report
-			xQueueOverwrite(queue_ctl_fbak, (void *)(&fbak));
+				swap_ports      = !swap_ports;
+				fbak.cport_idx  = cport_idx;
+				fbak.swap_ports = swap_ports;
+
+				// here we post only if there are any "news" to report
+				xQueueOverwrite(queue_ctl_fbak, (void *)(&fbak));
+			}
 		}
 	}
 	else
@@ -374,7 +381,7 @@ void task_c64b_disable_pairing(void * arg)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parse(uni_hid_device_t* d)
+void c64b_mt_parse(uni_hid_device_t* d)
 {
 	if(dev_ptr[0] == d)
 		xQueueOverwrite(queue_ctl_data[0], (void *)get_ctl(dev_ptr[0]));
@@ -389,12 +396,17 @@ void c64b_parse(uni_hid_device_t* d)
 	t_c64b_parse_fbak fbak;
 	while(1)
 	{
+		// the while is necessary so that we keep reading until the queue is empty
 		if(xQueueReceive(queue_ctl_fbak, &fbak, 0))
 		{
-			if((fbak.cport_idx == CPORT_2) || (dev_ptr[1] == NULL) || (dev_ptr[2] == NULL))
+			if (fbak.cport_idx == KPORT)
 			{
-				c64b_parser_set_gp_seat(CPORT_1, fbak.swap_ports ? 2 : 1);
-				c64b_parser_set_gp_seat(CPORT_2, fbak.swap_ports ? 1 : 2);
+				c64b_mt_parser_set_kb_leds(fbak.shift_lock ? 0x2 : 0);
+			}
+			else
+			{
+				c64b_mt_parser_set_gp_seat(CPORT_1, fbak.swap_ports ? 2 : 1);
+				c64b_mt_parser_set_gp_seat(CPORT_2, fbak.swap_ports ? 1 : 2);
 			}
 		}
 		else
@@ -404,7 +416,7 @@ void c64b_parse(uni_hid_device_t* d)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parser_disconnect(uni_hid_device_t* d)
+void c64b_mt_parser_disconnect(uni_hid_device_t* d)
 {
 	unsigned int idx;
 	if(dev_ptr[0] == d)
@@ -429,7 +441,7 @@ void c64b_parser_disconnect(uni_hid_device_t* d)
 
 //----------------------------------------------------------------------------//
 
-void c64b_parser_init()
+void c64b_mt_parser_init()
 {
 	queue_ctl_data[0] = xQueueCreate(1, sizeof(uni_controller_t));
 	queue_ctl_data[1] = xQueueCreate(1, sizeof(uni_controller_t));
@@ -552,4 +564,7 @@ void c64b_parser_init()
 	}
 
 	c64b_keyboard_init(&keyboard);
+
+	// needed to initialize the allowlist
+	uni_bt_allowlist_init_soft();
 }

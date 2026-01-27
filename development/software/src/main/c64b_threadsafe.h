@@ -46,7 +46,11 @@ typedef enum
 typedef struct
 {
 	t_c64b_cport_idx cport_idx;
-	bool             swap_ports;
+	union
+	{
+		bool swap_ports;
+		bool shift_lock;
+	};
 } t_c64b_parse_fbak;
 
 //----------------------------------------------------------------------------//

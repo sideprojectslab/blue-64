@@ -55,7 +55,10 @@ bool c64b_parse_keyboard_symbolic(uni_keyboard_t* kb, uni_keyboard_t* kb_old)
 					if(!shft_lock_old)
 					{
 						shft_lock = !shft_lock;
-						c64b_parser_set_kb_leds(shft_lock ? 0x2 : 0);
+						t_c64b_parse_fbak fbak;
+						fbak.cport_idx  = KPORT;
+						fbak.shift_lock = shft_lock;
+						xQueueOverwrite(queue_ctl_fbak, (void *)(&fbak));
 					}
 					shft_lock_press = true;
 				}

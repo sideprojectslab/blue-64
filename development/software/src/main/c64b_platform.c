@@ -47,7 +47,7 @@ static void c64b_init(int argc, const char** argv) {
 	ARG_UNUSED(argv);
 
 	logi("c64b: init()\n");
-	c64b_parser_init();
+	c64b_mt_parser_init();
 }
 
 static void c64b_on_init_complete(void) {
@@ -62,7 +62,7 @@ static void c64b_on_init_complete(void) {
 uni_error_t c64b_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi)
 {
 	logi("c64b: device discovered: %s\n", name);
-	return c64b_parser_discover(addr, name, cod, rssi);
+	return c64b_mt_parser_discover(addr, name, cod, rssi);
 }
 
 static void c64b_on_device_connected(uni_hid_device_t* d) {
@@ -71,17 +71,17 @@ static void c64b_on_device_connected(uni_hid_device_t* d) {
 
 static void c64b_on_device_disconnected(uni_hid_device_t* d) {
 	logi("c64b: device disconnected: %p\n", d);
-	c64b_parser_disconnect(d);
+	c64b_mt_parser_disconnect(d);
 }
 
 static uni_error_t c64b_on_device_ready(uni_hid_device_t* d) {
 	logi("c64b: device ready: %p\n", d);
-	c64b_parser_connect(d);
+	c64b_mt_parser_connect(d);
 	return UNI_ERROR_SUCCESS;
 }
 
 static void c64b_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
-	c64b_parse(d);
+	c64b_mt_parse(d);
 }
 
 static const uni_property_t* c64b_get_property(uni_property_idx_t idx) {
@@ -110,16 +110,16 @@ static void c64b_on_oob_event(uni_platform_oob_event_t event, void* data) {
 
 struct uni_platform* c64b_platform_create(void) {
 	static struct uni_platform plat = {
-		.name = "c64b",
-		.init = c64b_init,
-		.on_init_complete = c64b_on_init_complete,
-		.on_device_discovered = c64b_on_device_discovered,
-		.on_device_connected = c64b_on_device_connected,
+		.name                   = "c64b",
+		.init                   = c64b_init,
+		.on_init_complete       = c64b_on_init_complete,
+		.on_device_discovered   = c64b_on_device_discovered,
+		.on_device_connected    = c64b_on_device_connected,
 		.on_device_disconnected = c64b_on_device_disconnected,
-		.on_device_ready = c64b_on_device_ready,
-		.on_oob_event = c64b_on_oob_event,
-		.on_controller_data = c64b_on_controller_data,
-		.get_property = c64b_get_property,
+		.on_device_ready        = c64b_on_device_ready,
+		.on_oob_event           = c64b_on_oob_event,
+		.on_controller_data     = c64b_on_controller_data,
+		.get_property           = c64b_get_property,
 	};
 
 	return &plat;

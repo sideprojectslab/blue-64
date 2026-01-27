@@ -28,7 +28,6 @@
 #include "uni_hid_device.h"
 #include "uni_log.h"
 
-extern bool uni_bt_allowlist_add_addr_force(bd_addr_t addr);
 extern void uni_bt_allowlist_set_enabled_soft(bool enabled);
 
 static btstack_context_callback_registration_t cmd_callback_registration;
