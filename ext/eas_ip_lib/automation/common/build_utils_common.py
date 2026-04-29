@@ -38,8 +38,9 @@ DUMP      = 'dump'
 DUMP_DEST = {None: "misc", True: "pass", False: "fail"}
 
 
-def run_cmd(cmd:str, capture_output=True, text=True, shell=False):
-	sp.run(['bash', '-c', cmd], capture_output=capture_output, text=text, shell=shell)
+def run_cmd(cmd:str, capture_output=True, text=True, shell=False, cwd='.'):
+	os.makedirs(cwd, exist_ok=True)
+	return sp.run(['bash', '-c', cmd], capture_output=capture_output, text=text, shell=shell, cwd=cwd)
 
 
 def get_current_venv():
